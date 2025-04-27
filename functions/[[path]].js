@@ -17,6 +17,32 @@ export async function onRequest(context) {
   console.log(`处理请求: ${method} ${path}`);
 
   try {
+    // 处理管理后台页面路由
+    if (path === 'admin' && method === 'GET') {
+      console.log('处理管理后台路由');
+      const adminHtmlResponse = await fetch(new URL('/admin.html', url.origin));
+      if (!adminHtmlResponse.ok) {
+        console.error('获取admin.html失败:', adminHtmlResponse.status);
+        return new Response('找不到管理页面', { status: 404 });
+      }
+      return new Response(await adminHtmlResponse.text(), {
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    
+    // 处理登录页面路由
+    if (path === 'login' && method === 'GET') {
+      console.log('处理登录页面路由');
+      const loginHtmlResponse = await fetch(new URL('/login.html', url.origin));
+      if (!loginHtmlResponse.ok) {
+        console.error('获取login.html失败:', loginHtmlResponse.status);
+        return new Response('找不到登录页面', { status: 404 });
+      }
+      return new Response(await loginHtmlResponse.text(), {
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    
     // 处理文章详情页面路由
     if (path.startsWith('post/') && method === 'GET') {
       // 从静态存储获取post.html
@@ -79,6 +105,6 @@ export async function onRequest(context) {
     return context.next();
   } catch (error) {
     console.error('处理请求时出错:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
   }
 } 

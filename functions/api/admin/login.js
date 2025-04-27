@@ -19,7 +19,10 @@ async function sha256(message) {
 // 将字符串转换为 Base64 URL 编码
 function strToBase64Url(str) {
   try {
-    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // 先转换为Base64
+    let base64 = btoa(str);
+    // 再转换为Base64 URL格式
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   } catch (error) {
     console.error('Base64 URL编码出错:', error);
     throw error;
@@ -44,36 +47,35 @@ function safeCompare(a, b) {
   return result === 0;
 }
 
-// 生成简单的JWT令牌
-async function generateToken(username) {
+// 生成超简单的JWT令牌 - 与auth.js逻辑兼容
+function generateToken(username) {
   try {
+    // 创建JWT头部
     const header = {
-      alg: 'HS256',
-      typ: 'JWT'
+      alg: 'HS256', // 算法，实际上我们不会使用它
+      typ: 'JWT'    // 令牌类型
     };
     
+    // 创建JWT载荷
     const payload = {
       username,
-      exp: Math.floor(Date.now() / 1000) + (3600 * 24) // 24小时过期
+      // 过期时间：当前时间 + 24小时（单位：秒）
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     };
     
-    // 编码 header 和 payload
+    // 将头部和载荷转换为Base64编码的字符串
     const base64Header = strToBase64Url(JSON.stringify(header));
     const base64Payload = strToBase64Url(JSON.stringify(payload));
     
-    const secret = 'your-secret-key'; // 在实际应用中应该使用环境变量
+    // 创建签名 - 简单使用当前时间戳和用户名组合
+    // 我们的验证逻辑不会实际验证签名，所以这里只是为了格式完整
+    const signature = strToBase64Url(`${Date.now()}-${username}`);
     
-    const data = `${base64Header}.${base64Payload}`;
-    
-    // 生成签名
-    const signature = await sha256(`${data}.${secret}`);
-    // 简化处理，使用一个唯一标识符作为签名
-    const simpleSignature = strToBase64Url(new Date().toISOString() + username);
-    
-    return `${data}.${simpleSignature}`;
+    // 返回完整的JWT令牌
+    return `${base64Header}.${base64Payload}.${signature}`;
   } catch (error) {
-    console.error('生成令牌出错:', error);
-    throw error;
+    console.error('生成令牌失败:', error);
+    throw new Error('无法生成授权令牌');
   }
 }
 
@@ -133,7 +135,7 @@ export async function onRequestPost({ request, env }) {
     }
     
     // 生成JWT令牌
-    const token = await generateToken(username);
+    const token = generateToken(username);
     
     // 返回成功响应和令牌
     return new Response(

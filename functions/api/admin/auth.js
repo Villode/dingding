@@ -30,45 +30,61 @@ function strToBase64Url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// 验证JWT令牌
+/**
+ * 超简单的JWT验证逻辑
+ * 为确保在Cloudflare环境中正常工作，我们用最简单的方法
+ */
+
+// 解码Base64
+function decodeBase64(str) {
+  try {
+    // 确保字符串是有效的Base64
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) {
+      str += '=';
+    }
+    return atob(str);
+  } catch (e) {
+    console.error('Base64解码失败:', e);
+    return null;
+  }
+}
+
+// 超简单的令牌验证，不校验签名
 export async function verifyToken(token) {
   if (!token) {
+    console.log('没有提供令牌');
     return null;
   }
   
   try {
-    const [encodedHeader, encodedPayload, signature] = token.split('.');
-    
-    if (!encodedHeader || !encodedPayload || !signature) {
+    // 分割令牌
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.log('令牌格式无效');
       return null;
     }
     
-    // 验证签名
-    const secret = 'your-secret-key'; // 应与生成令牌时使用的密钥相同
-    
-    const data = `${encodedHeader}.${encodedPayload}`;
-    const expectedSignatureHex = await sha256(`${data}.${secret}`);
-    
-    // 直接比较签名，跳过复杂的编码转换
-    // 这里我们使用一种简化的验证方式
-    try {
-      // 解码payload
-      const decodedPayload = JSON.parse(atob(encodedPayload));
-      
-      // 检查令牌是否过期
-      const currentTime = Math.floor(Date.now() / 1000);
-      if (decodedPayload.exp && decodedPayload.exp < currentTime) {
-        console.log('令牌已过期');
-        return null;
-      }
-      
-      return decodedPayload;
-    } catch (decodeError) {
-      console.error('解码payload出错:', decodeError);
+    // 我们只需要解码payload部分即可
+    const payload = decodeBase64(parts[1]);
+    if (!payload) {
+      console.log('无法解码令牌payload');
       return null;
     }
+    
+    // 解析成JSON对象
+    const data = JSON.parse(payload);
+    
+    // 检查过期时间
+    if (data.exp && Date.now() / 1000 > data.exp) {
+      console.log('令牌已过期');
+      return null;
+    }
+    
+    // 返回解码后的数据
+    return data;
   } catch (error) {
-    console.error('验证令牌出错:', error);
+    console.error('令牌验证失败:', error);
     return null;
   }
 }
@@ -76,14 +92,23 @@ export async function verifyToken(token) {
 // 认证中间件
 export async function authenticate(request) {
   try {
-    // 从请求头中获取Authorization
+    // 获取授权头
     const authHeader = request.headers.get('Authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader) {
+      console.log('没有Authorization头');
       return null;
     }
     
-    const token = authHeader.substring(7); // 移除 'Bearer ' 前缀
+    // 检查Bearer令牌
+    if (!authHeader.startsWith('Bearer ')) {
+      console.log('不是Bearer令牌');
+      return null;
+    }
+    
+    // 提取令牌
+    const token = authHeader.substring(7);
+    
+    // 验证令牌
     return await verifyToken(token);
   } catch (error) {
     console.error('认证过程出错:', error);

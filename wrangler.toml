@@ -1,6 +1,4 @@
 name = "dingding-blog"
-# 主入口文件
-main = "functions/[[path]].js"
 
 # Cloudflare Pages 配置
 compatibility_date = "2023-06-01"

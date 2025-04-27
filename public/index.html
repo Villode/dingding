@@ -15,19 +15,69 @@
     </header>
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
-            <div class="border-4 border-dashed border-gray-200 rounded-lg p-4">
-                <h2 class="text-2xl font-bold mb-4">文章列表</h2>
-                <div id="posts-container" class="space-y-4">
-                    <!-- 文章将通过JavaScript动态加载 -->
-                    <p class="text-gray-500">加载中...</p>
+            <div id="main-content">
+                <!-- 主页文章列表 -->
+                <div id="home-content">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">最新文章</h2>
+                        <div id="posts-container" class="space-y-4">
+                            <p class="text-gray-500">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文章详情页，默认隐藏 -->
+                <div id="article-content" class="hidden">
+                    <div class="mb-4">
+                        <button id="back-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            返回首页
+                        </button>
+                    </div>
+                    <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
+                            <div class="animate-pulse">
+                                <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
+                                <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-500 text-sm">
+                &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
+            </p>
+        </div>
+    </footer>
 
     <script>
-        // 页面加载完成后获取文章列表
+        // 全局变量存储当前视图状态和文章ID
+        let currentState = 'home';
+        let currentArticleId = null;
+        
+        // 初始化时检查URL
         document.addEventListener('DOMContentLoaded', async () => {
+            const path = window.location.pathname;
+            if (path.startsWith('/post/')) {
+                const postId = path.split('/').pop();
+                if (postId) {
+                    await loadArticle(postId);
+                    return;
+                }
+            }
+            
+            // 默认加载文章列表
+            await loadArticleList();
+        });
+        
+        // 加载文章列表
+        async function loadArticleList() {
             try {
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
@@ -40,25 +90,142 @@
                     posts.forEach(post => {
                         const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
                         
-                        postsContainer.innerHTML += `
-                            <div class="bg-white p-4 rounded shadow">
-                                <h3 class="text-xl font-bold">
-                                    <a href="/post/${post.id}" class="text-blue-600 hover:text-blue-800">
-                                        ${post.title}
-                                    </a>
-                                </h3>
-                                <p class="text-gray-600 mt-2">${post.summary || '无摘要'}</p>
-                                <p class="text-gray-400 text-sm mt-2">发布于 ${postDate}</p>
-                            </div>
+                        const postElement = document.createElement('div');
+                        postElement.className = 'bg-white p-4 rounded shadow';
+                        postElement.innerHTML = `
+                            <h3 class="text-xl font-bold">
+                                <a href="#" class="text-blue-600 hover:text-blue-800 article-link" data-id="${post.id}">
+                                    ${post.title}
+                                </a>
+                            </h3>
+                            <p class="text-gray-600 mt-2">${post.summary || '无摘要'}</p>
+                            <p class="text-gray-400 text-sm mt-2">发布于 ${postDate}</p>
                         `;
+                        
+                        postsContainer.appendChild(postElement);
+                    });
+                    
+                    // 添加文章链接点击事件
+                    document.querySelectorAll('.article-link').forEach(link => {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const articleId = this.getAttribute('data-id');
+                            navigateToArticle(articleId);
+                        });
                     });
                 } else {
                     postsContainer.innerHTML = '<p class="text-gray-500">暂无文章</p>';
                 }
+                
+                // 显示首页，隐藏文章详情页
+                showHomeView();
             } catch (error) {
                 console.error('获取文章失败:', error);
                 document.getElementById('posts-container').innerHTML = 
                     '<p class="text-red-500">获取文章列表失败，请稍后再试</p>';
+            }
+        }
+        
+        // 加载文章详情
+        async function loadArticle(articleId) {
+            try {
+                // 显示文章详情页，隐藏首页
+                showArticleView();
+                
+                // 更新URL但不重新加载页面
+                history.pushState({articleId}, '', `/post/${articleId}`);
+                currentArticleId = articleId;
+                
+                // 获取文章数据
+                const response = await fetch(`/api/post/${articleId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`获取文章失败: ${response.status}`);
+                }
+                
+                const article = await response.json();
+                
+                // 更新页面标题
+                document.title = `${article.title} - 叮叮博客`;
+                
+                // 更新文章内容
+                const articleContainer = document.getElementById('article-container');
+                
+                // 格式化日期
+                const publishDate = new Date(article.published_at);
+                const formattedDate = publishDate.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                articleContainer.innerHTML = `
+                    <div class="px-4 py-5 sm:p-6">
+                        <h2 class="text-3xl font-bold mb-4 text-gray-900">${article.title}</h2>
+                        <p class="text-gray-500 mb-6">${formattedDate}</p>
+                        <div class="prose max-w-none">
+                            ${article.content}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('加载文章失败:', error);
+                
+                const articleContainer = document.getElementById('article-container');
+                articleContainer.innerHTML = `
+                    <div class="px-4 py-5 sm:p-6">
+                        <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
+                        <p class="text-gray-700">
+                            无法加载文章内容，请返回<button class="text-blue-500 hover:underline" id="back-to-home">首页</button>查看其他文章。
+                        </p>
+                        <p class="text-gray-500 mt-2">错误详情: ${error.message}</p>
+                    </div>
+                `;
+                
+                document.getElementById('back-to-home').addEventListener('click', navigateToHome);
+            }
+        }
+        
+        // 显示首页视图
+        function showHomeView() {
+            document.getElementById('home-content').classList.remove('hidden');
+            document.getElementById('article-content').classList.add('hidden');
+            document.title = '叮叮博客';
+            currentState = 'home';
+        }
+        
+        // 显示文章详情视图
+        function showArticleView() {
+            document.getElementById('home-content').classList.add('hidden');
+            document.getElementById('article-content').classList.remove('hidden');
+            currentState = 'article';
+        }
+        
+        // 导航到文章页面
+        function navigateToArticle(articleId) {
+            loadArticle(articleId);
+        }
+        
+        // 导航到首页
+        function navigateToHome() {
+            history.pushState({}, '', '/');
+            currentArticleId = null;
+            showHomeView();
+        }
+        
+        // 处理返回按钮点击
+        document.getElementById('back-button').addEventListener('click', navigateToHome);
+        
+        // 处理浏览器前进/后退按钮
+        window.addEventListener('popstate', function(event) {
+            const path = window.location.pathname;
+            if (path === '/' || path === '') {
+                showHomeView();
+            } else if (path.startsWith('/post/')) {
+                const postId = path.split('/').pop();
+                if (postId) {
+                    loadArticle(postId);
+                }
             }
         });
     </script>

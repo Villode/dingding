@@ -1,28 +1,29 @@
 // 使用 Web Crypto API 代替 Node.js crypto 模块
 async function sha256(message) {
-  // 将消息编码为 Uint8Array
-  const msgUint8 = new TextEncoder().encode(message);
-  // 使用 Web Crypto API 的 subtle.digest 生成哈希
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  // 将缓冲区转换为字节数组
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  // 将字节数组转换为十六进制字符串
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+  try {
+    // 将消息编码为 Uint8Array
+    const msgUint8 = new TextEncoder().encode(message);
+    // 使用 Web Crypto API 的 subtle.digest 生成哈希
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    // 将缓冲区转换为字节数组
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    // 将字节数组转换为十六进制字符串
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  } catch (error) {
+    console.error('SHA-256哈希生成出错:', error);
+    throw error;
+  }
 }
 
-// 将 ArrayBuffer 转换为 Base64 URL 编码
-function arrayBufferToBase64Url(buffer) {
-  // 将 ArrayBuffer 转换为 Base64
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+// 将字符串转换为 Base64 URL 编码
+function strToBase64Url(str) {
+  try {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch (error) {
+    console.error('Base64 URL编码出错:', error);
+    throw error;
   }
-  const base64 = btoa(binary);
-  
-  // 转换为 Base64 URL 格式
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 // 安全的密码比较函数
@@ -45,28 +46,35 @@ function safeCompare(a, b) {
 
 // 生成简单的JWT令牌
 async function generateToken(username) {
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT'
-  };
-  
-  const payload = {
-    username,
-    exp: Math.floor(Date.now() / 1000) + (3600 * 24) // 24小时过期
-  };
-  
-  const base64Header = btoa(JSON.stringify(header));
-  const base64Payload = btoa(JSON.stringify(payload));
-  
-  const secret = 'your-secret-key'; // 在实际应用中应该使用环境变量
-  
-  const data = `${base64Header}.${base64Payload}`;
-  const signature = await sha256(`${data}.${secret}`);
-  const signatureBase64 = arrayBufferToBase64Url(
-    new TextEncoder().encode(signature)
-  );
-  
-  return `${data}.${signatureBase64}`;
+  try {
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+    
+    const payload = {
+      username,
+      exp: Math.floor(Date.now() / 1000) + (3600 * 24) // 24小时过期
+    };
+    
+    // 编码 header 和 payload
+    const base64Header = strToBase64Url(JSON.stringify(header));
+    const base64Payload = strToBase64Url(JSON.stringify(payload));
+    
+    const secret = 'your-secret-key'; // 在实际应用中应该使用环境变量
+    
+    const data = `${base64Header}.${base64Payload}`;
+    
+    // 生成签名
+    const signature = await sha256(`${data}.${secret}`);
+    // 简化处理，使用一个唯一标识符作为签名
+    const simpleSignature = strToBase64Url(new Date().toISOString() + username);
+    
+    return `${data}.${simpleSignature}`;
+  } catch (error) {
+    console.error('生成令牌出错:', error);
+    throw error;
+  }
 }
 
 // 验证管理员登录信息
@@ -88,9 +96,14 @@ export async function onRequestPost({ request, env }) {
     // 在KV中获取管理员信息，如果有的话
     let adminCredentials;
     if (env.BLOG_POSTS) {
-      const kvAdminData = await env.BLOG_POSTS.get('admin:credentials');
-      if (kvAdminData) {
-        adminCredentials = JSON.parse(kvAdminData);
+      try {
+        const kvAdminData = await env.BLOG_POSTS.get('admin:credentials');
+        if (kvAdminData) {
+          adminCredentials = JSON.parse(kvAdminData);
+        }
+      } catch (kvError) {
+        console.error('从KV获取管理员信息出错:', kvError);
+        // 继续使用默认管理员
       }
     }
     

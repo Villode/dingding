@@ -93,13 +93,34 @@
             const token = checkAuth();
             if (!token) return;
 
-            const headers = options.headers || {};
-            headers['Authorization'] = `Bearer ${token}`;
-
-            return fetch(url, {
-                ...options,
-                headers
-            });
+            // 创建新的headers对象，以防止修改原始对象
+            const newHeaders = new Headers(options.headers || {});
+            newHeaders.set('Authorization', `Bearer ${token}`);
+            
+            // 在控制台记录请求信息，用于调试
+            console.log(`发送认证请求到: ${url}`);
+            console.log(`Authorization: Bearer ${token.substring(0, 10)}...`);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: newHeaders
+                });
+                
+                // 检查响应状态
+                if (response.status === 401) {
+                    // 未授权，需要重新登录
+                    console.error('认证失败: 需要重新登录');
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('请求出错:', error);
+                throw error;
+            }
         }
 
         // 加载文章列表

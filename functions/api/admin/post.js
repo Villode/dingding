@@ -1,109 +1,132 @@
+import { authenticate } from './auth.js';
+import { nanoid } from 'nanoid';
+
 export async function onRequestPost({ request, env }) {
   try {
-    // 检查是否有BLOG_POSTS KV命名空间绑定
-    if (!env.BLOG_POSTS) {
+    // 验证认证
+    const user = await authenticate(request);
+    if (!user) {
       return new Response(
-        JSON.stringify({ 
-          error: "未配置存储空间" 
-        }), 
+        JSON.stringify({ error: '未授权，请先登录' }),
         { 
-          status: 500,
-          headers: {
-            "Content-Type": "application/json"
-          }
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
         }
       );
     }
     
     // 解析请求体
-    const data = await request.json();
+    const postData = await request.json();
     
-    // 验证必要字段
-    if (!data.title || !data.content) {
+    // 验证必要的字段
+    if (!postData.title || !postData.content) {
       return new Response(
-        JSON.stringify({ 
-          error: "标题和内容是必填项" 
-        }), 
+        JSON.stringify({ error: '标题和内容为必填项' }),
         { 
           status: 400,
-          headers: {
-            "Content-Type": "application/json"
-          }
+          headers: { 'Content-Type': 'application/json' }
         }
       );
     }
     
-    // 准备文章数据
+    // 设置文章ID（如果是新文章）或使用现有的
+    const postId = postData.id || nanoid(8);
+    const isNew = !postData.id;
+    
+    // 构建完整的文章对象
     const post = {
-      id: data.id || crypto.randomUUID(), // 如果没有ID则创建新的
-      title: data.title,
-      summary: data.summary || "",
-      content: data.content,
-      published_at: data.published_at || new Date().toISOString()
+      id: postId,
+      title: postData.title,
+      summary: postData.summary || '',
+      content: postData.content,
+      published_at: postData.published_at || new Date().toISOString()
     };
     
-    // 存储到KV
-    await env.BLOG_POSTS.put(`post:${post.id}`, JSON.stringify(post));
-    
-    // 更新文章列表索引
-    let postsList = [];
-    try {
-      const existingList = await env.BLOG_POSTS.get("posts:list");
-      if (existingList) {
-        postsList = JSON.parse(existingList);
-      }
-    } catch (e) {
-      // 如果解析失败，使用空列表
-      console.error("解析文章列表失败:", e);
+    // 检查是否有KV命名空间可用
+    if (!env.BLOG_POSTS) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'KV存储不可用，无法保存文章',
+          post // 返回构建的文章以便前端可以处理
+        }),
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
     
-    // 检查文章是否已存在于列表中
-    const existingIndex = postsList.findIndex(item => item.id === post.id);
+    // 保存文章到KV
+    await env.BLOG_POSTS.put(`post:${postId}`, JSON.stringify(post));
     
-    if (existingIndex >= 0) {
-      // 更新已有文章
-      postsList[existingIndex] = {
-        id: post.id,
-        title: post.title,
-        summary: post.summary,
-        published_at: post.published_at
-      };
-    } else {
-      // 添加新文章到列表
-      postsList.push({
+    // 更新文章列表
+    let posts = [];
+    const kvPosts = await env.BLOG_POSTS.get('posts:list');
+    
+    if (kvPosts) {
+      posts = JSON.parse(kvPosts);
+    }
+    
+    // 如果是新文章，添加到列表；否则更新现有文章
+    if (isNew) {
+      posts.push({
         id: post.id,
         title: post.title,
         summary: post.summary,
         published_at: post.published_at
       });
+    } else {
+      // 更新现有文章
+      const index = posts.findIndex(p => p.id === postId);
+      if (index !== -1) {
+        posts[index] = {
+          id: post.id,
+          title: post.title,
+          summary: post.summary,
+          published_at: post.published_at
+        };
+      } else {
+        // 如果找不到，添加为新文章
+        posts.push({
+          id: post.id,
+          title: post.title,
+          summary: post.summary,
+          published_at: post.published_at
+        });
+      }
     }
     
-    // 按发布日期排序
-    postsList.sort((a, b) => 
+    // 按发布日期降序排序
+    posts.sort((a, b) => 
       new Date(b.published_at) - new Date(a.published_at)
     );
     
-    // 保存更新后的列表
-    await env.BLOG_POSTS.put("posts:list", JSON.stringify(postsList));
+    // 保存更新后的文章列表
+    await env.BLOG_POSTS.put('posts:list', JSON.stringify(posts));
     
-    return Response.json({
-      success: true,
-      post: {
-        id: post.id,
-        title: post.title
-      }
-    });
-  } catch (error) {
+    // 返回成功响应
     return new Response(
       JSON.stringify({ 
-        error: "处理请求时出错", 
+        success: true, 
+        message: isNew ? '文章创建成功' : '文章更新成功',
+        post
+      }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  } catch (error) {
+    console.error('保存文章时出错:', error);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: '处理文章保存请求时出错', 
         details: error.message 
-      }), 
+      }),
       { 
         status: 500,
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
   }

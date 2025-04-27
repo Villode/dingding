@@ -13,8 +13,11 @@
             <h1 class="text-3xl font-bold text-gray-900">
                 <a href="/" class="hover:text-gray-600">叮叮博客</a>
             </h1>
-            <div>
+            <div class="flex items-center space-x-4">
                 <span class="text-gray-600">管理后台</span>
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                    注销
+                </button>
             </div>
         </div>
     </header>
@@ -72,6 +75,32 @@
         const summaryInput = document.getElementById('summary');
         const contentInput = document.getElementById('content');
         const cancelBtn = document.getElementById('cancel-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                // 如果没有登录凭证，重定向到登录页面
+                window.location.href = '/login.html';
+                return false;
+            }
+            return token;
+        }
+
+        // 添加Authorization头到fetch请求
+        async function authFetch(url, options = {}) {
+            const token = checkAuth();
+            if (!token) return;
+
+            const headers = options.headers || {};
+            headers['Authorization'] = `Bearer ${token}`;
+
+            return fetch(url, {
+                ...options,
+                headers
+            });
+        }
 
         // 加载文章列表
         async function loadPosts() {
@@ -161,7 +190,7 @@
             }
             
             try {
-                const response = await fetch(`/api/admin/delete/${postId}`, {
+                const response = await authFetch(`/api/admin/delete/${postId}`, {
                     method: 'DELETE'
                 });
                 
@@ -174,7 +203,13 @@
                 loadPosts(); // 重新加载文章列表
             } catch (error) {
                 console.error('删除文章失败:', error);
-                alert(`删除文章失败: ${error.message}`);
+                if (error.message.includes('未授权') || error.message.includes('登录')) {
+                    // 如果是认证问题，重定向到登录页面
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                } else {
+                    alert(`删除文章失败: ${error.message}`);
+                }
             }
         }
 
@@ -191,7 +226,7 @@
             };
             
             try {
-                const response = await fetch('/api/admin/post', {
+                const response = await authFetch('/api/admin/post', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -211,12 +246,29 @@
                 loadPosts(); // 重新加载文章列表
             } catch (error) {
                 console.error('保存文章失败:', error);
-                alert(`保存文章失败: ${error.message}`);
+                if (error.message.includes('未授权') || error.message.includes('登录')) {
+                    // 如果是认证问题，重定向到登录页面
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                } else {
+                    alert(`保存文章失败: ${error.message}`);
+                }
+            }
+        }
+
+        // 注销
+        function logout() {
+            if (confirm('确定要注销吗？')) {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
             }
         }
 
         // 事件监听
         document.addEventListener('DOMContentLoaded', () => {
+            // 验证登录状态
+            if (!checkAuth()) return;
+            
             loadPosts();
             
             newPostBtn.addEventListener('click', createNewPost);
@@ -224,6 +276,7 @@
                 postFormContainer.classList.add('hidden');
             });
             postForm.addEventListener('submit', submitPostForm);
+            logoutBtn.addEventListener('click', logout);
         });
     </script>
 </body>

@@ -1,66 +1,91 @@
-export async function onRequestDelete({ params, env }) {
-  const { id } = params;
-  
+import { authenticate } from '../auth.js';
+
+export async function onRequestDelete({ request, env, params }) {
   try {
-    // 检查是否有BLOG_POSTS KV命名空间绑定
-    if (!env.BLOG_POSTS) {
+    // 验证认证
+    const user = await authenticate(request);
+    if (!user) {
       return new Response(
-        JSON.stringify({ 
-          error: "未配置存储空间" 
-        }), 
+        JSON.stringify({ error: '未授权，请先登录' }),
         { 
-          status: 500,
-          headers: {
-            "Content-Type": "application/json"
-          }
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
         }
       );
     }
     
-    // 检查文章是否存在
-    const post = await env.BLOG_POSTS.get(`post:${id}`);
-    
-    if (!post) {
+    const postId = params.id;
+    if (!postId) {
       return new Response(
-        JSON.stringify({ 
-          error: "文章不存在" 
-        }), 
+        JSON.stringify({ error: '缺少文章ID' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // 检查是否有KV命名空间可用
+    if (!env.BLOG_POSTS) {
+      return new Response(
+        JSON.stringify({ error: 'KV存储不可用，无法删除文章' }),
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // 首先，检查文章是否存在
+    const existingPost = await env.BLOG_POSTS.get(`post:${postId}`);
+    if (!existingPost) {
+      return new Response(
+        JSON.stringify({ error: '文章不存在' }),
         { 
           status: 404,
-          headers: {
-            "Content-Type": "application/json"
-          }
+          headers: { 'Content-Type': 'application/json' }
         }
       );
     }
     
     // 删除文章
-    await env.BLOG_POSTS.delete(`post:${id}`);
+    await env.BLOG_POSTS.delete(`post:${postId}`);
     
-    // 更新文章列表
-    const postsList = await env.BLOG_POSTS.get("posts:list");
+    // 从文章列表中删除
+    let posts = [];
+    const kvPosts = await env.BLOG_POSTS.get('posts:list');
     
-    if (postsList) {
-      const posts = JSON.parse(postsList);
-      const updatedPosts = posts.filter(post => post.id !== id);
-      await env.BLOG_POSTS.put("posts:list", JSON.stringify(updatedPosts));
+    if (kvPosts) {
+      posts = JSON.parse(kvPosts);
+      // 过滤掉要删除的文章
+      posts = posts.filter(post => post.id !== postId);
+      
+      // 保存更新后的文章列表
+      await env.BLOG_POSTS.put('posts:list', JSON.stringify(posts));
     }
     
-    return Response.json({
-      success: true,
-      message: "文章已删除"
-    });
-  } catch (error) {
+    // 返回成功响应
     return new Response(
       JSON.stringify({ 
-        error: "删除文章时出错", 
+        success: true, 
+        message: '文章已成功删除'
+      }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  } catch (error) {
+    console.error('删除文章时出错:', error);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: '处理删除请求时出错', 
         details: error.message 
-      }), 
+      }),
       { 
         status: 500,
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
   }

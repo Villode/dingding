@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/favicon.svg",
+    "/index.html",
+    "/admin.html",
+    "/post.html",
+    "/login.html",
+    "/*.css",
+    "/*.js",
+    "/images/*"
+  ]
+} 

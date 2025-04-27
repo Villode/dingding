@@ -1,5 +1,29 @@
-// 引入加密库
-import { createHash } from 'crypto';
+// 使用 Web Crypto API 代替 Node.js crypto 模块
+async function sha256(message) {
+  // 将消息编码为 Uint8Array
+  const msgUint8 = new TextEncoder().encode(message);
+  // 使用 Web Crypto API 的 subtle.digest 生成哈希
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  // 将缓冲区转换为字节数组
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  // 将字节数组转换为十六进制字符串
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+// 将 ArrayBuffer 转换为 Base64 URL 编码
+function arrayBufferToBase64Url(buffer) {
+  // 将 ArrayBuffer 转换为 Base64
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  
+  // 转换为 Base64 URL 格式
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
 // 安全的密码比较函数
 function safeCompare(a, b) {
@@ -20,7 +44,7 @@ function safeCompare(a, b) {
 }
 
 // 生成简单的JWT令牌
-function generateToken(username) {
+async function generateToken(username) {
   const header = {
     alg: 'HS256',
     typ: 'JWT'
@@ -37,14 +61,12 @@ function generateToken(username) {
   const secret = 'your-secret-key'; // 在实际应用中应该使用环境变量
   
   const data = `${base64Header}.${base64Payload}`;
-  const signature = createHash('sha256')
-    .update(`${data}.${secret}`)
-    .digest('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  const signature = await sha256(`${data}.${secret}`);
+  const signatureBase64 = arrayBufferToBase64Url(
+    new TextEncoder().encode(signature)
+  );
   
-  return `${data}.${signature}`;
+  return `${data}.${signatureBase64}`;
 }
 
 // 验证管理员登录信息
@@ -83,9 +105,7 @@ export async function onRequestPost({ request, env }) {
     }
     
     // 计算密码哈希
-    const passwordHash = createHash('sha256')
-      .update(password)
-      .digest('hex');
+    const passwordHash = await sha256(password);
     
     // 验证用户名和密码
     if (username !== adminCredentials.username || 
@@ -100,7 +120,7 @@ export async function onRequestPost({ request, env }) {
     }
     
     // 生成JWT令牌
-    const token = generateToken(username);
+    const token = await generateToken(username);
     
     // 返回成功响应和令牌
     return new Response(

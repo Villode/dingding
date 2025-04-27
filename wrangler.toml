@@ -5,6 +5,7 @@ main = "functions/[[path]].js"
 # Cloudflare Pages 配置
 compatibility_date = "2023-06-01"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "public"
 
 # KV命名空间配置
 [[kv_namespaces]]

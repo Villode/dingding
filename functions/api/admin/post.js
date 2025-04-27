@@ -1,5 +1,15 @@
 import { authenticate } from './auth.js';
-import { nanoid } from 'nanoid';
+
+// 生成简单的随机ID
+function generateId(length = 8) {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -30,7 +40,7 @@ export async function onRequestPost({ request, env }) {
     }
     
     // 设置文章ID（如果是新文章）或使用现有的
-    const postId = postData.id || nanoid(8);
+    const postId = postData.id || generateId(8);
     const isNew = !postData.id;
     
     // 构建完整的文章对象

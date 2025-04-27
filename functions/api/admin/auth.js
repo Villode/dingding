@@ -1,8 +1,32 @@
-// 引入加密库
-import { createHash } from 'crypto';
+// 使用 Web Crypto API 代替 Node.js crypto 模块
+async function sha256(message) {
+  // 将消息编码为 Uint8Array
+  const msgUint8 = new TextEncoder().encode(message);
+  // 使用 Web Crypto API 的 subtle.digest 生成哈希
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  // 将缓冲区转换为字节数组
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  // 将字节数组转换为十六进制字符串
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+// 将 ArrayBuffer 转换为 Base64 URL 编码
+function arrayBufferToBase64Url(buffer) {
+  // 将 ArrayBuffer 转换为 Base64
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  
+  // 转换为 Base64 URL 格式
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
 // 验证JWT令牌
-export function verifyToken(token) {
+export async function verifyToken(token) {
   if (!token) {
     return null;
   }
@@ -18,14 +42,12 @@ export function verifyToken(token) {
     const secret = 'your-secret-key'; // 应与生成令牌时使用的密钥相同
     
     const data = `${encodedHeader}.${encodedPayload}`;
-    const expectedSignature = createHash('sha256')
-      .update(`${data}.${secret}`)
-      .digest('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    const expectedSignature = await sha256(`${data}.${secret}`);
+    const expectedSignatureBase64 = arrayBufferToBase64Url(
+      new TextEncoder().encode(expectedSignature)
+    );
     
-    if (signature !== expectedSignature) {
+    if (signature !== expectedSignatureBase64) {
       return null;
     }
     
@@ -55,5 +77,5 @@ export async function authenticate(request) {
   }
   
   const token = authHeader.substring(7); // 移除 'Bearer ' 前缀
-  return verifyToken(token);
+  return await verifyToken(token);
 } 

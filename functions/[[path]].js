@@ -103,16 +103,16 @@ export async function onRequest(context) {
                             }
                             
                             // 获取文章数据
-                            const response = await fetch(`/api/post/${postId}`);
+                            const response = await fetch('/api/post/' + postId);
                             
                             if (!response.ok) {
-                                throw new Error(`获取文章失败: ${response.status}`);
+                                throw new Error('获取文章失败: ' + response.status);
                             }
                             
                             const article = await response.json();
                             
                             // 更新页面标题
-                            document.title = `${article.title} - 叮叮博客`;
+                            document.title = article.title + ' - 叮叮博客';
                             
                             // 更新文章内容
                             const articleContainer = document.getElementById('article-container');
@@ -125,28 +125,26 @@ export async function onRequest(context) {
                                 day: 'numeric'
                             });
                             
-                            articleContainer.innerHTML = `
-                                <div class="px-4 py-5 sm:p-6">
-                                    <h2 class="text-3xl font-bold mb-4 text-gray-900">${article.title}</h2>
-                                    <p class="text-gray-500 mb-6">${formattedDate}</p>
-                                    <div class="prose max-w-none">
-                                        ${article.content}
-                                    </div>
-                                </div>
-                            `;
+                            articleContainer.innerHTML = 
+                                '<div class="px-4 py-5 sm:p-6">' +
+                                    '<h2 class="text-3xl font-bold mb-4 text-gray-900">' + article.title + '</h2>' +
+                                    '<p class="text-gray-500 mb-6">' + formattedDate + '</p>' +
+                                    '<div class="prose max-w-none">' +
+                                        article.content +
+                                    '</div>' +
+                                '</div>';
                         } catch (error) {
                             console.error('加载文章失败:', error);
                             
                             const articleContainer = document.getElementById('article-container');
-                            articleContainer.innerHTML = `
-                                <div class="px-4 py-5 sm:p-6">
-                                    <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
-                                    <p class="text-gray-700">
-                                        无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。
-                                    </p>
-                                    <p class="text-gray-500 mt-2">错误详情: ${error.message}</p>
-                                </div>
-                            `;
+                            articleContainer.innerHTML = 
+                                '<div class="px-4 py-5 sm:p-6">' +
+                                    '<h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>' +
+                                    '<p class="text-gray-700">' +
+                                        '无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。' +
+                                    '</p>' +
+                                    '<p class="text-gray-500 mt-2">错误详情: ' + error.message + '</p>' +
+                                '</div>';
                         }
                     });
                 </script>
@@ -160,7 +158,7 @@ export async function onRequest(context) {
         return postPageResponse;
       } catch (error) {
         console.error('处理文章详情页面路由出错:', error);
-        return new Response(`获取文章详情页面出错: ${error.message}`, { status: 500 });
+        return new Response('获取文章详情页面出错: ' + error.message, { status: 500 });
       }
     }
     
@@ -213,10 +211,10 @@ export async function onRequest(context) {
         
         // 如果没有匹配的API路径，返回404
         console.log('API路径不匹配:', apiPath);
-        return new Response(`API not found: ${apiPath}`, { status: 404 });
+        return new Response('API not found: ' + apiPath, { status: 404 });
       } catch (error) {
         console.error('处理API请求出错:', error);
-        return new Response(`API错误: ${error.message}`, { status: 500 });
+        return new Response('API错误: ' + error.message, { status: 500 });
       }
     }
     
@@ -225,6 +223,6 @@ export async function onRequest(context) {
     return context.next();
   } catch (error) {
     console.error('处理请求时出错:', error);
-    return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
+    return new Response('Internal Server Error: ' + error.message, { status: 500 });
   }
 } 

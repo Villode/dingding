@@ -1,6 +1,9 @@
 name = "dingding-blog"
 type = "javascript"
 
+# Cloudflare Pages 配置
+pages_build_output_dir = "public"
+
 [site]
 bucket = "./public"
 
@@ -8,7 +11,11 @@ bucket = "./public"
 command = ""
 upload.format = "service-worker"
 
-# 开发环境KV配置示例
-# 需要替换为实际的KV命名空间ID
+# KV命名空间配置
+[[kv_namespaces]]
+binding = "BLOG_POSTS"
+id = "97c1ad6d710b42129dc204075412907e"
+
+# 开发环境KV配置
 [env.dev.kv_namespaces]
-BLOG_POSTS = { binding = "BLOG_POSTS", id = "替换为你的KV命名空间ID" } 
+BLOG_POSTS = { binding = "BLOG_POSTS", id = "97c1ad6d710b42129dc204075412907e" } 

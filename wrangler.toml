@@ -1,21 +1,20 @@
 name = "dingding-blog"
-type = "javascript"
+# 主入口文件
+main = "functions/[[path]].js"
 
 # Cloudflare Pages 配置
-pages_build_output_dir = "public"
-
-[site]
-bucket = "./public"
-
-[build]
-command = ""
-upload.format = "service-worker"
+compatibility_date = "2023-06-01"
+compatibility_flags = ["nodejs_compat"]
 
 # KV命名空间配置
 [[kv_namespaces]]
 binding = "BLOG_POSTS"
 id = "97c1ad6d710b42129dc204075412907e"
 
-# 开发环境KV配置
-[env.dev.kv_namespaces]
+# 预览环境KV配置
+[env.preview.kv_namespaces]
+BLOG_POSTS = { binding = "BLOG_POSTS", id = "97c1ad6d710b42129dc204075412907e" }
+
+# 生产环境KV配置
+[env.production.kv_namespaces]
 BLOG_POSTS = { binding = "BLOG_POSTS", id = "97c1ad6d710b42129dc204075412907e" } 

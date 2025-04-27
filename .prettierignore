@@ -1,0 +1,9 @@
+**/.*
+dist
+node_modules
+/data/migrations
+*.toml
+*.sh
+/assets
+/public
+*.http

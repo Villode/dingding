@@ -1,15 +1,83 @@
 {
-  "name": "fileshare",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "cloudflare-drop",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate": "drizzle-kit generate --config data/drizzle.config.ts",
+    "predeploy": "npm run build:web && npm run generate",
+    "deploy": "wrangler deploy",
+    "prestart": "cat .dev.vars > .env.local && npm run generate && yes | wrangler d1 migrations apply airdrop --local",
+    "start": "concurrently \"npm run dev:web\" \"npm run dev:app\"",
+    "dev:app": "wrangler dev --ip 0.0.0.0",
+    "dev:web": "vite --host",
+    "build:web": "tsc -b ./tsconfig.web.json && vite build",
+    "cf-typegen": "wrangler types",
+    "lint": "prettier . --write && eslint . --fix",
+    "prepare": "husky"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@cfworker/web": "^1.12.5",
-    "@cloudflare/kv-asset-handler": "^0.2.0"
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@hono/zod-openapi": "^0.18.3",
+    "@mui/icons-material": "^6.3.1",
+    "@mui/lab": "6.0.0-beta.22",
+    "@mui/material": "^6.4.8",
+    "@mui/utils": "^7.0.2",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@toolpad/core": "^0.12.0",
+    "argon2-browser": "^1.18.0",
+    "axios": "^1.8.2",
+    "chanfana": "^2.6.3",
+    "dayjs": "^1.11.13",
+    "drizzle-orm": "^0.38.3",
+    "drizzle-zod": "^0.6.1",
+    "hono": "^4.4.7",
+    "mime": "^4.0.6",
+    "mobx": "^6.13.5",
+    "mobx-react-lite": "^4.1.0",
+    "preact": "^10.25.3",
+    "preact-iso": "^2.9.1",
+    "qrcode-svg": "^1.1.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-decorators": "^7.25.9",
+    "@cloudflare/workers-types": "^4.20250317.0",
+    "@eslint/js": "^9.18.0",
+    "@preact/preset-vite": "^2.9.3",
+    "@types/argon2-browser": "^1.18.4",
+    "@types/node": "20.8.3",
+    "@types/qrcode-svg": "^1.1.5",
+    "@types/react-copy-to-clipboard": "^5.0.7",
+    "@types/service-worker-mock": "^2.0.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "drizzle-kit": "^0.30.1",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.1",
+    "postcss": "^8.4.49",
+    "prettier": "3.4.2",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.21.0",
+    "vite": "^6.0.9",
+    "wrangler": "^4.1.0"
+  },
+  "repository": {
+    "url": "https://github.com/oustn/cloudflare-drop"
+  },
+  "volta": {
+    "node": "20.18.1",
+    "pnpm": "9.15.3"
+  },
+  "packageManager": "pnpm@9.15.3",
+  "lint-staged": {
+    "*": [
+      "prettier --write",
+      "eslint --fix --no-warn-ignored"
+    ]
   }
 }

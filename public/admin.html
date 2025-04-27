@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 叮叮博客</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <a href="/" class="hover:text-gray-600">叮叮博客</a>
+            </h1>
+            <div>
+                <span class="text-gray-600">管理后台</span>
+            </div>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">文章管理</h2>
+                <div id="posts-list" class="space-y-2 mb-4">
+                    <!-- 文章列表将通过JavaScript动态加载 -->
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+                <button id="new-post-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    新建文章
+                </button>
+            </div>
+
+            <div id="post-form-container" class="bg-white rounded-lg shadow p-6 hidden">
+                <h2 class="text-2xl font-bold mb-4" id="form-title">新建文章</h2>
+                <form id="post-form" class="space-y-4">
+                    <input type="hidden" id="post-id" name="id">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">标题</label>
+                        <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
+                        <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                    </div>
+                    <div>
+                        <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
+                        <textarea id="content" name="content" rows="10" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                    </div>
+                    <div class="flex justify-between">
+                        <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">
+                            取消
+                        </button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 获取DOM元素
+        const postsList = document.getElementById('posts-list');
+        const newPostBtn = document.getElementById('new-post-btn');
+        const postFormContainer = document.getElementById('post-form-container');
+        const postForm = document.getElementById('post-form');
+        const formTitle = document.getElementById('form-title');
+        const postIdInput = document.getElementById('post-id');
+        const titleInput = document.getElementById('title');
+        const summaryInput = document.getElementById('summary');
+        const contentInput = document.getElementById('content');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        // 加载文章列表
+        async function loadPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                if (!response.ok) throw new Error('获取文章列表失败');
+                
+                const posts = await response.json();
+                
+                if (posts && posts.length > 0) {
+                    postsList.innerHTML = '';
+                    
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.className = 'flex justify-between items-center bg-white p-3 rounded shadow';
+                        
+                        const titleElement = document.createElement('h3');
+                        titleElement.className = 'text-lg font-bold';
+                        titleElement.textContent = post.title;
+                        
+                        const actionContainer = document.createElement('div');
+                        actionContainer.className = 'space-x-2';
+                        
+                        const editButton = document.createElement('button');
+                        editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm';
+                        editButton.textContent = '编辑';
+                        editButton.addEventListener('click', () => editPost(post.id));
+                        
+                        const deleteButton = document.createElement('button');
+                        deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm';
+                        deleteButton.textContent = '删除';
+                        deleteButton.addEventListener('click', () => deletePost(post.id, post.title));
+                        
+                        actionContainer.appendChild(editButton);
+                        actionContainer.appendChild(deleteButton);
+                        
+                        postElement.appendChild(titleElement);
+                        postElement.appendChild(actionContainer);
+                        
+                        postsList.appendChild(postElement);
+                    });
+                } else {
+                    postsList.innerHTML = '<p class="text-gray-500">暂无文章</p>';
+                }
+            } catch (error) {
+                console.error('加载文章列表失败:', error);
+                postsList.innerHTML = '<p class="text-red-500">获取文章列表失败，请刷新页面重试</p>';
+            }
+        }
+
+        // 新建文章
+        function createNewPost() {
+            formTitle.textContent = '新建文章';
+            postIdInput.value = '';
+            titleInput.value = '';
+            summaryInput.value = '';
+            contentInput.value = '';
+            postFormContainer.classList.remove('hidden');
+        }
+
+        // 编辑文章
+        async function editPost(postId) {
+            try {
+                const response = await fetch(`/api/post/${postId}`);
+                if (!response.ok) throw new Error('获取文章详情失败');
+                
+                const post = await response.json();
+                
+                formTitle.textContent = '编辑文章';
+                postIdInput.value = post.id;
+                titleInput.value = post.title;
+                summaryInput.value = post.summary || '';
+                contentInput.value = post.content;
+                
+                postFormContainer.classList.remove('hidden');
+                postFormContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('编辑文章失败:', error);
+                alert('获取文章详情失败，请重试');
+            }
+        }
+
+        // 删除文章
+        async function deletePost(postId, postTitle) {
+            if (!confirm(`确定要删除文章 "${postTitle}" 吗？此操作无法撤销。`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/delete/${postId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '删除文章失败');
+                }
+                
+                alert('文章已成功删除');
+                loadPosts(); // 重新加载文章列表
+            } catch (error) {
+                console.error('删除文章失败:', error);
+                alert(`删除文章失败: ${error.message}`);
+            }
+        }
+
+        // 提交表单
+        async function submitPostForm(event) {
+            event.preventDefault();
+            
+            const postData = {
+                id: postIdInput.value || undefined,
+                title: titleInput.value,
+                summary: summaryInput.value,
+                content: contentInput.value,
+                published_at: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/admin/post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '保存文章失败');
+                }
+                
+                const result = await response.json();
+                
+                alert(`文章 "${postData.title}" 已成功保存`);
+                postFormContainer.classList.add('hidden');
+                loadPosts(); // 重新加载文章列表
+            } catch (error) {
+                console.error('保存文章失败:', error);
+                alert(`保存文章失败: ${error.message}`);
+            }
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPosts();
+            
+            newPostBtn.addEventListener('click', createNewPost);
+            cancelBtn.addEventListener('click', () => {
+                postFormContainer.classList.add('hidden');
+            });
+            postForm.addEventListener('submit', submitPostForm);
+        });
+    </script>
+</body>
+</html> 

@@ -1,40 +1,14 @@
-#:schema node_modules/wrangler/config-schema.json
-name = "cloudflare-drop"
-main = "src/index.ts"
-compatibility_date = "2024-12-30"
+name = "dingding-blog"
+type = "javascript"
 
-[triggers]
-crons = ["*/10 * * * *"] # 每10分钟执行一次，用于清理过期文件
+[site]
+bucket = "./public"
 
-# Workers Logs
-[observability]
-enabled = true
+[build]
+command = ""
+upload.format = "service-worker"
 
-# D1 数据库绑定
-[[d1_databases]]
-binding = "DB"
-database_name = "airdrop"
-database_id = ""  # 需要填入实际的 database_id
-
-# KV 存储绑定
-[[kv_namespaces]]
-binding = "file_drops"
-id = ""  # 需要填入实际的 kv namespace id
-
-# 速率限制配置
-[[unsafe.bindings]]
-name = "UPLOAD_LIMIT"
-type = "ratelimit"
-namespace_id = "1001"  # 确保这是唯一的标识符
-simple = { limit = 10, period = 10 }  # 每10秒允许10个请求
-
-# 生产环境配置
-[env.production]
-assets = { directory = "./dist/", binding = "ASSETS", html_handling = "none", not_found_handling = "single-page-application" }
-
-# 环境变量
-[vars]
-# 此处可以添加环境变量，如最大文件大小限制等
-ENVIRONMENT = "production"
-SHARE_MAX_SIZE_IN_MB = "10"  # 默认10MB限制
-SHARE_DURATION = "1hour"     # 默认1小时过期时间 
+# 开发环境KV配置示例
+# 需要替换为实际的KV命名空间ID
+[env.dev.kv_namespaces]
+BLOG_POSTS = { binding = "BLOG_POSTS", id = "替换为你的KV命名空间ID" } 

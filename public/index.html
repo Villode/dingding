@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>叮叮博客</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-gray-900">叮叮博客</h1>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="border-4 border-dashed border-gray-200 rounded-lg p-4">
+                <h2 class="text-2xl font-bold mb-4">文章列表</h2>
+                <div id="posts-container" class="space-y-4">
+                    <!-- 文章将通过JavaScript动态加载 -->
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 页面加载完成后获取文章列表
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                
+                const postsContainer = document.getElementById('posts-container');
+                
+                if (posts && posts.length > 0) {
+                    postsContainer.innerHTML = '';
+                    
+                    posts.forEach(post => {
+                        const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                        
+                        postsContainer.innerHTML += `
+                            <div class="bg-white p-4 rounded shadow">
+                                <h3 class="text-xl font-bold">
+                                    <a href="/post/${post.id}" class="text-blue-600 hover:text-blue-800">
+                                        ${post.title}
+                                    </a>
+                                </h3>
+                                <p class="text-gray-600 mt-2">${post.summary || '无摘要'}</p>
+                                <p class="text-gray-400 text-sm mt-2">发布于 ${postDate}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    postsContainer.innerHTML = '<p class="text-gray-500">暂无文章</p>';
+                }
+            } catch (error) {
+                console.error('获取文章失败:', error);
+                document.getElementById('posts-container').innerHTML = 
+                    '<p class="text-red-500">获取文章列表失败，请稍后再试</p>';
+            }
+        });
+    </script>
+</body>
+</html> 

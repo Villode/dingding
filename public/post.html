@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章 - 叮叮博客</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <a href="/" class="hover:text-gray-600">叮叮博客</a>
+            </h1>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div id="post-container">
+                    <!-- 文章内容将通过JavaScript动态加载 -->
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <a href="/" class="text-blue-600 hover:text-blue-800">← 返回文章列表</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 获取文章ID
+        function getPostId() {
+            const path = window.location.pathname;
+            const parts = path.split('/');
+            return parts[parts.length - 1];
+        }
+
+        // 页面加载完成后获取文章内容
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const postId = getPostId();
+                if (!postId) {
+                    throw new Error('文章ID不存在');
+                }
+
+                const response = await fetch(`/api/post/${postId}`);
+                
+                if (!response.ok) {
+                    throw new Error('文章不存在');
+                }
+                
+                const post = await response.json();
+                const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                
+                // 更新页面标题
+                document.title = `${post.title} - 叮叮博客`;
+                
+                // 更新文章内容
+                const postContainer = document.getElementById('post-container');
+                postContainer.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4">${post.title}</h2>
+                    <p class="text-gray-400 text-sm mb-6">发布于 ${postDate}</p>
+                    <div class="prose max-w-none">
+                        ${post.content}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('获取文章失败:', error);
+                document.getElementById('post-container').innerHTML = 
+                    '<p class="text-red-500">文章不存在或加载失败，请稍后再试</p>';
+            }
+        });
+    </script>
+</body>
+</html> 

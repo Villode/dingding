@@ -1,120 +1,156 @@
-# Cloudflare Drop
+# 叮叮博客 - Cloudflare Pages动态博客系统
 
-基于 Cloudflare Worker、D1Database 和 KV 实现的轻量级文件分享工具。
+这是一个使用Cloudflare Pages、Functions和Workers KV构建的简单动态博客系统。这个系统展示了如何利用Cloudflare的无服务器平台构建完整的全栈应用。
 
-<img src="assets/IMG_5898.png" width="200">
-<img src="assets/IMG_5899.png" width="200">
-<img src="assets/IMG_5900.png" width="200">
-<img src="assets/IMG_5901.png" width="200">
+## 特点
 
-## 自动部署
+- 使用Cloudflare Pages托管静态内容
+- 使用Cloudflare Functions (基于Workers)提供动态API
+- 使用Cloudflare Workers KV存储博客文章和元数据
+- 完全无服务器架构，无需管理服务器或数据库
+- 全球CDN分发，快速加载
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/oustn/cloudflare-drop)
+## 项目结构
 
-1. 点击按钮，跳转到自动部署页面
-2. 根据页面指引，关联 GitHub & Cloudflare，配置 Cloudflare Account ID & API Key
-3. Fork 仓库
-4. 开启 Action
-5. 部署
+```
+/
+├── functions/                # Cloudflare Functions目录
+│   └── api/                  # API函数
+│       ├── posts.js          # 获取文章列表
+│       ├── post/             # 文章相关操作
+│       │   └── [id].js       # 获取单篇文章
+│       ├── posts/            # 文章数据
+│       │   └── data.js       # 示例文章数据
+│       └── admin/            # 管理功能
+│           ├── post.js       # 创建/更新文章
+│           └── delete/       # 删除文章
+│               └── [id].js   # 删除指定ID的文章
+├── public/                   # 静态文件目录
+│   ├── index.html            # 博客首页
+│   ├── post.html             # 文章页面
+│   ├── admin.html            # 管理后台页面
+│   └── favicon.svg           # 网站图标
+└── README.md                 # 项目说明文档
+```
 
-> 创建 Cloudflare API Key 时，如果使用 worker 模板创建，请记得添加 D1 的编辑权限。
+## 功能介绍
 
-## 手动部署 (推荐)
+### 前端功能
 
-如果自动部署出现问题，可以使用手动部署方式：
+1. **博客首页**：展示所有文章的列表，包括标题、摘要和发布日期。
+2. **文章详情页**：显示单篇文章的完整内容。
+3. **管理后台**：提供创建、编辑和删除文章的界面。
 
-1. 克隆仓库到本地
-   ```bash
-   git clone https://github.com/oustn/cloudflare-drop.git
-   cd cloudflare-drop
-   ```
+### 后端功能
 
-2. 在 Cloudflare Dashboard 中创建 [D1Database](https://developers.cloudflare.com/d1/get-started/#2-create-a-database) 和 [KV Namespace](https://developers.cloudflare.com/kv/get-started/#2-create-a-kv-namespace)，记下各自的 ID
+1. **文章API**：
+   - `GET /api/posts`：获取所有文章的列表
+   - `GET /api/post/{id}`：获取指定ID的文章详情
+   - `POST /api/admin/post`：创建或更新文章
+   - `DELETE /api/admin/delete/{id}`：删除指定ID的文章
 
-3. 使用部署脚本进行部署
+2. **数据存储**：
+   - 使用Workers KV存储文章数据
+   - 示例数据作为备份，当KV不可用时使用
 
-   **Linux/macOS 用户**:
-   ```bash
-   chmod +x deploy.sh
-   ./deploy.sh
-   ```
+## 设置说明
 
-   **Windows 用户**:
-   ```bash
-   # 使用 PowerShell 执行
-   ./deploy.sh
-   
-   # 或者使用 Git Bash
-   bash deploy.sh
-   ```
+### 1. 克隆并部署到Cloudflare Pages
 
-4. 按照脚本提示输入 D1 数据库 ID、KV 命名空间 ID 和管理员令牌
+1. 将本仓库克隆到你的GitHub账户
+2. 登录到Cloudflare仪表板
+3. 进入Workers & Pages
+4. 选择"创建应用程序" > "Pages" > "连接到Git"
+5. 选择你的仓库，并设置以下构建配置:
+   - 构建命令: 留空（无需构建）
+   - 输出目录: `public`
+   - 根目录: `/`
 
-部署脚本会自动配置 wrangler.toml 文件、构建前端、应用数据库迁移并部署应用。
+### 2. 创建KV命名空间
 
-## 手动配置方法
+1. 在Cloudflare仪表板中，进入"Workers & Pages"
+2. 点击"KV"标签
+3. 点击"创建命名空间"按钮
+4. 创建一个名为`BLOG_POSTS`的命名空间
 
-如果部署脚本无法运行，可以手动配置：
+### 3. 绑定KV到Pages项目
 
-1. 编辑 `wrangler.toml` 文件，填入你的 D1 数据库 ID 和 KV 命名空间 ID
-2. 安装依赖: `pnpm install`
-3. 构建前端: `pnpm run build:web`
-4. 生成数据库迁移: `pnpm run generate`
-5. 应用数据库迁移: `wrangler d1 migrations apply airdrop --remote`
-6. 部署应用: `wrangler deploy`
+1. 进入你的Pages项目
+2. 点击"设置" > "Functions"
+3. 在"KV命名空间绑定"部分，添加一个新绑定：
+   - 变量名: `BLOG_POSTS`
+   - KV命名空间: 选择你刚刚创建的`BLOG_POSTS`命名空间
 
-## 更新
+### 4. 重新部署项目
 
-同步 Fork 的仓库即可自动更新 & 构建。
+1. 进入你的Pages项目
+2. 点击"部署" > "重新部署"以应用新的KV绑定
 
-<img src="assets/IMG_01.png" width="200">
+### 5. 本地开发（可选）
 
-## 配置 GitHub Action Secret
+如果你想在本地开发和测试这个项目，你需要安装Wrangler CLI：
 
-1. 在初次部署完成后，还需要创建 [D1Database](https://developers.cloudflare.com/d1/get-started/#2-create-a-database) & [KV](https://developers.cloudflare.com/kv/get-started/#2-create-a-kv-namespace)，参考对应文档。
-2. 配置 Secret：在 forked 的仓库 -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**
-3. 配置以下 Secret：
-   - CUSTOM_DOMAIN （可选，域名，如 drop.example.cn）
-   - D1_ID (D1Database ID)
-   - D1_NAME (D1Database Name)
-   - KV_ID (KV Namespace ID)
-4. 重新运行 Github Actions
+```bash
+npm install -g wrangler
+```
 
-## 其他配置
+然后，在项目根目录创建一个`wrangler.toml`文件：
 
-### 文件大小限制
+```toml
+name = "dingding-blog"
+type = "javascript"
 
-默认文件限制为 10M，可以通过添加 Action 变量来修改。
+[site]
+bucket = "./public"
 
-新增 `SHARE_MAX_SIZE_IN_MB` Action 变量，值为最大允许的 MB 数字，例如 20，配置路径：在 forked 的仓库 -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository variable**
+[build]
+command = ""
+upload.format = "service-worker"
 
-### 分享过期时间配置
+[env.dev.kv_namespaces]
+BLOG_POSTS = { binding = "BLOG_POSTS", id = "your-kv-namespace-id" }
+```
 
-分享默认有效期是一个小时，可以通过添加 Action 变量来修改。
+替换`your-kv-namespace-id`为你在Cloudflare仪表板中创建的KV命名空间ID。
 
-新增 `SHARE_DURATION` Action 变量，配置格式为 `数值+单位`，比如 (5minute)，支持的单位有 `minute`, `hour`, `day`, `week`, `month`, `year`
+然后运行以下命令启动本地开发服务器：
 
-### 新增 IP 上传频率限制
+```bash
+wrangler pages dev
+```
 
-默认无限制，可以通过添加 Action 变量来修改。
+## 使用说明
 
-新增 `RATE_LIMIT` Action 变量，值为每 10s 可请求数，比如 10
+### 访问博客
 
-## 过期清理
+- 博客主页: `https://your-project.pages.dev/`
+- 文章页面: `https://your-project.pages.dev/post/{id}`
 
-Worker 添加了一个 10 分钟的定时任务，自动清理过期的 KV 存储和 D1 中的记录。
+### 管理博客
 
-## 后台管理
+- 管理后台: `https://your-project.pages.dev/admin.html`
+- 在管理后台可以创建、编辑和删除文章
 
-通过配置 ADMIN_TOKEN Secret，可以访问管理后台：`https://your.drop.com/admin/{ADMIN_TOKEN}`， 在管理后台可以删除分享。
+## 安全建议
 
-<img src="assets/IMG_6000.png" width="400">
+在真实的生产环境中，应该为管理后台添加访问控制和身份验证。可以考虑使用：
 
-## 故障排除
+1. Cloudflare Access控制后台访问
+2. 添加自定义的身份验证系统
+3. 为API端点添加CSRF防护和验证
 
-如果部署过程中遇到问题，请检查以下几点：
+## 扩展可能性
 
-1. 确保已正确创建 D1 数据库和 KV 命名空间
-2. 确保 wrangler.toml 文件中的 database_id 和 kv id 已正确配置
-3. 检查是否有权限部署 Workers 和应用数据库迁移
-4. 如果使用自动部署，确保 GitHub Actions 的 Secret 已正确配置
+1. 添加分类和标签功能
+2. 实现评论系统（可以使用Durable Objects）
+3. 添加图片上传功能（使用Cloudflare R2存储）
+4. 添加搜索功能
+5. 添加用户系统（用户注册、登录等）
+
+## 参考资源
+
+- [Cloudflare Pages文档](https://developers.cloudflare.com/pages/)
+- [Cloudflare Functions文档](https://developers.cloudflare.com/pages/functions/)
+- [Cloudflare Workers KV文档](https://developers.cloudflare.com/workers/runtime-apis/kv/)
+- [Cloudflare R2文档](https://developers.cloudflare.com/r2/)
+- [Cloudflare Durable Objects文档](https://developers.cloudflare.com/workers/runtime-apis/durable-objects/) 

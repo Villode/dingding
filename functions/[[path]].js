@@ -44,12 +44,14 @@ export async function onRequest(context) {
     
     // 处理文章详情页面路由
     if (path.startsWith('post/') && method === 'GET') {
-      console.log('处理文章详情页面路由');
+      console.log('处理文章详情页面路由:', path);
       try {
-        // 从静态存储获取post.html
-        const postPageResponse = await context.next();
-        if (postPageResponse.status === 404) {
-          // 如果找不到资源，返回post.html作为单页应用的入口
+        // 直接获取 post.html 内容作为模板
+        const postHtmlResponse = await fetch(new URL('/post.html', url.origin));
+        
+        if (!postHtmlResponse.ok) {
+          // 如果无法获取 post.html，返回内联的文章详情页模板
+          console.warn('无法获取 post.html，使用内联模板');
           return new Response(
             `<!DOCTYPE html>
             <html lang="zh-CN">
@@ -155,7 +157,11 @@ export async function onRequest(context) {
             }
           );
         }
-        return postPageResponse;
+        
+        // 返回post.html的内容
+        return new Response(await postHtmlResponse.text(), {
+          headers: { 'Content-Type': 'text/html' },
+        });
       } catch (error) {
         console.error('处理文章详情页面路由出错:', error);
         return new Response('获取文章详情页面出错: ' + error.message, { status: 500 });

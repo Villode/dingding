@@ -4,7 +4,6 @@ name = "dingding-blog"
 compatibility_date = "2023-12-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "public"
-route = "*/*"
 
 # KV命名空间配置
 [[kv_namespaces]]

@@ -872,9 +872,20 @@
                 
                 // 更新点赞数量
                 const likeCountElements = document.querySelectorAll('.like-count-display');
-                likeCountElements.forEach(el => {
-                    el.textContent = stats.likeCount;
-                });
+                if (stats.likeCount === -1) {
+                    // 点赞功能不可用
+                    likeCountElements.forEach(el => {
+                        el.textContent = '功能未启用';
+                        el.classList.add('text-red-500');
+                        el.title = stats.likeMessage || 'BLOG_LIKES KV命名空间未配置';
+                    });
+                } else {
+                    likeCountElements.forEach(el => {
+                        el.textContent = stats.likeCount;
+                        el.classList.remove('text-red-500');
+                        el.removeAttribute('title');
+                    });
+                }
                 
                 // 更新API调用数
                 document.getElementById('api-call-count').textContent = stats.apiCalls;

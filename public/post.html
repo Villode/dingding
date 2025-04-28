@@ -75,14 +75,22 @@
         async function getLikes(postId) {
             try {
                 const response = await fetch(`/api/post/like/${postId}`);
-                if (!response.ok) {
-                    throw new Error('获取点赞数失败');
-                }
                 const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || '获取点赞数失败');
+                }
+                
                 return data.likes;
             } catch (error) {
                 console.error('获取点赞数据失败:', error);
-                return 0;
+                // 显示错误信息并禁用点赞按钮
+                const likeButton = document.getElementById('like-button');
+                if (likeButton) {
+                    likeButton.disabled = true;
+                    likeButton.title = error.message || '点赞功能暂时不可用';
+                }
+                return '不可用';
             }
         }
 
@@ -107,11 +115,11 @@
                     }
                 });
                 
-                if (!response.ok) {
-                    throw new Error('点赞失败');
-                }
-                
                 const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || '点赞失败');
+                }
                 
                 // 更新点赞数
                 document.getElementById('like-count').textContent = data.likes;
@@ -127,7 +135,7 @@
                 return data.likes;
             } catch (error) {
                 console.error('点赞失败:', error);
-                alert('点赞失败，请稍后再试');
+                alert(`点赞失败: ${error.message || '请稍后再试'}`);
                 
                 // 重置按钮状态
                 document.getElementById('like-button').disabled = false;

@@ -235,15 +235,22 @@
                 // 获取并显示点赞数
                 try {
                     const likeResponse = await fetch(`/api/post/like/${articleId}`);
-                    if (likeResponse.ok) {
-                        const likeData = await likeResponse.json();
-                        document.getElementById('like-count').textContent = likeData.likes;
-                        if (likeData.likes > 0) {
-                            document.getElementById('like-icon').setAttribute('fill', '#ec4899');
-                        }
+                    const likeData = await likeResponse.json();
+                    
+                    if (!likeResponse.ok) {
+                        throw new Error(likeData.error || likeData.message || '获取点赞数失败');
+                    }
+                    
+                    document.getElementById('like-count').textContent = likeData.likes;
+                    if (likeData.likes > 0) {
+                        document.getElementById('like-icon').setAttribute('fill', '#ec4899');
                     }
                 } catch (error) {
                     console.error('获取点赞数据失败:', error);
+                    document.getElementById('like-count').textContent = '点赞功能不可用';
+                    // 禁用点赞按钮
+                    document.getElementById('like-button').disabled = true;
+                    document.getElementById('like-button').title = error.message || '点赞功能暂时不可用';
                 }
                 
                 // 绑定点赞按钮事件
@@ -267,11 +274,11 @@
                             }
                         });
                         
-                        if (!response.ok) {
-                            throw new Error('点赞失败');
-                        }
-                        
                         const data = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(data.error || data.message || '点赞失败');
+                        }
                         
                         // 更新点赞数
                         document.getElementById('like-count').textContent = data.likes;
@@ -285,7 +292,7 @@
                         }, 1000);
                     } catch (error) {
                         console.error('点赞失败:', error);
-                        alert('点赞失败，请稍后再试');
+                        alert(`点赞失败: ${error.message || '请稍后再试'}`);
                         
                         // 重置按钮状态
                         document.getElementById('like-button').disabled = false;

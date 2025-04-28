@@ -148,21 +148,11 @@ function calculateDailyPostCounts(posts, dates) {
  * 从KV中获取实际的点赞数据
  */
 async function calculateDailyLikeCounts(posts, dates, context) {
-  // 如果没有BLOG_LIKES绑定，返回模拟数据
+  // 如果没有BLOG_LIKES绑定，返回所有为0的数据
   if (!context.env.BLOG_LIKES) {
-    console.warn('BLOG_LIKES KV命名空间不可用，使用模拟数据');
-    return dates.map(date => {
-      const dateString = date.toISOString().split('T')[0];
-      const postsOnDay = posts.filter(post => post.published_at && post.published_at.startsWith(dateString));
-      
-      // 如果有文章，生成随机点赞数（1-5）× 文章数
-      if (postsOnDay.length > 0) {
-        return Math.floor(Math.random() * 5 + 1) * postsOnDay.length;
-      }
-      
-      // 没有文章的日子也可能有少量点赞（旧文章）
-      return Math.floor(Math.random() * 3);
-    });
+    console.warn('BLOG_LIKES KV命名空间不可用');
+    // 返回全部为0的数据
+    return dates.map(() => 0);
   }
   
   try {

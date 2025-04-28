@@ -54,6 +54,11 @@ export async function onRequestGet(context) {
       } catch (error) {
         console.error('获取点赞数据失败:', error);
       }
+    } else {
+      // 明确标记点赞功能不可用
+      stats.likeCount = -1; // 使用-1表示功能不可用
+      stats.likeStatus = 'unavailable';
+      stats.likeMessage = 'BLOG_LIKES KV命名空间未配置';
     }
     
     return new Response(JSON.stringify(stats), {

@@ -571,11 +571,6 @@
                 
                 const posts = await response.json();
                 
-                // 删除对文章计数的更新，由其他API负责
-                // document.getElementById('post-count').textContent = posts.length;
-                // 删除对周活动中文章数的更新，由loadActivityData()函数负责
-                // document.getElementById('weekly-post-count').textContent = posts.length;
-                
                 // 更新最近文章表格
                 const recentPostsTable = document.getElementById('recent-posts-table');
                 
@@ -641,8 +636,57 @@
                     `;
                 }
                 
-                // 更新图表数据
-                updateActivityChart(posts);
+                // 更新图表数据 - 正确构造活动图表所需的数据结构
+                // 不应该直接传入posts，而是构造包含dates, postCounts, likeCounts的对象
+                if (posts && posts.length > 0) {
+                    // 创建一个按日期分组的映射
+                    const postsByDate = {};
+                    const today = new Date();
+                    
+                    // 初始化最近7天的日期
+                    const dates = [];
+                    const postCounts = [];
+                    const likeCounts = new Array(7).fill(0); // 点赞数据在此处无法获取，初始化为0
+                    
+                    // 准备最近7天的日期数组（从旧到新）
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(today.getDate() - i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        dates.push(dateStr);
+                        postsByDate[dateStr] = 0;
+                    }
+                    
+                    // 统计每天发布的文章数量
+                    posts.forEach(post => {
+                        const postDate = new Date(post.published_at).toISOString().split('T')[0];
+                        // 只统计最近7天内的文章
+                        if (postsByDate.hasOwnProperty(postDate)) {
+                            postsByDate[postDate]++;
+                        }
+                    });
+                    
+                    // 构造postCounts数组，与dates数组对应
+                    dates.forEach(date => {
+                        postCounts.push(postsByDate[date] || 0);
+                    });
+                    
+                    // 创建活动图表所需的数据对象
+                    const chartData = {
+                        dates: dates.map(d => d.split('-').slice(1).join('/')), // 只显示月/日
+                        postCounts,
+                        likeCounts
+                    };
+                    
+                    updateActivityChart(chartData);
+                } else {
+                    // 如果没有文章数据，显示空图表
+                    updateActivityChart({
+                        dates: [],
+                        postCounts: [],
+                        likeCounts: []
+                    });
+                }
                 
             } catch (error) {
                 console.error('加载文章数据失败:', error);

@@ -284,98 +284,314 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 64px;
-            background-color: var(--bg-color-light);
-            border-right: 1px solid var(--border-color);
+            width: 40px;
+            background-color: #FFFFFF;
             z-index: 100;
-            transition: width var(--transition-normal);
-            overflow: hidden;
+            border-right: 1px solid #EEEEEE;
             display: flex;
             flex-direction: column;
-        }
-        
-        .sidebar:hover {
-            width: 200px;
+            align-items: center;
+            padding: 15px 0;
         }
         
         .sidebar-logo {
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 var(--spacing-md);
-            margin-bottom: var(--spacing-md);
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
         }
         
         .sidebar-nav {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: var(--spacing-md) 0;
+            align-items: center;
+            gap: 25px;
         }
         
         .nav-item {
             display: flex;
             align-items: center;
-            padding: var(--spacing-sm) var(--spacing-md);
-            color: var(--text-secondary);
+            justify-content: center;
+            color: #666;
+            width: 30px;
+            height: 30px;
             text-decoration: none;
-            transition: all var(--transition-fast);
-            border-left: 3px solid transparent;
-            white-space: nowrap;
+            transition: color var(--transition-fast);
         }
         
         .nav-item:hover, .nav-item.active {
-            color: var(--text-primary);
-            background-color: rgba(110, 86, 207, 0.1);
-            border-left-color: var(--primary-color);
-        }
-        
-        .nav-item i {
-            width: 20px;
-            margin-right: var(--spacing-lg);
-            text-align: center;
+            color: var(--primary-color);
         }
         
         .sidebar-footer {
-            padding: var(--spacing-md);
+            margin-top: auto;
             display: flex;
-            justify-content: center;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: var(--spacing-sm);
-            border-radius: 50%;
-            transition: all var(--transition-fast);
-        }
-        
-        .theme-toggle:hover {
-            color: var(--text-primary);
-            background-color: rgba(110, 86, 207, 0.1);
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding-top: 20px;
         }
         
         /* 主内容区调整 */
         .main-wrapper {
-            margin-left: 64px;
-            width: calc(100% - 64px);
+            margin-left: 40px;
+            width: calc(100% - 40px);
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
+            background-color: #F4F5F7;
         }
         
-        /* 适配移动设备的侧边栏 */
+        /* 顶部导航栏 */
+        .top-navbar {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #EEEEEE;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            padding: 8px 16px;
+            color: #666;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all var(--transition-fast);
+        }
+        
+        .nav-links a.active {
+            background-color: #FA541C;
+            color: #FFFFFF;
+        }
+        
+        .nav-links a:hover:not(.active) {
+            color: #FA541C;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-box input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #F0F2F5;
+            margin-right: 10px;
+        }
+        
+        /* 主内容布局 */
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+        }
+        
+        .sidebar-right {
+            width: 300px;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .user-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #EEEEEE;
+        }
+        
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .username {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .user-meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .user-tabs {
+            display: flex;
+            border-bottom: 1px solid #EEEEEE;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .tab.active {
+            color: #333;
+            border-bottom: 2px solid #FA541C;
+        }
+        
+        /* 文章列表部分 */
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .category-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-right: auto;
+        }
+        
+        /* 卡片样式重置 */
+        .article-card {
+            display: flex;
+            flex-direction: column;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            position: relative;
+            border: none;
+        }
+        
+        .article-card::before {
+            display: none;
+        }
+        
+        /* 文章预览图 */
+        .article-preview {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .article-thumb {
+            width: 120px;
+            height: 80px;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background-color: #F0F2F5;
+        }
+        
+        .article-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .article-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .article-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .article-summary {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .article-meta {
+            display: flex;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .article-meta span {
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .article-meta i {
+            margin-right: 5px;
+        }
+        
+        .article-divider {
+            height: 1px;
+            background-color: #EEEEEE;
+            margin: 0 20px;
+        }
+        
+        /* 热门文章样式 */
+        .hot-article {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #EEEEEE;
+        }
+        
+        .hot-article:last-child {
+            border-bottom: none;
+        }
+        
+        .hot-article-title {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        /* 适配移动设备 */
+        @media (max-width: 992px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            
+            .sidebar-right {
+                width: 100%;
+            }
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-100%);
-                width: 200px;
+                width: 0;
+                opacity: 0;
             }
             
             .sidebar.active {
-                transform: translateX(0);
+                width: 40px;
+                opacity: 1;
             }
             
             .main-wrapper {
@@ -384,152 +600,176 @@
             }
             
             .menu-toggle {
-                position: fixed;
-                top: var(--spacing-md);
-                left: var(--spacing-md);
-                z-index: 99;
-                background-color: var(--bg-color-light);
-                border: 1px solid var(--border-color);
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
+                display: block;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .nav-links.active {
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--text-primary);
-                cursor: pointer;
-                box-shadow: var(--shadow-sm);
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background-color: #FFFFFF;
+                padding: 10px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                z-index: 90;
             }
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <!-- 侧边栏 -->
+    <!-- 左侧功能菜单 -->
     <div class="sidebar">
         <div class="sidebar-logo">
-            <a href="/" class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="url(#gradientPrimary)">
-                    <defs>
-                        <linearGradient id="gradientPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#6e56cf" />
-                            <stop offset="100%" stop-color="#00b8d4" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
+            <a href="/" class="nav-item active">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 5c0-1.103-.897-2-2-2H5c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2V5zM5 19V5h14l.002 14H5z"/>
+                    <path d="M7 7h1.998v2H7zm4 0h6v2h-6zm-4 4h1.998v2H7zm4 0h6v2h-6zm-4 4h1.998v2H7zm4 0h6v2h-6z"/>
                 </svg>
-                <span class="logo-text">叮叮博客</span>
             </a>
         </div>
         <nav class="sidebar-nav">
-            <a href="/" class="nav-item active">
-                <i class="fas fa-home"></i>
-                <span>首页</span>
-            </a>
-            <a href="/archives.html" class="nav-item">
-                <i class="fas fa-archive"></i>
-                <span>归档</span>
-            </a>
-            <a href="/about.html" class="nav-item">
+            <a href="#" class="nav-item">
                 <i class="fas fa-user"></i>
-                <span>关于</span>
             </a>
-            <a href="https://github.com" target="_blank" class="nav-item">
-                <i class="fab fa-github"></i>
-                <span>GitHub</span>
+            <a href="#" class="nav-item">
+                <i class="fas fa-comment-alt"></i>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-cloud"></i>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-expand"></i>
             </a>
         </nav>
         <div class="sidebar-footer">
-            <button class="theme-toggle" title="切换主题">
-                <i class="fas fa-moon"></i>
-            </button>
+            <a href="#" class="nav-item">
+                <i class="fas fa-cog"></i>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-arrow-up"></i>
+            </a>
         </div>
     </div>
 
-    <!-- 移动端菜单按钮 -->
-    <button class="menu-toggle md:hidden">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- 主要内容包装器 -->
+    <!-- 主内容区包装器 -->
     <div class="main-wrapper">
-        <!-- 主要内容区域 -->
-        <main class="container py-10">
-            <div id="main-content">
-                <!-- 主页文章列表 -->
-                <div id="home-content">
-                    <div class="mb-12">
-                        <div class="flex items-center justify-between mb-8">
-                            <h2 class="text-2xl font-bold text-white relative inline-block">
-                                最新文章
-                                <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-color to-accent-color transform -translate-y-2"></span>
-                            </h2>
-                            <div class="text-sm text-gray-400">
-                                <i class="fas fa-terminal mr-2"></i>
-                                <span class="hidden sm:inline">更新于 </span>
-                                <span id="current-date">加载中...</span>
-                            </div>
+        <!-- 顶部导航栏 -->
+        <div class="top-navbar">
+            <div class="nav-links">
+                <a href="#" class="active">首页</a>
+                <a href="#">生活</a>
+                <a href="#">技术</a>
+                <a href="#">其他</a>
+                <a href="#">说说</a>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="搜索...">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-wrapper">
+            <!-- 主要内容 -->
+            <div class="main-content">
+                <div id="main-content">
+                    <!-- 主页文章列表 -->
+                    <div id="home-content">
+                        <div class="category-header">
+                            <h2 class="category-title">推荐文章</h2>
                         </div>
-                        <div id="posts-container" class="space-y-6">
+                        <div id="posts-container" class="article-list">
                             <div class="loading">
                                 <div class="spinner"></div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文章详情页，默认隐藏 -->
+                    <div id="article-content" class="hidden">
+                        <div class="mb-6">
+                            <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i> 返回首页
+                            </button>
+                        </div>
+                        <div id="article-container" class="bg-white rounded-lg overflow-hidden shadow">
+                            <div class="p-6 md:p-8">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧边栏 -->
+            <div class="sidebar-right">
+                <div class="user-profile">
+                    <div class="avatar">
+                        <img src="https://img.yzcdn.cn/vant/cat.jpeg" alt="用户头像">
+                    </div>
+                    <div class="username">此间少年</div>
+                    <div class="user-meta">QQ群：539165194</div>
+                    
+                    <div class="user-tabs mt-3">
+                        <div class="tab active">博主</div>
+                        <div class="tab">跟帖中</div>
+                        <div class="tab">正在围观</div>
+                    </div>
+                </div>
+                
+                <div class="hot-articles">
+                    <h3 class="text-lg font-bold mb-3">热门文章</h3>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">Jasmine - 简约、美观的博客主题</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">Jasmine - 主题文档</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">第二次出发</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">2022 年感想</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">去过最美的四个地方：出口与入口</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">讲个笑话：开放麒麟 1.0</div>
+                        </div>
+                    </div>
+                    <div class="hot-article">
+                        <div>
+                            <div class="hot-article-title">Typecho 密记博客搭建教程</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- 文章详情页，默认隐藏 -->
-                <div id="article-content" class="hidden">
-                    <div class="mb-6">
-                        <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
-                            <i class="fas fa-arrow-left mr-2"></i> 返回首页
-                        </button>
-                    </div>
-                    <div id="article-container" class="bg-bg-card rounded-lg overflow-hidden border border-border-color">
-                        <div class="p-6 md:p-8">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="latest-comments mt-5">
+                    <h3 class="text-lg font-bold mb-3">最新评论</h3>
+                    <!-- 评论内容省略 -->
                 </div>
             </div>
-        </main>
-
-        <!-- 页脚 -->
-        <footer class="border-t border-border-color py-8 mt-12">
-            <div class="container">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="mb-4 md:mb-0">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="url(#gradientFooter)">
-                                <defs>
-                                    <linearGradient id="gradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#6e56cf" />
-                                        <stop offset="100%" stop-color="#00b8d4" />
-                                    </linearGradient>
-                                </defs>
-                                <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
-                            </svg>
-                            <span class="text-white ml-2 font-medium">叮叮博客</span>
-                        </div>
-                    </div>
-                    <div class="text-gray-400 text-sm">
-                        &copy; <span id="year">2023</span> 叮叮博客 | 基于 Cloudflare Pages 构建
-                    </div>
-                    <div class="flex space-x-4 mt-4 md:mt-0">
-                        <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
-                            <i class="fab fa-github"></i>
-                        </a>
-                        <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="mailto:contact@example.com" class="text-gray-400 hover:text-white transition-colors">
-                            <i class="fas fa-envelope"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        </div>
     </div>
 
     <script>
@@ -537,49 +777,15 @@
         let currentState = 'home';
         let currentArticleId = null;
         
-        // 更新页脚年份
-        document.getElementById('year').textContent = new Date().getFullYear();
-        
-        // 更新当前日期
-        function updateCurrentDate() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
-        }
-        
-        // 初始化侧边栏菜单（移动端）
-        function initSidebar() {
-            const menuToggle = document.querySelector('.menu-toggle');
-            const sidebar = document.querySelector('.sidebar');
-            
-            if (menuToggle) {
-                menuToggle.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                });
-            }
-            
-            // 设置当前活动链接
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.nav-item').forEach(link => {
-                link.classList.remove('active');
-                const href = link.getAttribute('href');
-                
-                if (currentPath === href || 
-                    (href !== '/' && currentPath.startsWith(href))) {
-                    link.classList.add('active');
-                } else if (currentPath === '/' && href === '/') {
-                    link.classList.add('active');
-                }
-            });
-        }
-
         // 初始化时检查URL并设置页面
         document.addEventListener('DOMContentLoaded', async () => {
-            // 更新日期
-            updateCurrentDate();
-            
-            // 初始化侧边栏
-            initSidebar();
+            // 设置TAB点击事件
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
             
             const path = window.location.pathname;
             if (path.startsWith('/post/')) {
@@ -629,37 +835,35 @@
                         const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false, remainingOperations: 0};
                         
                         const postElement = document.createElement('div');
-                        postElement.className = 'article-card fade-in';
-                        postElement.style.animationDelay = `${index * 0.1}s`;
+                        postElement.className = 'article-card';
+                        
+                        const category = index % 3 === 0 ? '技术' : (index % 3 === 1 ? '生活' : '其他');
+                        const categoryDate = index % 2 === 0 ? formattedDate : `${postDate.getMonth() + 1}-${postDate.getDate()}`;
                         
                         postElement.innerHTML = `
-                            <div class="p-6">
-                                <h3 class="text-xl font-bold mb-3">
-                                    <a href="#" class="text-white hover:text-primary-light transition-colors article-link" data-id="${post.id}">
-                                        ${post.title}
-                                    </a>
-                                </h3>
-                                <p class="text-text-secondary mb-4">${post.summary || '无摘要'}</p>
-                                <div class="flex flex-wrap justify-between items-center">
-                                    <div class="flex items-center space-x-4 mb-2 sm:mb-0">
-                                        <span class="text-text-secondary text-sm">
-                                            <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
-                                        </span>
-                                        <span class="like-icon">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeStatus.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                            </svg>
-                                            <span>${likeStatus.likes}</span>
+                            <div class="article-preview">
+                                <div class="article-info">
+                                    <a href="#" class="article-title article-link" data-id="${post.id}">${post.title}</a>
+                                    <div class="article-summary">${post.summary || '无摘要'}</div>
+                                    <div class="article-meta">
+                                        <span><i class="fas fa-folder"></i>${category}</span>
+                                        <span><i class="far fa-calendar-alt"></i>${categoryDate}</span>
+                                        <span class="like-count">
+                                            <i class="fas fa-heart"></i>${likeStatus.likes}
                                         </span>
                                     </div>
-                                    <a href="#" class="article-link inline-flex items-center text-primary-light hover:text-accent-light transition-colors text-sm" data-id="${post.id}">
-                                        阅读全文 <i class="fas fa-angle-right ml-1"></i>
-                                    </a>
                                 </div>
                             </div>
                         `;
                         
                         postsContainer.appendChild(postElement);
+                        
+                        // 如果不是最后一篇文章，添加分隔线
+                        if (index < posts.length - 1) {
+                            const divider = document.createElement('div');
+                            divider.className = 'article-divider';
+                            postsContainer.appendChild(divider);
+                        }
                     });
                     
                     // 添加文章链接点击事件
@@ -673,9 +877,9 @@
                     });
                 } else {
                     postsContainer.innerHTML = `
-                        <div class="bg-bg-card border border-border-color rounded-lg p-6 text-center">
-                            <i class="fas fa-inbox text-4xl text-text-secondary mb-2"></i>
-                            <p class="text-text-secondary">暂无文章</p>
+                        <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                            <i class="fas fa-inbox text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">暂无文章</p>
                         </div>
                     `;
                 }
@@ -685,222 +889,12 @@
             } catch (error) {
                 console.error('获取文章失败:', error);
                 document.getElementById('posts-container').innerHTML = `
-                    <div class="bg-bg-card border border-border-color rounded-lg p-6 text-center">
-                        <i class="fas fa-exclamation-triangle text-4xl text-error-color mb-2"></i>
-                        <p class="text-error-color">获取文章列表失败，请稍后再试</p>
-                        <p class="text-text-secondary text-sm mt-2">${error.message}</p>
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
+                        <p class="text-red-500">获取文章列表失败，请稍后再试</p>
+                        <p class="text-gray-500 text-sm mt-2">${error.message}</p>
                     </div>
                 `;
-            }
-        }
-        
-        // 检查用户是否已点赞
-        function hasUserLiked(postId) {
-            const likedPostsStr = localStorage.getItem('liked_posts');
-            const likedPosts = likedPostsStr ? JSON.parse(likedPostsStr) : [];
-            return likedPosts.includes(postId);
-        }
-
-        // 保存用户点赞状态
-        function saveUserLike(postId) {
-            const likedPostsStr = localStorage.getItem('liked_posts');
-            const likedPosts = likedPostsStr ? JSON.parse(likedPostsStr) : [];
-            
-            if (!likedPosts.includes(postId)) {
-                likedPosts.push(postId);
-                localStorage.setItem('liked_posts', JSON.stringify(likedPosts));
-            }
-        }
-
-        // 更新点赞按钮状态
-        function updateLikeButtonState(isLiked, remainingOperations) {
-            const likeButton = document.getElementById('like-button');
-            const likeIcon = document.getElementById('like-icon');
-            const operationsCounter = document.getElementById('operations-counter');
-            
-            // 更新点赞按钮样式
-            if (isLiked) {
-                likeIcon.setAttribute('fill', 'currentColor');
-                likeButton.classList.add('liked');
-                likeButton.title = '点击取消点赞';
-            } else {
-                likeIcon.setAttribute('fill', 'none');
-                likeButton.classList.remove('liked');
-                likeButton.title = '点赞支持';
-            }
-            
-            // 更新剩余操作次数显示
-            if (remainingOperations <= 0) {
-                operationsCounter.textContent = '今日操作次数已用完，请明天再试';
-                operationsCounter.className = 'operations-counter danger';
-                likeButton.disabled = true;
-            } else {
-                operationsCounter.textContent = `今日剩余操作次数：${remainingOperations}次`;
-                operationsCounter.className = 'operations-counter';
-                
-                if (remainingOperations === 1) {
-                    operationsCounter.className = 'operations-counter warning';
-                }
-                
-                likeButton.disabled = false;
-            }
-        }
-        
-        // 加载文章详情
-        async function loadArticle(articleId) {
-            currentArticleId = articleId;
-            
-            try {
-                showArticleView();
-                
-                const articleContainer = document.getElementById('article-container');
-                articleContainer.innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
-                `;
-                
-                // 获取文章内容
-                const response = await fetch(`/api/post/${articleId}`);
-                
-                if (!response.ok) {
-                    throw new Error('文章不存在或已被删除');
-                }
-                
-                const article = await response.json();
-                
-                // 格式化日期
-                const date = new Date(article.published_at);
-                const formattedDate = date.toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
-                // 设置文档标题
-                document.title = `${article.title} - 叮叮博客`;
-                
-                // 替换文章详情内容
-                articleContainer.innerHTML = `
-                    <div class="p-6 md:p-8">
-                        <h1 class="text-2xl md:text-3xl font-bold mb-4 text-white">${article.title}</h1>
-                        <div class="flex items-center mb-8 text-text-secondary">
-                            <span class="inline-flex items-center">
-                                <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
-                            </span>
-                            <span class="mx-3">·</span>
-                            <span class="inline-flex items-center">
-                                <i class="fas fa-code mr-1"></i> Cloudflare Pages
-                            </span>
-                        </div>
-                        <div class="prose max-w-none text-text-primary mb-8 article-content">
-                            ${article.content}
-                        </div>
-                        
-                        <!-- 点赞按钮区域 -->
-                        <div class="mt-10 flex flex-col items-center border-t border-border-color pt-8">
-                            <button id="like-button" class="like-button">
-                                <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
-                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                </svg>
-                                <span id="like-count">0</span> 次点赞
-                            </button>
-                            <div id="operations-counter" class="operations-counter"></div>
-                        </div>
-                    </div>
-                `;
-                
-                // 处理文章内容中的代码块
-                const codeBlocks = document.querySelectorAll('.article-content pre');
-                codeBlocks.forEach(block => {
-                    block.style.fontFamily = 'var(--font-code)';
-                    block.style.background = 'rgba(18, 18, 18, 0.6)';
-                    block.style.borderRadius = 'var(--border-radius)';
-                    block.style.padding = 'var(--spacing-md)';
-                    block.style.borderLeft = '4px solid var(--primary-color)';
-                    block.style.overflowX = 'auto';
-                });
-                
-                // 获取并显示点赞数
-                try {
-                    const likeResponse = await fetch(`/api/post/like/${articleId}`);
-                    const likeData = await likeResponse.json();
-                    
-                    if (!likeResponse.ok) {
-                        throw new Error(likeData.error || likeData.message || '获取点赞数据失败');
-                    }
-                    
-                    document.getElementById('like-count').textContent = likeData.likes;
-                    
-                    // 更新点赞按钮状态
-                    updateLikeButtonState(likeData.isLiked, likeData.remainingOperations);
-                } catch (error) {
-                    console.error('获取点赞数据失败:', error);
-                    document.getElementById('like-count').textContent = '点赞功能不可用';
-                    // 禁用点赞按钮
-                    document.getElementById('like-button').disabled = true;
-                    document.getElementById('like-button').title = error.message || '点赞功能暂时不可用';
-                }
-                
-                // 绑定点赞按钮事件
-                document.getElementById('like-button').addEventListener('click', async () => {
-                    try {
-                        // 暂时禁用按钮，防止重复点击
-                        const likeButton = document.getElementById('like-button');
-                        const likeIcon = document.getElementById('like-icon');
-                        
-                        likeButton.disabled = true;
-                        
-                        // 动画效果
-                        likeIcon.classList.add('like-animation');
-                        setTimeout(() => likeIcon.classList.remove('like-animation'), 500);
-                        
-                        // 发送点赞请求
-                        const response = await fetch(`/api/post/like/${articleId}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ action: 'toggle' })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (!response.ok) {
-                            throw new Error(data.error || data.message || '操作失败');
-                        }
-                        
-                        // 更新点赞数
-                        document.getElementById('like-count').textContent = data.likes;
-                        
-                        // 更新点赞按钮状态
-                        updateLikeButtonState(data.isLiked, data.remainingOperations);
-                    } catch (error) {
-                        console.error('操作失败:', error);
-                        alert(`操作失败: ${error.message || '请稍后再试'}`);
-                        
-                        // 重置按钮状态
-                        document.getElementById('like-button').disabled = false;
-                    }
-                });
-            } catch (error) {
-                console.error('加载文章失败:', error);
-                
-                const articleContainer = document.getElementById('article-container');
-                articleContainer.innerHTML = `
-                    <div class="p-6 md:p-8 text-center">
-                        <i class="fas fa-exclamation-circle text-4xl text-error-color mb-4"></i>
-                        <h2 class="text-2xl font-bold mb-4 text-error-color">加载文章失败</h2>
-                        <p class="text-text-secondary mb-6">
-                            无法加载文章内容，请返回<button class="text-primary-light hover:text-accent-light hover:underline ml-1" id="back-to-home">首页</button>查看其他文章。
-                        </p>
-                        <div class="inline-block bg-bg-color-light p-4 rounded-lg text-left">
-                            <p class="font-mono text-sm text-error-color">Error: ${error.message}</p>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('back-to-home').addEventListener('click', navigateToHome);
             }
         }
         
@@ -936,19 +930,6 @@
         document.getElementById('back-button').addEventListener('click', function(e) {
             e.preventDefault();
             navigateToHome();
-        });
-        
-        // 处理浏览器前进/后退按钮
-        window.addEventListener('popstate', function(event) {
-            const path = window.location.pathname;
-            if (path === '/' || path === '') {
-                showHomeView();
-            } else if (path.startsWith('/post/')) {
-                const postId = path.split('/').pop();
-                if (postId) {
-                    loadArticle(postId);
-                }
-            }
         });
     </script>
 </body>

@@ -3,65 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理后台 - 叮叮博客</title>
+    <title>文章管理 - 叮叮博客</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-gray-900">
-                <a href="/" class="hover:text-gray-600">叮叮博客</a>
-            </h1>
-            <div class="flex items-center space-x-4">
-                <span class="text-gray-600">管理后台</span>
-                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                    注销
-                </button>
-            </div>
-        </div>
-    </header>
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">文章管理</h2>
-                <div id="posts-list" class="space-y-2 mb-4">
-                    <!-- 文章列表将通过JavaScript动态加载 -->
-                    <p class="text-gray-500">加载中...</p>
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 bg-gray-800">
+                <div class="flex items-center justify-center h-16 px-4 bg-gray-900">
+                    <h1 class="text-xl font-semibold text-white flex items-center">
+                        <img src="/favicon.svg" alt="叮叮博客" class="h-8 w-8 mr-2">
+                        叮叮博客 管理系统
+                    </h1>
                 </div>
-                <button id="new-post-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    新建文章
-                </button>
-            </div>
-
-            <div id="post-form-container" class="bg-white rounded-lg shadow p-6 hidden">
-                <h2 class="text-2xl font-bold mb-4" id="form-title">新建文章</h2>
-                <form id="post-form" class="space-y-4">
-                    <input type="hidden" id="post-id" name="id">
-                    <div>
-                        <label for="title" class="block text-sm font-medium text-gray-700">标题</label>
-                        <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div>
-                        <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
-                        <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
-                    </div>
-                    <div>
-                        <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
-                        <textarea id="content" name="content" rows="10" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
-                    </div>
-                    <div class="flex justify-between">
-                        <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded">
-                            取消
-                        </button>
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                            保存
-                        </button>
-                    </div>
-                </form>
+                <div class="flex flex-col flex-grow px-4 mt-5">
+                    <nav class="flex-1 space-y-1">
+                        <a href="/admin-dashboard.html" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="text-sm">控制面板</span>
+                        </a>
+                        <a href="/admin.html" class="flex items-center px-4 py-3 text-white bg-blue-600 rounded-md group">
+                            <i class="fas fa-file-alt mr-3"></i>
+                            <span class="text-sm">文章管理</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-folder mr-3"></i>
+                            <span class="text-sm">文件管理</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-database mr-3"></i>
+                            <span class="text-sm">KV存储配置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span class="text-sm">系统设置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-key mr-3"></i>
+                            <span class="text-sm">密钥管理</span>
+                        </a>
+                    </nav>
+                    <a href="#" id="logout-btn" class="flex items-center px-4 py-3 mt-auto text-gray-300 rounded-md hover:bg-gray-700 group">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        <span class="text-sm">退出登录</span>
+                    </a>
+                </div>
             </div>
         </div>
-    </main>
+
+        <!-- 主要内容区域 -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- 顶部栏 -->
+            <header class="bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                    <button class="md:hidden px-4 py-2 text-gray-700 bg-white rounded-md">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center ml-auto">
+                        <button class="p-2 text-gray-400 bg-white rounded-full hover:text-gray-700 focus:outline-none">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                        <div class="ml-3 relative">
+                            <div class="flex items-center">
+                                <span class="text-gray-700 mr-2">管理员</span>
+                                <i class="fas fa-user-circle text-2xl text-gray-700"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-100">
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        文章管理
+                        <button id="new-post-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center text-sm">
+                            <i class="fas fa-plus mr-2"></i> 新建文章
+                        </button>
+                    </h1>
+
+                    <div class="mb-8">
+                        <div class="bg-white shadow rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:p-6">
+                                <div id="posts-list" class="space-y-3 mb-4">
+                                    <!-- 文章列表将通过JavaScript动态加载 -->
+                                    <div class="flex items-center justify-center p-6">
+                                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> 
+                                        <span class="text-gray-600">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="post-form-container" class="bg-white rounded-lg shadow overflow-hidden hidden">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h2 class="text-xl font-bold mb-4 text-gray-900" id="form-title">新建文章</h2>
+                            <form id="post-form" class="space-y-4">
+                                <input type="hidden" id="post-id" name="id">
+                                <div>
+                                    <label for="title" class="block text-sm font-medium text-gray-700">标题</label>
+                                    <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
+                                    <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                <div>
+                                    <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
+                                    <textarea id="content" name="content" rows="12" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                <div class="flex justify-between">
+                                    <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded flex items-center">
+                                        <i class="fas fa-times mr-2"></i> 取消
+                                    </button>
+                                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                                        <i class="fas fa-save mr-2"></i> 保存
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
     <script>
         // 获取DOM元素
@@ -97,10 +167,6 @@
             const newHeaders = new Headers(options.headers || {});
             newHeaders.set('Authorization', `Bearer ${token}`);
             
-            // 在控制台记录请求信息，用于调试
-            console.log(`发送认证请求到: ${url}`);
-            console.log(`Authorization: Bearer ${token.substring(0, 10)}...`);
-            
             try {
                 const response = await fetch(url, {
                     ...options,
@@ -110,7 +176,6 @@
                 // 检查响应状态
                 if (response.status === 401) {
                     // 未授权，需要重新登录
-                    console.error('认证失败: 需要重新登录');
                     localStorage.removeItem('auth_token');
                     window.location.href = '/login.html';
                     return null;
@@ -135,40 +200,56 @@
                     postsList.innerHTML = '';
                     
                     posts.forEach(post => {
+                        const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                        
                         const postElement = document.createElement('div');
-                        postElement.className = 'flex justify-between items-center bg-white p-3 rounded shadow';
+                        postElement.className = 'flex justify-between items-center bg-white p-4 rounded shadow border border-gray-100 hover:shadow-md transition-shadow';
                         
-                        const titleElement = document.createElement('h3');
-                        titleElement.className = 'text-lg font-bold';
-                        titleElement.textContent = post.title;
-                        
-                        const actionContainer = document.createElement('div');
-                        actionContainer.className = 'space-x-2';
-                        
-                        const editButton = document.createElement('button');
-                        editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm';
-                        editButton.textContent = '编辑';
-                        editButton.addEventListener('click', () => editPost(post.id));
-                        
-                        const deleteButton = document.createElement('button');
-                        deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm';
-                        deleteButton.textContent = '删除';
-                        deleteButton.addEventListener('click', () => deletePost(post.id, post.title));
-                        
-                        actionContainer.appendChild(editButton);
-                        actionContainer.appendChild(deleteButton);
-                        
-                        postElement.appendChild(titleElement);
-                        postElement.appendChild(actionContainer);
+                        postElement.innerHTML = `
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">${post.title}</h3>
+                                <p class="text-sm text-gray-600 mt-1">${post.summary || '无摘要'}</p>
+                                <p class="text-xs text-gray-400 mt-1">发布于 ${postDate}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="edit-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded text-sm flex items-center" data-id="${post.id}">
+                                    <i class="fas fa-edit mr-1"></i> 编辑
+                                </button>
+                                <button class="delete-btn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm flex items-center" data-id="${post.id}" data-title="${post.title}">
+                                    <i class="fas fa-trash-alt mr-1"></i> 删除
+                                </button>
+                            </div>
+                        `;
                         
                         postsList.appendChild(postElement);
                     });
+                    
+                    // 添加编辑和删除按钮的点击事件
+                    document.querySelectorAll('.edit-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const postId = this.getAttribute('data-id');
+                            editPost(postId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const postId = this.getAttribute('data-id');
+                            const postTitle = this.getAttribute('data-title');
+                            deletePost(postId, postTitle);
+                        });
+                    });
                 } else {
-                    postsList.innerHTML = '<p class="text-gray-500">暂无文章</p>';
+                    postsList.innerHTML = `
+                        <div class="bg-white p-6 rounded-lg shadow text-center">
+                            <i class="fas fa-file-alt text-gray-400 text-4xl mb-3"></i>
+                            <p class="text-gray-500">暂无文章，点击"新建文章"开始创作</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('加载文章列表失败:', error);
-                postsList.innerHTML = '<p class="text-red-500">获取文章列表失败，请刷新页面重试</p>';
+                postsList.innerHTML = '<p class="text-red-500 p-4">获取文章列表失败，请刷新页面重试</p>';
             }
         }
 
@@ -180,6 +261,7 @@
             summaryInput.value = '';
             contentInput.value = '';
             postFormContainer.classList.remove('hidden');
+            postFormContainer.scrollIntoView({ behavior: 'smooth' });
         }
 
         // 编辑文章
@@ -224,13 +306,7 @@
                 loadPosts(); // 重新加载文章列表
             } catch (error) {
                 console.error('删除文章失败:', error);
-                if (error.message.includes('未授权') || error.message.includes('登录')) {
-                    // 如果是认证问题，重定向到登录页面
-                    localStorage.removeItem('auth_token');
-                    window.location.href = '/login.html';
-                } else {
-                    alert(`删除文章失败: ${error.message}`);
-                }
+                alert(`删除文章失败: ${error.message}`);
             }
         }
 
@@ -238,15 +314,31 @@
         async function submitPostForm(event) {
             event.preventDefault();
             
+            if (!titleInput.value.trim()) {
+                alert('请输入文章标题');
+                titleInput.focus();
+                return;
+            }
+            
+            if (!contentInput.value.trim()) {
+                alert('请输入文章内容');
+                contentInput.focus();
+                return;
+            }
+            
             const postData = {
                 id: postIdInput.value || undefined,
-                title: titleInput.value,
-                summary: summaryInput.value,
-                content: contentInput.value,
+                title: titleInput.value.trim(),
+                summary: summaryInput.value.trim(),
+                content: contentInput.value.trim(),
                 published_at: new Date().toISOString()
             };
             
             try {
+                const submitButton = postForm.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
+                
                 const response = await authFetch('/api/admin/post', {
                     method: 'POST',
                     headers: {
@@ -265,15 +357,20 @@
                 alert(`文章 "${postData.title}" 已成功保存`);
                 postFormContainer.classList.add('hidden');
                 loadPosts(); // 重新加载文章列表
+                
+                // 如果是新建文章，清空表单
+                if (!postIdInput.value) {
+                    titleInput.value = '';
+                    summaryInput.value = '';
+                    contentInput.value = '';
+                }
             } catch (error) {
                 console.error('保存文章失败:', error);
-                if (error.message.includes('未授权') || error.message.includes('登录')) {
-                    // 如果是认证问题，重定向到登录页面
-                    localStorage.removeItem('auth_token');
-                    window.location.href = '/login.html';
-                } else {
-                    alert(`保存文章失败: ${error.message}`);
-                }
+                alert(`保存文章失败: ${error.message}`);
+            } finally {
+                const submitButton = postForm.querySelector('button[type="submit"]');
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save mr-2"></i> 保存';
             }
         }
 
@@ -290,14 +387,29 @@
             // 验证登录状态
             if (!checkAuth()) return;
             
+            // 检查URL参数，判断是否需要编辑特定文章
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+            
+            if (editId) {
+                editPost(editId);
+            }
+            
+            // 加载文章列表
             loadPosts();
             
+            // 添加事件监听
             newPostBtn.addEventListener('click', createNewPost);
             cancelBtn.addEventListener('click', () => {
-                postFormContainer.classList.add('hidden');
+                if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                    postFormContainer.classList.add('hidden');
+                }
             });
             postForm.addEventListener('submit', submitPostForm);
             logoutBtn.addEventListener('click', logout);
+            
+            // 添加刷新按钮事件监听
+            document.querySelector('button:has(.fa-sync-alt)').addEventListener('click', loadPosts);
         });
     </script>
 </body>

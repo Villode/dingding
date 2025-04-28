@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 叮叮博客</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 bg-gray-800">
+                <div class="flex items-center justify-center h-16 px-4 bg-gray-900">
+                    <h1 class="text-xl font-semibold text-white flex items-center">
+                        <img src="/favicon.svg" alt="叮叮博客" class="h-8 w-8 mr-2">
+                        叮叮博客 管理系统
+                    </h1>
+                </div>
+                <div class="flex flex-col flex-grow px-4 mt-5">
+                    <nav class="flex-1 space-y-1">
+                        <a href="/admin-dashboard.html" class="flex items-center px-4 py-3 text-white bg-blue-600 rounded-md group">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="text-sm">控制面板</span>
+                        </a>
+                        <a href="/admin.html" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-file-alt mr-3"></i>
+                            <span class="text-sm">文章管理</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-folder mr-3"></i>
+                            <span class="text-sm">文件管理</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-database mr-3"></i>
+                            <span class="text-sm">KV存储配置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span class="text-sm">系统设置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-key mr-3"></i>
+                            <span class="text-sm">密钥管理</span>
+                        </a>
+                    </nav>
+                    <a href="#" id="logout-btn" class="flex items-center px-4 py-3 mt-auto text-gray-300 rounded-md hover:bg-gray-700 group">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        <span class="text-sm">退出登录</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- 顶部栏 -->
+            <header class="bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                    <button class="md:hidden px-4 py-2 text-gray-700 bg-white rounded-md">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center ml-auto">
+                        <button class="p-2 text-gray-400 bg-white rounded-full hover:text-gray-700 focus:outline-none">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                        <div class="ml-3 relative">
+                            <div class="flex items-center">
+                                <span class="text-gray-700 mr-2">管理员</span>
+                                <i class="fas fa-user-circle text-2xl text-gray-700"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-100">
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        系统概览
+                        <button class="ml-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center text-sm">
+                            <i class="fas fa-sync-alt mr-2"></i> 刷新
+                        </button>
+                    </h1>
+
+                    <!-- 统计卡片 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <h2 class="text-gray-500 text-sm">文章分享</h2>
+                                    <p class="text-3xl font-bold" id="post-count">0</p>
+                                </div>
+                                <div class="bg-blue-500 p-3 rounded-md">
+                                    <i class="fas fa-file-alt text-white text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <h2 class="text-gray-500 text-sm">文件上传</h2>
+                                    <p class="text-3xl font-bold">0</p>
+                                </div>
+                                <div class="bg-green-500 p-3 rounded-md">
+                                    <i class="fas fa-upload text-white text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <h2 class="text-gray-500 text-sm">API调用</h2>
+                                    <p class="text-3xl font-bold">0</p>
+                                </div>
+                                <div class="bg-purple-500 p-3 rounded-md">
+                                    <i class="fas fa-key text-white text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <h2 class="text-gray-500 text-sm">存储配置</h2>
+                                    <p class="text-3xl font-bold">1</p>
+                                </div>
+                                <div class="bg-orange-500 p-3 rounded-md">
+                                    <i class="fas fa-database text-white text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 存储使用情况 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="font-semibold text-gray-700">存储空间使用</h2>
+                                <select class="text-sm border-gray-300 rounded-md">
+                                    <option>所有存储桶</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="h-3 rounded-full bg-gray-200 overflow-hidden">
+                                    <div class="h-full bg-blue-500 rounded-full" style="width: 0.1%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>0.95 MB / 10 GB</span>
+                                <span>0.1%</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="font-semibold text-gray-700">存储桶分布占比</h2>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                                    <span class="flex-1 text-sm">Cloudflare R2</span>
+                                    <span class="text-sm">100%</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                                    <span class="flex-1 text-sm">Backblaze B2</span>
+                                    <span class="text-sm">0%</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
+                                    <span class="flex-1 text-sm">AWS S3</span>
+                                    <span class="text-sm">0%</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
+                                    <span class="flex-1 text-sm">其他存储</span>
+                                    <span class="text-sm">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 活动统计 -->
+                    <div class="bg-white shadow rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-semibold text-gray-700">过去7天活动</h2>
+                            <button class="text-sm text-blue-500 focus:outline-none">
+                                <i class="fas fa-chart-bar mr-1"></i> 切换为柱状图
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                            <div class="flex items-center p-3 bg-blue-100 rounded-lg">
+                                <i class="fas fa-file-alt text-blue-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-blue-700">本周文章分享</p>
+                                    <p class="text-2xl font-bold text-blue-800" id="weekly-post-count">0</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-green-100 rounded-lg">
+                                <i class="fas fa-upload text-green-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-green-700">本周文件上传</p>
+                                    <p class="text-2xl font-bold text-green-800">0</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-purple-100 rounded-lg">
+                                <i class="fas fa-calendar-alt text-purple-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-purple-700">最活跃日期</p>
+                                    <p class="text-xl font-bold text-purple-800">4月27日</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-yellow-100 rounded-lg">
+                                <i class="fas fa-fire text-yellow-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-yellow-700">最高单日活动</p>
+                                    <p class="text-2xl font-bold text-yellow-800">2 个</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 图表区域 -->
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <div class="w-full" id="activity-chart">
+                                    <div class="flex items-end justify-between h-40 px-4">
+                                        <!-- 图表容器 -->
+                                    </div>
+                                    <div class="flex justify-between px-4 mt-2 text-xs text-gray-500">
+                                        <span>4/21</span>
+                                        <span>4/22</span>
+                                        <span>4/23</span>
+                                        <span>4/24</span>
+                                        <span>4/25</span>
+                                        <span>4/26</span>
+                                        <span>4/27</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最近文章 -->
+                    <div class="bg-white shadow rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-semibold text-gray-700">最近文章</h2>
+                            <a href="/admin.html" class="text-sm text-blue-500 hover:underline">
+                                查看全部 <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布日期</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="recent-posts-table">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-center" colspan="3">
+                                            加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                // 如果没有登录凭证，重定向到登录页面
+                window.location.href = '/login.html';
+                return false;
+            }
+            return token;
+        }
+
+        // 添加Authorization头到fetch请求
+        async function authFetch(url, options = {}) {
+            const token = checkAuth();
+            if (!token) return;
+
+            // 创建新的headers对象
+            const newHeaders = new Headers(options.headers || {});
+            newHeaders.set('Authorization', `Bearer ${token}`);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: newHeaders
+                });
+                
+                // 检查响应状态
+                if (response.status === 401) {
+                    // 未授权，需要重新登录
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('请求出错:', error);
+                throw error;
+            }
+        }
+
+        // 注销
+        function logout() {
+            if (confirm('确定要注销吗？')) {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login.html';
+            }
+        }
+
+        // 加载文章数据
+        async function loadPostsData() {
+            try {
+                // 获取文章列表
+                const response = await fetch('/api/posts');
+                if (!response.ok) throw new Error('获取文章列表失败');
+                
+                const posts = await response.json();
+                
+                // 更新总文章数
+                document.getElementById('post-count').textContent = posts.length;
+                document.getElementById('weekly-post-count').textContent = posts.length;
+                
+                // 更新最近文章表格
+                const recentPostsTable = document.getElementById('recent-posts-table');
+                
+                if (posts.length > 0) {
+                    recentPostsTable.innerHTML = '';
+                    
+                    // 只显示最近5篇文章
+                    const recentPosts = posts.slice(0, 5);
+                    
+                    recentPosts.forEach(post => {
+                        const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${post.title}</div>
+                                <div class="text-xs text-gray-500">${post.summary || '无摘要'}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${postDate}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="/admin.html?edit=${post.id}" class="text-indigo-600 hover:text-indigo-900 mr-3">编辑</a>
+                                <a href="#" class="text-red-600 hover:text-red-900 delete-post" data-id="${post.id}">删除</a>
+                            </td>
+                        `;
+                        
+                        recentPostsTable.appendChild(row);
+                    });
+                    
+                    // 添加删除文章的事件监听
+                    document.querySelectorAll('.delete-post').forEach(link => {
+                        link.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            const postId = this.getAttribute('data-id');
+                            if (confirm('确定要删除这篇文章吗？此操作无法撤销。')) {
+                                try {
+                                    const response = await authFetch(`/api/admin/delete/${postId}`, {
+                                        method: 'DELETE'
+                                    });
+                                    
+                                    if (response.ok) {
+                                        alert('文章已成功删除');
+                                        // 重新加载数据
+                                        loadPostsData();
+                                    } else {
+                                        const data = await response.json();
+                                        throw new Error(data.error || '删除文章失败');
+                                    }
+                                } catch (error) {
+                                    alert(`删除文章失败: ${error.message}`);
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    recentPostsTable.innerHTML = `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-center" colspan="3">
+                                暂无文章
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // 更新图表数据
+                updateActivityChart(posts);
+                
+            } catch (error) {
+                console.error('加载文章数据失败:', error);
+            }
+        }
+        
+        // 更新活动图表
+        function updateActivityChart(posts) {
+            const chartContainer = document.querySelector('#activity-chart .flex');
+            chartContainer.innerHTML = '';
+            
+            // 获取过去7天的日期
+            const dates = [];
+            const now = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                dates.push(date);
+            }
+            
+            // 统计每天的文章数量
+            const dailyCounts = dates.map(date => {
+                const dateString = date.toISOString().split('T')[0];
+                const count = posts.filter(post => post.published_at.startsWith(dateString)).length;
+                return { date: dateString, count };
+            });
+            
+            // 找出最大值
+            const maxCount = Math.max(...dailyCounts.map(d => d.count), 1);
+            
+            // 创建柱状图
+            dailyCounts.forEach((item, index) => {
+                const height = item.count > 0 ? (item.count / maxCount) * 100 : 0;
+                
+                const barContainer = document.createElement('div');
+                barContainer.className = 'flex flex-col items-center';
+                
+                const bar = document.createElement('div');
+                bar.className = 'w-8 bg-blue-500 rounded-t';
+                bar.style.height = `${height}%`;
+                
+                if (height === 0) {
+                    bar.style.height = '2px';
+                    bar.className = 'w-8 bg-gray-300 rounded-t';
+                }
+                
+                const label = document.createElement('div');
+                label.className = 'text-xs text-gray-500 mt-1';
+                label.textContent = item.count;
+                
+                barContainer.appendChild(bar);
+                barContainer.appendChild(label);
+                chartContainer.appendChild(barContainer);
+            });
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 验证登录状态
+            if (!checkAuth()) return;
+            
+            // 加载文章数据
+            loadPostsData();
+            
+            // 添加注销事件监听
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            
+            // 添加刷新按钮事件监听
+            document.querySelectorAll('button:has(.fa-sync-alt)').forEach(button => {
+                button.addEventListener('click', function() {
+                    loadPostsData();
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

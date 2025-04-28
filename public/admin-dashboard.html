@@ -625,6 +625,67 @@
             }
         }
         
+        // 创建折线路径
+        function createLinePath(container, dataPoints, maxValue, color, dates, title) {
+            if (dataPoints.length < 2) return;
+            
+            // 使用SVG来绘制折线图，这样更精确
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.style.position = "absolute";
+            svg.style.top = "0";
+            svg.style.left = "0";
+            
+            // 计算点的位置
+            const points = dataPoints.map((value, index) => {
+                const x = (index / (dataPoints.length - 1)) * 100;
+                const y = value > 0 ? 100 - (value / maxValue) * 100 : 100;
+                return { x, y, value };
+            });
+            
+            // 创建折线
+            const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            const pointsString = points.map(point => `${point.x},${point.y}`).join(" ");
+            polyline.setAttribute("points", pointsString);
+            polyline.setAttribute("fill", "none");
+            polyline.setAttribute("stroke", color === 'blue' ? "#3B82F6" : "#10B981"); // 蓝色或绿色
+            polyline.setAttribute("stroke-width", "2");
+            
+            svg.appendChild(polyline);
+            
+            // 将SVG添加到容器
+            container.appendChild(svg);
+            
+            // 添加数据点和标签
+            points.forEach((point, index) => {
+                // 添加数据点 (HTML元素)
+                const dot = document.createElement('div');
+                dot.className = `absolute w-2 h-2 bg-${color}-500 rounded-full`;
+                dot.style.left = `${point.x}%`;
+                dot.style.top = `${point.y}%`;
+                dot.style.transform = 'translate(-50%, -50%)';
+                dot.style.zIndex = "2"; // 确保点在线上方
+                
+                // 添加悬停提示
+                dot.title = `${title}: ${point.value} (${dates[index]})`;
+                
+                // 添加数据标签
+                if (point.value > 0) {
+                    const label = document.createElement('div');
+                    label.className = `absolute text-xs text-${color}-600 font-bold`;
+                    label.style.left = `${point.x}%`;
+                    label.style.top = `${point.y - 5}%`;
+                    label.style.transform = 'translate(-50%, -100%)';
+                    label.style.zIndex = "3"; // 确保标签在最上方
+                    label.textContent = point.value;
+                    container.appendChild(label);
+                }
+                
+                container.appendChild(dot);
+            });
+        }
+        
         // 更新活动图表
         function updateActivityChart(data) {
             // 获取图表容器和标签容器
@@ -734,75 +795,6 @@
                     chartLabels.appendChild(dateLabel);
                 });
             }
-        }
-        
-        // 创建折线路径
-        function createLinePath(container, dataPoints, maxValue, color, dates, title) {
-            if (dataPoints.length < 2) return;
-            
-            // 创建容器
-            const lineContainer = document.createElement('div');
-            lineContainer.className = 'absolute inset-0';
-            
-            // 计算点的位置
-            const points = dataPoints.map((value, index) => {
-                const x = (index / (dataPoints.length - 1)) * 100;
-                const y = value > 0 ? 100 - (value / maxValue) * 100 : 100;
-                return { x, y, value };
-            });
-            
-            // 添加连接线
-            for (let i = 0; i < points.length - 1; i++) {
-                const line = document.createElement('div');
-                line.className = `absolute bg-${color}-500`;
-                
-                // 计算线的角度和长度
-                const x1 = points[i].x;
-                const y1 = points[i].y;
-                const x2 = points[i + 1].x;
-                const y2 = points[i + 1].y;
-                
-                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-                
-                // 设置线的样式
-                line.style.width = `${length}%`;
-                line.style.height = '2px';
-                line.style.left = `${x1}%`;
-                line.style.top = `${y1}%`;
-                line.style.transformOrigin = '0 0';
-                line.style.transform = `rotate(${angle}deg)`;
-                
-                lineContainer.appendChild(line);
-            }
-            
-            // 添加数据点和标签
-            points.forEach((point, index) => {
-                // 添加数据点
-                const dot = document.createElement('div');
-                dot.className = `absolute w-2 h-2 bg-${color}-500 rounded-full`;
-                dot.style.left = `${point.x}%`;
-                dot.style.top = `${point.y}%`;
-                dot.style.transform = 'translate(-50%, -50%)';
-                
-                // 添加悬停提示
-                dot.title = `${title}: ${point.value} (${dates[index]})`;
-                
-                // 添加数据标签
-                if (point.value > 0) {
-                    const label = document.createElement('div');
-                    label.className = `absolute text-xs text-${color}-600`;
-                    label.style.left = `${point.x}%`;
-                    label.style.top = `${point.y - 5}%`;
-                    label.style.transform = 'translate(-50%, -100%)';
-                    label.textContent = point.value;
-                    lineContainer.appendChild(label);
-                }
-                
-                lineContainer.appendChild(dot);
-            });
-            
-            container.appendChild(lineContainer);
         }
         
         // 切换图表类型

@@ -36,6 +36,19 @@ export async function onRequestGet(context) {
       // 获取查询参数中的命名空间 ID
       const namespaceId = new URL(context.request.url).searchParams.get('namespace');
       
+      // 获取存储桶分布数据
+      // 在实际环境中，这些数据应该从相应的存储服务 API 获取
+      // 目前我们只有 Cloudflare KV 可用，所以只显示这一个
+      const bucketDistribution = [
+        { name: 'Cloudflare KV', usage: estimatedUsage, color: 'blue' }
+      ];
+      
+      // 计算总使用量和百分比
+      const totalUsage = bucketDistribution.reduce((total, bucket) => total + bucket.usage, 0);
+      bucketDistribution.forEach(bucket => {
+        bucket.percentage = totalUsage > 0 ? (bucket.usage / totalUsage * 100).toFixed(1) : 100;
+      });
+      
       // 准备响应数据
       const kvInfo = {
         namespaces: [
@@ -45,7 +58,8 @@ export async function onRequestGet(context) {
           // KV 命名空间大小限制
           total: 1024 * 1024 * 1024, // 1GB
           used: estimatedUsage
-        }
+        },
+        bucketDistribution: bucketDistribution
       };
       
       // 如果请求了特定命名空间且不是 blog_posts，返回错误

@@ -161,26 +161,11 @@
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="font-semibold text-gray-700">存储桶分布占比</h2>
                             </div>
-                            <div class="space-y-2">
+                            <div class="space-y-2" id="bucket-distribution">
                                 <div class="flex items-center">
-                                    <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                                    <span class="flex-1 text-sm">Cloudflare R2</span>
-                                    <span class="text-sm">100%</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                                    <span class="flex-1 text-sm">Backblaze B2</span>
-                                    <span class="text-sm">0%</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
-                                    <span class="flex-1 text-sm">AWS S3</span>
-                                    <span class="text-sm">0%</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
-                                    <span class="flex-1 text-sm">其他存储</span>
-                                    <span class="text-sm">0%</span>
+                                    <div class="w-full text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> 加载中...
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -337,6 +322,7 @@
                 const usageText = document.getElementById('kv-usage-text');
                 const usagePercent = document.getElementById('kv-usage-percent');
                 const namespaceSelect = document.getElementById('kv-namespace-select');
+                const bucketDistribution = document.getElementById('bucket-distribution');
                 
                 if (!response.ok) {
                     // 处理错误响应
@@ -357,6 +343,15 @@
                     usageText.classList.add('text-red-500');
                     
                     usagePercent.textContent = '';
+                    
+                    // 更新存储桶分布错误
+                    bucketDistribution.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-full text-center text-red-500">
+                                ${errorData.error || '获取存储桶数据失败'}
+                            </div>
+                        </div>
+                    `;
                     
                     return;
                 }
@@ -415,6 +410,51 @@
                     usagePercent.textContent = '0%';
                 }
                 
+                // 更新存储桶分布
+                if (data.bucketDistribution && data.bucketDistribution.length > 0) {
+                    bucketDistribution.innerHTML = '';
+                    
+                    // 颜色映射
+                    const colorMap = {
+                        'blue': 'bg-blue-500',
+                        'green': 'bg-green-500',
+                        'yellow': 'bg-yellow-500',
+                        'purple': 'bg-purple-500',
+                        'red': 'bg-red-500',
+                        'orange': 'bg-orange-500'
+                    };
+                    
+                    // 添加存储桶数据
+                    data.bucketDistribution.forEach(bucket => {
+                        const colorClass = colorMap[bucket.color] || 'bg-gray-500';
+                        const item = document.createElement('div');
+                        item.className = 'flex items-center';
+                        item.innerHTML = `
+                            <span class="w-3 h-3 rounded-full ${colorClass} mr-2"></span>
+                            <span class="flex-1 text-sm">${bucket.name}</span>
+                            <span class="text-sm">${bucket.percentage}%</span>
+                        `;
+                        bucketDistribution.appendChild(item);
+                    });
+                    
+                    // 如果存储桶分布只有一项，添加"无其他存储服务"的提示
+                    if (data.bucketDistribution.length === 1) {
+                        const noOtherBuckets = document.createElement('div');
+                        noOtherBuckets.className = 'text-sm text-gray-500 mt-3 text-center';
+                        noOtherBuckets.textContent = '目前只使用了单一存储服务';
+                        bucketDistribution.appendChild(noOtherBuckets);
+                    }
+                } else {
+                    // 如果没有存储桶数据
+                    bucketDistribution.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-full text-center text-gray-500">
+                                暂无存储桶数据
+                            </div>
+                        </div>
+                    `;
+                }
+                
             } catch (error) {
                 console.error('加载 KV 存储信息失败:', error);
                 
@@ -422,6 +462,7 @@
                 const usageBar = document.getElementById('kv-usage-bar');
                 const usageText = document.getElementById('kv-usage-text');
                 const usagePercent = document.getElementById('kv-usage-percent');
+                const bucketDistribution = document.getElementById('bucket-distribution');
                 
                 usageBar.style.width = '0%';
                 usageBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
@@ -431,6 +472,15 @@
                 usageText.classList.add('text-red-500');
                 
                 usagePercent.textContent = '';
+                
+                // 更新存储桶分布错误
+                bucketDistribution.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-full text-center text-red-500">
+                            连接错误: ${error.message || '网络请求失败'}
+                        </div>
+                    </div>
+                `;
             }
         }
 

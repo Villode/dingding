@@ -6,6 +6,14 @@
     <title>叮叮博客</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+        .like-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #f472b6;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <header class="bg-white shadow">
@@ -87,8 +95,23 @@
                 if (posts && posts.length > 0) {
                     postsContainer.innerHTML = '';
                     
+                    // 获取所有文章的点赞数
+                    const likesPromises = posts.map(post => 
+                        fetch(`/api/post/like/${post.id}`)
+                            .then(res => res.ok ? res.json() : {likes: 0})
+                            .then(data => ({id: post.id, likes: data.likes}))
+                            .catch(() => ({id: post.id, likes: 0}))
+                    );
+                    
+                    const likesResults = await Promise.all(likesPromises);
+                    const likesMap = {};
+                    likesResults.forEach(item => {
+                        likesMap[item.id] = item.likes;
+                    });
+                    
                     posts.forEach(post => {
                         const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                        const likeCount = likesMap[post.id] || 0;
                         
                         const postElement = document.createElement('div');
                         postElement.className = 'bg-white p-4 rounded shadow';
@@ -99,7 +122,15 @@
                                 </a>
                             </h3>
                             <p class="text-gray-600 mt-2">${post.summary || '无摘要'}</p>
-                            <p class="text-gray-400 text-sm mt-2">发布于 ${postDate}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <p class="text-gray-400 text-sm">发布于 ${postDate}</p>
+                                <span class="like-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeCount > 0 ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                    <span>${likeCount}</span>
+                                </span>
+                            </div>
                         `;
                         
                         postsContainer.appendChild(postElement);

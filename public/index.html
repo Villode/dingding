@@ -944,6 +944,135 @@
             e.preventDefault();
             navigateToHome();
         });
+
+        // 添加文章详情加载函数
+        async function loadArticle(articleId) {
+            try {
+                currentArticleId = articleId;
+                showArticleView();
+                
+                const articleContainer = document.getElementById('article-container');
+                articleContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+                
+                // 获取文章详情
+                const response = await fetch(`/api/post/${articleId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`文章获取失败: ${response.status}`);
+                }
+                
+                const article = await response.json();
+                
+                // 获取点赞信息
+                const likeResponse = await fetch(`/api/post/like/${articleId}`).catch(() => null);
+                const likeData = likeResponse && likeResponse.ok ? await likeResponse.json() : { likes: 0, isLiked: false };
+                
+                // 更新页面标题
+                document.title = `${article.title} - 叮叮博客`;
+                
+                // 格式化日期
+                const postDate = new Date(article.published_at);
+                const formattedDate = postDate.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // 渲染文章
+                articleContainer.innerHTML = `
+                    <div class="p-6 md:p-8">
+                        <h1 class="text-2xl md:text-3xl font-bold mb-4">${article.title}</h1>
+                        <div class="flex items-center text-gray-500 mb-6">
+                            <span class="flex items-center mr-4">
+                                <i class="far fa-calendar-alt mr-1"></i>
+                                ${formattedDate}
+                            </span>
+                            <span class="flex items-center mr-4 like-count">
+                                <i class="fas fa-heart mr-1"></i>
+                                ${likeData.likes}
+                            </span>
+                        </div>
+                        <div class="article-content prose max-w-none">
+                            ${article.content}
+                        </div>
+                        <div class="mt-8 flex justify-center">
+                            <button class="like-button ${likeData.isLiked ? 'liked' : ''}" id="like-button" data-id="${articleId}">
+                                <span class="heart-icon"><i class="fas fa-heart"></i></span>
+                                <span class="like-text">${likeData.isLiked ? '已点赞' : '点赞'}</span>
+                                <span class="like-count">${likeData.likes}</span>
+                            </button>
+                        </div>
+                        <div class="operations-counter text-center mt-2 ${likeData.remainingOperations < 3 ? (likeData.remainingOperations < 1 ? 'danger' : 'warning') : ''}">
+                            今日剩余操作次数: ${likeData.remainingOperations || 0}/10
+                        </div>
+                    </div>
+                `;
+                
+                // 点赞按钮事件
+                const likeButton = document.getElementById('like-button');
+                if (likeButton) {
+                    likeButton.addEventListener('click', async function() {
+                        try {
+                            const id = this.getAttribute('data-id');
+                            const response = await fetch(`/api/post/like/${id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const result = await response.json();
+                                
+                                // 更新UI
+                                this.classList.toggle('liked', result.isLiked);
+                                this.querySelector('.like-text').textContent = result.isLiked ? '已点赞' : '点赞';
+                                
+                                const countElement = this.querySelector('.like-count');
+                                countElement.textContent = result.likes;
+                                countElement.classList.add('like-count-change');
+                                setTimeout(() => countElement.classList.remove('like-count-change'), 500);
+                                
+                                const heartIcon = this.querySelector('.heart-icon');
+                                heartIcon.classList.add('like-animation');
+                                setTimeout(() => heartIcon.classList.remove('like-animation'), 800);
+                                
+                                // 更新操作计数
+                                const counterElement = document.querySelector('.operations-counter');
+                                if (counterElement) {
+                                    counterElement.textContent = `今日剩余操作次数: ${result.remainingOperations}/10`;
+                                    counterElement.className = `operations-counter text-center mt-2 ${
+                                        result.remainingOperations < 3 ? (result.remainingOperations < 1 ? 'danger' : 'warning') : ''
+                                    }`;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('点赞失败:', error);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载文章失败:', error);
+                document.getElementById('article-container').innerHTML = `
+                    <div class="p-6 text-center">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <p class="text-xl font-bold text-red-500">文章加载失败</p>
+                        <p class="text-gray-500 mt-2">${error.message}</p>
+                        <button id="reload-article" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                            重试
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('reload-article')?.addEventListener('click', () => {
+                    loadArticle(articleId);
+                });
+            }
+        }
     </script>
 </body>
 </html> 

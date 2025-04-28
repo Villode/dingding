@@ -26,7 +26,8 @@ export async function onRequestGet(context) {
     if (context.env.BLOG_POSTS) {
       try {
         const keys = await context.env.BLOG_POSTS.list();
-        stats.postCount = keys.keys.length;
+        // 只统计以post:开头的键，排除其他如posts:list等控制键
+        stats.postCount = keys.keys.filter(key => key.name.startsWith('post:')).length;
         stats.storageConfigs = 1; // 有BLOG_POSTS配置
       } catch (error) {
         console.error('获取文章数据失败:', error);

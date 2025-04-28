@@ -506,9 +506,10 @@
                 
                 const posts = await response.json();
                 
-                // 更新总文章数
-                document.getElementById('post-count').textContent = posts.length;
-                document.getElementById('weekly-post-count').textContent = posts.length;
+                // 删除对文章计数的更新，由其他API负责
+                // document.getElementById('post-count').textContent = posts.length;
+                // 删除对周活动中文章数的更新，由loadActivityData()函数负责
+                // document.getElementById('weekly-post-count').textContent = posts.length;
                 
                 // 更新最近文章表格
                 const recentPostsTable = document.getElementById('recent-posts-table');
@@ -817,17 +818,17 @@
             // 验证登录状态
             if (!checkAuth()) return;
             
-            // 加载控制面板统计数据
+            // 加载控制面板统计数据 - 先加载这个以获取准确的文章计数
             loadDashboardStats();
-            
-            // 加载文章数据
-            loadPostsData();
             
             // 加载 KV 存储信息
             loadKVStorageInfo();
             
             // 加载活动数据
             loadActivityData();
+            
+            // 加载文章数据（最近文章列表）
+            loadPostsData();
             
             // 添加图表类型切换事件
             document.getElementById('chart-toggle-btn').addEventListener('click', toggleChartType);

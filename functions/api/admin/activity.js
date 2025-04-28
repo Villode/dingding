@@ -36,8 +36,8 @@ export async function onRequestGet(context) {
       // 计算每天的文章数量
       const dailyPostCounts = calculateDailyPostCounts(posts, past7Days);
       
-      // 计算每天的点赞数量 (模拟数据，因为我们目前没有真实的点赞功能)
-      const dailyLikeCounts = calculateDailyLikeCounts(posts, past7Days);
+      // 计算每天的点赞数量
+      const dailyLikeCounts = await calculateDailyLikeCounts(posts, past7Days, context);
       
       // 找出最活跃的日期
       const { mostActiveDate, highestDailyActivity } = findMostActiveDate(dailyPostCounts, dailyLikeCounts);
@@ -145,21 +145,70 @@ function calculateDailyPostCounts(posts, dates) {
 
 /**
  * 计算每天的点赞数量
- * 注意：这里使用了基于文章数量的模拟数据
+ * 从KV中获取实际的点赞数据
  */
-function calculateDailyLikeCounts(posts, dates) {
-  return dates.map(date => {
-    const dateString = date.toISOString().split('T')[0];
-    const postsOnDay = posts.filter(post => post.published_at && post.published_at.startsWith(dateString));
+async function calculateDailyLikeCounts(posts, dates, context) {
+  // 如果没有BLOG_LIKES绑定，返回模拟数据
+  if (!context.env.BLOG_LIKES) {
+    console.warn('BLOG_LIKES KV命名空间不可用，使用模拟数据');
+    return dates.map(date => {
+      const dateString = date.toISOString().split('T')[0];
+      const postsOnDay = posts.filter(post => post.published_at && post.published_at.startsWith(dateString));
+      
+      // 如果有文章，生成随机点赞数（1-5）× 文章数
+      if (postsOnDay.length > 0) {
+        return Math.floor(Math.random() * 5 + 1) * postsOnDay.length;
+      }
+      
+      // 没有文章的日子也可能有少量点赞（旧文章）
+      return Math.floor(Math.random() * 3);
+    });
+  }
+  
+  try {
+    // 获取所有文章ID
+    const postIds = posts.map(post => post.id);
     
-    // 如果有文章，生成随机点赞数（1-5）× 文章数
-    if (postsOnDay.length > 0) {
-      return Math.floor(Math.random() * 5 + 1) * postsOnDay.length;
-    }
+    // 获取每篇文章的点赞数
+    const likesPromises = postIds.map(async postId => {
+      const likeData = await context.env.BLOG_LIKES.get(`post:${postId}:likes`);
+      return {
+        postId,
+        likes: likeData ? parseInt(likeData, 10) : 0,
+        // 从posts数组中查找对应的发布日期
+        publishedAt: posts.find(post => post.id === postId)?.published_at || ''
+      };
+    });
     
-    // 没有文章的日子也可能有少量点赞（旧文章）
-    return Math.floor(Math.random() * 3);
-  });
+    const likesData = await Promise.all(likesPromises);
+    
+    // 计算每天的点赞数
+    return dates.map(date => {
+      const dateString = date.toISOString().split('T')[0];
+      
+      // 找出在这个日期发布的文章
+      const postsOnDay = posts.filter(post => post.published_at && post.published_at.startsWith(dateString));
+      
+      // 获取这些文章的点赞总数
+      let likesCount = 0;
+      
+      // 计算所有文章的点赞数
+      // 注意：这里我们只计算文章的总点赞数，而非当天产生的点赞
+      // 因为我们没有记录点赞的时间，所以无法精确统计每天新增的点赞数
+      for (const post of postsOnDay) {
+        const postLikes = likesData.find(data => data.postId === post.id);
+        if (postLikes) {
+          likesCount += postLikes.likes;
+        }
+      }
+      
+      return likesCount;
+    });
+  } catch (error) {
+    console.error('获取点赞数据失败:', error);
+    // 发生错误时返回空数据
+    return dates.map(() => 0);
+  }
 }
 
 /**

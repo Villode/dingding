@@ -10,12 +10,24 @@ pages_build_output_dir = "public"
 binding = "BLOG_POSTS"
 id = "97c1ad6d710b42129dc204075412907e"
 
+[[kv_namespaces]]
+binding = "BLOG_LIKES"
+id = "likes_namespace_id"  # 这里需要替换为实际的KV命名空间ID
+
 # 预览环境KV配置
 [[env.preview.kv_namespaces]]
 binding = "BLOG_POSTS"
 id = "97c1ad6d710b42129dc204075412907e"
 
+[[env.preview.kv_namespaces]]
+binding = "BLOG_LIKES"
+id = "likes_namespace_id"  # 这里需要替换为实际的KV命名空间ID
+
 # 生产环境KV配置
 [[env.production.kv_namespaces]]
 binding = "BLOG_POSTS"
-id = "97c1ad6d710b42129dc204075412907e" 
+id = "97c1ad6d710b42129dc204075412907e"
+
+[[env.production.kv_namespaces]]
+binding = "BLOG_LIKES"
+id = "likes_namespace_id"  # 这里需要替换为实际的KV命名空间ID 

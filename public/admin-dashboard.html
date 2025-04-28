@@ -104,7 +104,7 @@
                             <div class="flex items-center">
                                 <div class="flex-1">
                                     <h2 class="text-gray-500 text-sm">点赞数量</h2>
-                                    <p class="text-3xl font-bold">0</p>
+                                    <p class="text-3xl font-bold like-count-display">0</p>
                                 </div>
                                 <div class="bg-orange-500 p-3 rounded-md">
                                     <i class="fas fa-thumbs-up text-white text-xl"></i>
@@ -116,7 +116,7 @@
                             <div class="flex items-center">
                                 <div class="flex-1">
                                     <h2 class="text-gray-500 text-sm">API调用</h2>
-                                    <p class="text-3xl font-bold">0</p>
+                                    <p class="text-3xl font-bold" id="api-call-count">0</p>
                                 </div>
                                 <div class="bg-purple-500 p-3 rounded-md">
                                     <i class="fas fa-key text-white text-xl"></i>
@@ -128,7 +128,7 @@
                             <div class="flex items-center">
                                 <div class="flex-1">
                                     <h2 class="text-gray-500 text-sm">存储配置</h2>
-                                    <p class="text-3xl font-bold">1</p>
+                                    <p class="text-3xl font-bold" id="storage-config-count">1</p>
                                 </div>
                                 <div class="bg-orange-500 p-3 rounded-md">
                                     <i class="fas fa-database text-white text-xl"></i>
@@ -195,7 +195,7 @@
                                 <i class="fas fa-thumbs-up text-green-500 text-2xl mr-3"></i>
                                 <div>
                                     <p class="text-sm text-green-700">本周点赞数量</p>
-                                    <p class="text-2xl font-bold text-green-800" id="weekly-like-count">
+                                    <p class="text-2xl font-bold text-green-800 like-count-display" id="weekly-like-count">
                                         <i class="fas fa-spinner fa-spin text-sm"></i>
                                     </p>
                                 </div>
@@ -817,6 +817,9 @@
             // 验证登录状态
             if (!checkAuth()) return;
             
+            // 加载控制面板统计数据
+            loadDashboardStats();
+            
             // 加载文章数据
             loadPostsData();
             
@@ -843,12 +846,46 @@
             // 添加刷新按钮事件监听
             document.querySelectorAll('button:has(.fa-sync-alt)').forEach(button => {
                 button.addEventListener('click', function() {
+                    loadDashboardStats();
                     loadPostsData();
                     loadKVStorageInfo();
                     loadActivityData();
                 });
             });
         });
+
+        // 加载控制面板统计数据
+        async function loadDashboardStats() {
+            try {
+                // 获取统计数据
+                const response = await authFetch('/api/admin/dashboard');
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '获取统计数据失败');
+                }
+                
+                const stats = await response.json();
+                
+                // 更新统计卡片
+                document.getElementById('post-count').textContent = stats.postCount;
+                
+                // 更新点赞数量
+                const likeCountElements = document.querySelectorAll('.like-count-display');
+                likeCountElements.forEach(el => {
+                    el.textContent = stats.likeCount;
+                });
+                
+                // 更新API调用数
+                document.getElementById('api-call-count').textContent = stats.apiCalls;
+                
+                // 更新存储配置数
+                document.getElementById('storage-config-count').textContent = stats.storageConfigs;
+                
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
     </script>
 </body>
 </html> 

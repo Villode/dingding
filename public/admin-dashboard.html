@@ -142,18 +142,18 @@
                         <div class="bg-white shadow rounded-lg p-4">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="font-semibold text-gray-700">存储空间使用</h2>
-                                <select class="text-sm border-gray-300 rounded-md">
-                                    <option>所有存储桶</option>
+                                <select id="kv-namespace-select" class="text-sm border-gray-300 rounded-md">
+                                    <option value="all">所有 KV 命名空间</option>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <div class="h-3 rounded-full bg-gray-200 overflow-hidden">
-                                    <div class="h-full bg-blue-500 rounded-full" style="width: 0.1%"></div>
+                                    <div id="kv-usage-bar" class="h-full bg-blue-500 rounded-full" style="width: 0.1%"></div>
                                 </div>
                             </div>
                             <div class="flex justify-between text-sm text-gray-600">
-                                <span>0.95 MB / 10 GB</span>
-                                <span>0.1%</span>
+                                <span id="kv-usage-text">加载中...</span>
+                                <span id="kv-usage-percent">0%</span>
                             </div>
                         </div>
 
@@ -325,6 +325,71 @@
             }
         }
 
+        // 获取 KV 存储信息
+        async function loadKVStorageInfo() {
+            try {
+                // 从 API 获取 KV 存储信息
+                const response = await authFetch('/api/admin/kv-info');
+                if (!response.ok) throw new Error('获取 KV 存储信息失败');
+                
+                const data = await response.json();
+                
+                // 获取 UI 元素
+                const usageBar = document.getElementById('kv-usage-bar');
+                const usageText = document.getElementById('kv-usage-text');
+                const usagePercent = document.getElementById('kv-usage-percent');
+                const namespaceSelect = document.getElementById('kv-namespace-select');
+                
+                // 更新命名空间下拉菜单
+                if (data.namespaces && data.namespaces.length > 0) {
+                    // 清空现有选项（保留"所有命名空间"选项）
+                    while (namespaceSelect.options.length > 1) {
+                        namespaceSelect.remove(1);
+                    }
+                    
+                    // 添加从 API 获取的命名空间
+                    data.namespaces.forEach(namespace => {
+                        const option = document.createElement('option');
+                        option.value = namespace.id;
+                        option.textContent = namespace.name;
+                        namespaceSelect.appendChild(option);
+                    });
+                }
+                
+                // 更新使用情况显示
+                if (data.usage) {
+                    // 计算使用百分比
+                    const usedMB = (data.usage.used / (1024 * 1024)).toFixed(2);
+                    const totalMB = (data.usage.total / (1024 * 1024)).toFixed(2);
+                    const percentUsed = ((data.usage.used / data.usage.total) * 100).toFixed(1);
+                    
+                    // 更新 UI 元素
+                    usageBar.style.width = `${percentUsed}%`;
+                    usageText.textContent = `${usedMB} MB / ${totalMB} MB`;
+                    usagePercent.textContent = `${percentUsed}%`;
+                    
+                    // 为使用率较高的情况改变颜色
+                    if (percentUsed > 80) {
+                        usageBar.classList.remove('bg-blue-500');
+                        usageBar.classList.add('bg-red-500');
+                    } else if (percentUsed > 60) {
+                        usageBar.classList.remove('bg-blue-500');
+                        usageBar.classList.add('bg-yellow-500');
+                    }
+                } else {
+                    // 如果没有数据，显示默认值
+                    usageBar.style.width = '0%';
+                    usageText.textContent = '无数据';
+                    usagePercent.textContent = '0%';
+                }
+                
+            } catch (error) {
+                console.error('加载 KV 存储信息失败:', error);
+                // 更新 UI 显示错误
+                document.getElementById('kv-usage-text').textContent = '获取数据失败';
+            }
+        }
+
         // 注销
         function logout() {
             if (confirm('确定要注销吗？')) {
@@ -477,6 +542,17 @@
             // 加载文章数据
             loadPostsData();
             
+            // 加载 KV 存储信息
+            loadKVStorageInfo();
+            
+            // 添加 KV 命名空间选择事件
+            document.getElementById('kv-namespace-select').addEventListener('change', function() {
+                // 可以添加根据选定的命名空间重新加载数据的逻辑
+                const selectedNamespace = this.value;
+                // 这里可以添加针对特定命名空间的数据获取
+                loadKVStorageInfo(selectedNamespace);
+            });
+            
             // 添加注销事件监听
             document.getElementById('logout-btn').addEventListener('click', logout);
             
@@ -484,6 +560,7 @@
             document.querySelectorAll('button:has(.fa-sync-alt)').forEach(button => {
                 button.addEventListener('click', function() {
                     loadPostsData();
+                    loadKVStorageInfo();
                 });
             });
         });

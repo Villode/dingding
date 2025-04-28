@@ -7,6 +7,13 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <style>
+        body {
+            font-family: 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f9fafb;
+        }
+        
         .like-icon {
             display: inline-flex;
             align-items: center;
@@ -19,21 +26,73 @@
             align-items: center;
             gap: 0.5rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background-color: #fdf2f8;
+            color: #ec4899;
+            font-size: 0.875rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         .like-button:hover {
             transform: scale(1.05);
+            background-color: #fbcfe8;
+            box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.1), 0 2px 4px -1px rgba(236, 72, 153, 0.06);
         }
         .like-button:active {
             transform: scale(0.95);
         }
+        .like-button.liked {
+            background-color: #fdf2f8;
+            border: 1px solid #fbcfe8;
+        }
         .like-animation {
-            animation: likeEffect 0.5s ease-in-out;
+            animation: likeEffect 0.8s ease-in-out;
         }
         @keyframes likeEffect {
             0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(0.95); }
+            75% { transform: scale(1.1); }
             100% { transform: scale(1); }
+        }
+        .like-button .heart-icon {
+            position: relative;
+            transition: all 0.3s;
+        }
+        .like-button:hover .heart-icon {
+            transform: scale(1.1);
+        }
+        .like-button.liked .heart-icon {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .like-count {
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .like-count-change {
+            animation: countChange 0.5s ease-out;
+        }
+        @keyframes countChange {
+            0% { color: #ec4899; transform: scale(1.2); }
+            100% { color: inherit; transform: scale(1); }
+        }
+        .operations-counter {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            color: #6b7280;
+            text-align: center;
+        }
+        .operations-counter.warning {
+            color: #f59e0b;
+        }
+        .operations-counter.danger {
+            color: #ef4444;
         }
     </style>
 </head>
@@ -120,20 +179,20 @@
                     // 获取所有文章的点赞数
                     const likesPromises = posts.map(post => 
                         fetch(`/api/post/like/${post.id}`)
-                            .then(res => res.ok ? res.json() : {likes: 0})
-                            .then(data => ({id: post.id, likes: data.likes}))
-                            .catch(() => ({id: post.id, likes: 0}))
+                            .then(res => res.ok ? res.json() : {likes: 0, isLiked: false, remainingOperations: 0})
+                            .then(data => data)
+                            .catch(() => ({id: post.id, likes: 0, isLiked: false, remainingOperations: 0}))
                     );
                     
                     const likesResults = await Promise.all(likesPromises);
                     const likesMap = {};
-                    likesResults.forEach(item => {
-                        likesMap[item.id] = item.likes;
+                    likesResults.forEach((item, index) => {
+                        likesMap[posts[index].id] = item;
                     });
                     
                     posts.forEach(post => {
                         const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
-                        const likeCount = likesMap[post.id] || 0;
+                        const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false, remainingOperations: 0};
                         
                         const postElement = document.createElement('div');
                         postElement.className = 'bg-white p-4 rounded shadow';
@@ -147,10 +206,10 @@
                             <div class="flex justify-between items-center mt-2">
                                 <p class="text-gray-400 text-sm">发布于 ${postDate}</p>
                                 <span class="like-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeCount > 0 ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeStatus.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                     </svg>
-                                    <span>${likeCount}</span>
+                                    <span>${likeStatus.likes}</span>
                                 </span>
                             </div>
                         `;
@@ -179,39 +238,86 @@
             }
         }
         
+        // 检查用户是否已点赞
+        function hasUserLiked(postId) {
+            const likedPostsStr = localStorage.getItem('liked_posts');
+            const likedPosts = likedPostsStr ? JSON.parse(likedPostsStr) : [];
+            return likedPosts.includes(postId);
+        }
+
+        // 保存用户点赞状态
+        function saveUserLike(postId) {
+            const likedPostsStr = localStorage.getItem('liked_posts');
+            const likedPosts = likedPostsStr ? JSON.parse(likedPostsStr) : [];
+            
+            if (!likedPosts.includes(postId)) {
+                likedPosts.push(postId);
+                localStorage.setItem('liked_posts', JSON.stringify(likedPosts));
+            }
+        }
+
+        // 更新点赞按钮状态
+        function updateLikeButtonState(isLiked, remainingOperations) {
+            const likeButton = document.getElementById('like-button');
+            const likeIcon = document.getElementById('like-icon');
+            const operationsCounter = document.getElementById('operations-counter');
+            
+            // 更新点赞按钮样式
+            if (isLiked) {
+                likeIcon.setAttribute('fill', '#ec4899');
+                likeButton.classList.add('liked');
+                likeButton.title = '点击取消点赞';
+            } else {
+                likeIcon.setAttribute('fill', 'none');
+                likeButton.classList.remove('liked');
+                likeButton.title = '点赞支持';
+            }
+            
+            // 更新剩余操作次数显示
+            if (remainingOperations <= 0) {
+                operationsCounter.textContent = '今日操作次数已用完，请明天再试';
+                operationsCounter.className = 'operations-counter danger';
+                likeButton.disabled = true;
+            } else {
+                operationsCounter.textContent = `今日剩余操作次数：${remainingOperations}次`;
+                operationsCounter.className = 'operations-counter';
+                
+                if (remainingOperations === 1) {
+                    operationsCounter.className = 'operations-counter warning';
+                }
+                
+                likeButton.disabled = false;
+            }
+        }
+        
         // 加载文章详情
         async function loadArticle(articleId) {
+            currentArticleId = articleId;
+            
             try {
-                // 显示文章详情页，隐藏首页
                 showArticleView();
                 
-                // 更新URL但不重新加载页面
-                history.pushState({articleId}, '', `/post/${articleId}`);
-                currentArticleId = articleId;
+                const articleContainer = document.getElementById('article-container');
+                articleContainer.innerHTML = `<div class="p-6 text-center"><i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i><p class="mt-2 text-gray-500">正在加载文章...</p></div>`;
                 
-                // 获取文章数据
+                // 获取文章内容
                 const response = await fetch(`/api/post/${articleId}`);
                 
                 if (!response.ok) {
-                    throw new Error(`获取文章失败: ${response.status}`);
+                    throw new Error('文章不存在或已被删除');
                 }
                 
                 const article = await response.json();
                 
-                // 更新页面标题
-                document.title = `${article.title} - 叮叮博客`;
-                
-                // 更新文章内容
-                const articleContainer = document.getElementById('article-container');
-                
                 // 格式化日期
-                const publishDate = new Date(article.published_at);
-                const formattedDate = publishDate.toLocaleDateString('zh-CN', {
+                const date = new Date(article.published_at);
+                const formattedDate = date.toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                 });
                 
+                // 替换文章详情内容
                 articleContainer.innerHTML = `
                     <div class="px-4 py-5 sm:p-6">
                         <h2 class="text-3xl font-bold mb-4 text-gray-900">${article.title}</h2>
@@ -221,13 +327,14 @@
                         </div>
                         
                         <!-- 点赞按钮区域 -->
-                        <div class="mt-8 flex justify-center">
+                        <div class="mt-8 flex flex-col items-center">
                             <button id="like-button" class="like-button bg-pink-50 hover:bg-pink-100 text-pink-600 font-medium py-2 px-6 rounded-full shadow-sm flex items-center gap-2">
                                 <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                                 <span id="like-count">0</span> 次点赞
                             </button>
+                            <div id="operations-counter" class="operations-counter"></div>
                         </div>
                     </div>
                 `;
@@ -238,13 +345,13 @@
                     const likeData = await likeResponse.json();
                     
                     if (!likeResponse.ok) {
-                        throw new Error(likeData.error || likeData.message || '获取点赞数失败');
+                        throw new Error(likeData.error || likeData.message || '获取点赞数据失败');
                     }
                     
                     document.getElementById('like-count').textContent = likeData.likes;
-                    if (likeData.likes > 0) {
-                        document.getElementById('like-icon').setAttribute('fill', '#ec4899');
-                    }
+                    
+                    // 更新点赞按钮状态
+                    updateLikeButtonState(likeData.isLiked, likeData.remainingOperations);
                 } catch (error) {
                     console.error('获取点赞数据失败:', error);
                     document.getElementById('like-count').textContent = '点赞功能不可用';
@@ -256,10 +363,10 @@
                 // 绑定点赞按钮事件
                 document.getElementById('like-button').addEventListener('click', async () => {
                     try {
-                        const likeIcon = document.getElementById('like-icon');
+                        // 暂时禁用按钮，防止重复点击
                         const likeButton = document.getElementById('like-button');
+                        const likeIcon = document.getElementById('like-icon');
                         
-                        // 禁用按钮，防止重复点击
                         likeButton.disabled = true;
                         
                         // 动画效果
@@ -271,28 +378,24 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
-                            }
+                            },
+                            body: JSON.stringify({ action: 'toggle' })
                         });
                         
                         const data = await response.json();
                         
                         if (!response.ok) {
-                            throw new Error(data.error || data.message || '点赞失败');
+                            throw new Error(data.error || data.message || '操作失败');
                         }
                         
                         // 更新点赞数
                         document.getElementById('like-count').textContent = data.likes;
                         
-                        // 填充心形
-                        likeIcon.setAttribute('fill', '#ec4899');
-                        
-                        // 启用按钮
-                        setTimeout(() => {
-                            likeButton.disabled = false;
-                        }, 1000);
+                        // 更新点赞按钮状态
+                        updateLikeButtonState(data.isLiked, data.remainingOperations);
                     } catch (error) {
-                        console.error('点赞失败:', error);
-                        alert(`点赞失败: ${error.message || '请稍后再试'}`);
+                        console.error('操作失败:', error);
+                        alert(`操作失败: ${error.message || '请稍后再试'}`);
                         
                         // 重置按钮状态
                         document.getElementById('like-button').disabled = false;

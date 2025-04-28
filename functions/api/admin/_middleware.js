@@ -4,6 +4,13 @@
  */
 
 export async function onRequest(context) {
+  // 检查是否是登录API - 登录API不需要认证
+  const url = new URL(context.request.url);
+  if (url.pathname.endsWith('/api/admin/login')) {
+    // 如果是登录API，跳过验证
+    return context.next();
+  }
+  
   // 获取请求中的 Authorization 头
   const authHeader = context.request.headers.get('Authorization');
   

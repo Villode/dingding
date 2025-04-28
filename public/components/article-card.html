@@ -1,0 +1,54 @@
+<!-- 文章卡片组件 -->
+<div class="article-card">
+  <div class="article-card-content">
+    <h2 class="article-card-title">
+      <a href="/post.html?id={{id}}">{{title}}</a>
+    </h2>
+    <div class="article-card-meta">
+      <span class="article-date">
+        <i class="fas fa-calendar-alt"></i> {{date}}
+      </span>
+      <span class="article-likes">
+        <i class="fas fa-heart"></i> {{likes}} 点赞
+      </span>
+    </div>
+    <p class="article-card-summary">{{summary}}</p>
+    <a href="/post.html?id={{id}}" class="article-card-link">
+      阅读更多 <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
+<script>
+  // 使用示例:
+  // 1. 引入该组件
+  // 2. 使用以下代码创建文章卡片:
+  /*
+    function createArticleCard(article) {
+      // 获取模板内容
+      const template = document.getElementById('article-card-template').innerHTML;
+      
+      // 格式化日期
+      const date = new Date(article.published_at);
+      const formattedDate = date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // 替换模板变量
+      const cardHtml = template
+        .replace(/{{id}}/g, article.id)
+        .replace(/{{title}}/g, article.title)
+        .replace(/{{summary}}/g, article.summary)
+        .replace(/{{date}}/g, formattedDate)
+        .replace(/{{likes}}/g, article.likes || 0);
+      
+      // 创建DOM元素
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = cardHtml;
+      
+      return tempDiv.firstElementChild;
+    }
+  */
+</script> 

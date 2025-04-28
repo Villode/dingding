@@ -1,0 +1,60 @@
+<!-- 导航栏组件 -->
+<div class="navbar">
+  <div class="container nav-container">
+    <a href="/" class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
+      </svg>
+      <span class="logo-text">叮叮博客</span>
+    </a>
+    
+    <div class="nav-links" id="navLinks">
+      <a href="/" class="active">首页</a>
+      <a href="/categories.html">分类</a>
+      <a href="/archives.html">归档</a>
+      <a href="/about.html">关于</a>
+    </div>
+    
+    <div class="menu-toggle" id="menuToggle">
+      <i class="fas fa-bars"></i>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 导航栏响应式交互
+  document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    
+    menuToggle.addEventListener('click', function() {
+      navLinks.classList.toggle('active');
+      
+      // 切换图标
+      const iconElement = menuToggle.querySelector('i');
+      if (navLinks.classList.contains('active')) {
+        iconElement.classList.remove('fa-bars');
+        iconElement.classList.add('fa-times');
+      } else {
+        iconElement.classList.remove('fa-times');
+        iconElement.classList.add('fa-bars');
+      }
+    });
+    
+    // 设置当前活动链接
+    const currentPath = window.location.pathname;
+    const navLinksArray = navLinks.querySelectorAll('a');
+    
+    navLinksArray.forEach(link => {
+      link.classList.remove('active');
+      const linkPath = link.getAttribute('href');
+      
+      if (currentPath === linkPath || 
+          (linkPath !== '/' && currentPath.startsWith(linkPath))) {
+        link.classList.add('active');
+      } else if (currentPath === '/' && linkPath === '/') {
+        link.classList.add('active');
+      }
+    });
+  });
+</script> 

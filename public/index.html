@@ -13,6 +13,28 @@
             gap: 0.25rem;
             color: #f472b6;
         }
+        
+        .like-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .like-button:hover {
+            transform: scale(1.05);
+        }
+        .like-button:active {
+            transform: scale(0.95);
+        }
+        .like-animation {
+            animation: likeEffect 0.5s ease-in-out;
+        }
+        @keyframes likeEffect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -197,8 +219,78 @@
                         <div class="prose max-w-none">
                             ${article.content}
                         </div>
+                        
+                        <!-- 点赞按钮区域 -->
+                        <div class="mt-8 flex justify-center">
+                            <button id="like-button" class="like-button bg-pink-50 hover:bg-pink-100 text-pink-600 font-medium py-2 px-6 rounded-full shadow-sm flex items-center gap-2">
+                                <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                                <span id="like-count">0</span> 次点赞
+                            </button>
+                        </div>
                     </div>
                 `;
+                
+                // 获取并显示点赞数
+                try {
+                    const likeResponse = await fetch(`/api/post/like/${articleId}`);
+                    if (likeResponse.ok) {
+                        const likeData = await likeResponse.json();
+                        document.getElementById('like-count').textContent = likeData.likes;
+                        if (likeData.likes > 0) {
+                            document.getElementById('like-icon').setAttribute('fill', '#ec4899');
+                        }
+                    }
+                } catch (error) {
+                    console.error('获取点赞数据失败:', error);
+                }
+                
+                // 绑定点赞按钮事件
+                document.getElementById('like-button').addEventListener('click', async () => {
+                    try {
+                        const likeIcon = document.getElementById('like-icon');
+                        const likeButton = document.getElementById('like-button');
+                        
+                        // 禁用按钮，防止重复点击
+                        likeButton.disabled = true;
+                        
+                        // 动画效果
+                        likeIcon.classList.add('like-animation');
+                        setTimeout(() => likeIcon.classList.remove('like-animation'), 500);
+                        
+                        // 发送点赞请求
+                        const response = await fetch(`/api/post/like/${articleId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('点赞失败');
+                        }
+                        
+                        const data = await response.json();
+                        
+                        // 更新点赞数
+                        document.getElementById('like-count').textContent = data.likes;
+                        
+                        // 填充心形
+                        likeIcon.setAttribute('fill', '#ec4899');
+                        
+                        // 启用按钮
+                        setTimeout(() => {
+                            likeButton.disabled = false;
+                        }, 1000);
+                    } catch (error) {
+                        console.error('点赞失败:', error);
+                        alert('点赞失败，请稍后再试');
+                        
+                        // 重置按钮状态
+                        document.getElementById('like-button').disabled = false;
+                    }
+                });
             } catch (error) {
                 console.error('加载文章失败:', error);
                 

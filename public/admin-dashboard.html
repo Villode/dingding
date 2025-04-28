@@ -326,13 +326,11 @@
         }
 
         // 获取 KV 存储信息
-        async function loadKVStorageInfo() {
+        async function loadKVStorageInfo(namespaceId = 'all') {
             try {
-                // 从 API 获取 KV 存储信息
-                const response = await authFetch('/api/admin/kv-info');
-                if (!response.ok) throw new Error('获取 KV 存储信息失败');
-                
-                const data = await response.json();
+                // 从 API 获取 KV 存储信息，添加命名空间参数
+                const url = `/api/admin/kv-info${namespaceId !== 'all' ? `?namespace=${namespaceId}` : ''}`;
+                const response = await authFetch(url);
                 
                 // 获取 UI 元素
                 const usageBar = document.getElementById('kv-usage-bar');
@@ -340,8 +338,37 @@
                 const usagePercent = document.getElementById('kv-usage-percent');
                 const namespaceSelect = document.getElementById('kv-namespace-select');
                 
-                // 更新命名空间下拉菜单
-                if (data.namespaces && data.namespaces.length > 0) {
+                if (!response.ok) {
+                    // 处理错误响应
+                    const errorData = await response.json();
+                    console.error('KV 存储信息错误:', errorData);
+                    
+                    // 清除命名空间选择（只保留"所有命名空间"）
+                    while (namespaceSelect.options.length > 1) {
+                        namespaceSelect.remove(1);
+                    }
+                    
+                    // 更新 UI 显示错误
+                    usageBar.style.width = '0%';
+                    usageBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
+                    usageBar.classList.add('bg-gray-500');
+                    
+                    usageText.textContent = errorData.error || '获取数据失败';
+                    usageText.classList.add('text-red-500');
+                    
+                    usagePercent.textContent = '';
+                    
+                    return;
+                }
+                
+                // 请求成功，解析数据
+                const data = await response.json();
+                
+                // 重置错误样式
+                usageText.classList.remove('text-red-500');
+                
+                // 更新命名空间下拉菜单（只在首次加载或切换回"所有命名空间"时更新）
+                if (namespaceId === 'all' && data.namespaces && data.namespaces.length > 0) {
                     // 清空现有选项（保留"所有命名空间"选项）
                     while (namespaceSelect.options.length > 1) {
                         namespaceSelect.remove(1);
@@ -351,7 +378,7 @@
                     data.namespaces.forEach(namespace => {
                         const option = document.createElement('option');
                         option.value = namespace.id;
-                        option.textContent = namespace.name;
+                        option.textContent = namespace.name + (namespace.keys ? ` (${namespace.keys} 个键)` : '');
                         namespaceSelect.appendChild(option);
                     });
                 }
@@ -369,24 +396,41 @@
                     usagePercent.textContent = `${percentUsed}%`;
                     
                     // 为使用率较高的情况改变颜色
+                    usageBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500', 'bg-gray-500');
+                    
                     if (percentUsed > 80) {
-                        usageBar.classList.remove('bg-blue-500');
                         usageBar.classList.add('bg-red-500');
                     } else if (percentUsed > 60) {
-                        usageBar.classList.remove('bg-blue-500');
                         usageBar.classList.add('bg-yellow-500');
+                    } else {
+                        usageBar.classList.add('bg-blue-500');
                     }
                 } else {
-                    // 如果没有数据，显示默认值
+                    // 如果没有使用数据，显示默认值
                     usageBar.style.width = '0%';
+                    usageBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
+                    usageBar.classList.add('bg-gray-500');
+                    
                     usageText.textContent = '无数据';
                     usagePercent.textContent = '0%';
                 }
                 
             } catch (error) {
                 console.error('加载 KV 存储信息失败:', error);
+                
                 // 更新 UI 显示错误
-                document.getElementById('kv-usage-text').textContent = '获取数据失败';
+                const usageBar = document.getElementById('kv-usage-bar');
+                const usageText = document.getElementById('kv-usage-text');
+                const usagePercent = document.getElementById('kv-usage-percent');
+                
+                usageBar.style.width = '0%';
+                usageBar.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500');
+                usageBar.classList.add('bg-gray-500');
+                
+                usageText.textContent = '连接错误: ' + (error.message || '网络请求失败');
+                usageText.classList.add('text-red-500');
+                
+                usagePercent.textContent = '';
             }
         }
 

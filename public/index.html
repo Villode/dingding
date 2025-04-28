@@ -277,12 +277,136 @@
                 font-size: 1.25rem;
             }
         }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 64px;
+            background-color: var(--bg-color-light);
+            border-right: 1px solid var(--border-color);
+            z-index: 100;
+            transition: width var(--transition-normal);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar:hover {
+            width: 200px;
+        }
+        
+        .sidebar-logo {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: var(--spacing-md) 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-sm) var(--spacing-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            border-left: 3px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-primary);
+            background-color: rgba(110, 86, 207, 0.1);
+            border-left-color: var(--primary-color);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: var(--spacing-md);
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--spacing-sm);
+            border-radius: 50%;
+            transition: all var(--transition-fast);
+        }
+        
+        .theme-toggle:hover {
+            color: var(--text-primary);
+            background-color: rgba(110, 86, 207, 0.1);
+        }
+        
+        /* 主内容区调整 */
+        .main-wrapper {
+            margin-left: 64px;
+            width: calc(100% - 64px);
+            min-height: 100vh;
+        }
+        
+        /* 适配移动设备的侧边栏 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 200px;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .menu-toggle {
+                position: fixed;
+                top: var(--spacing-md);
+                left: var(--spacing-md);
+                z-index: 99;
+                background-color: var(--bg-color-light);
+                border: 1px solid var(--border-color);
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--text-primary);
+                cursor: pointer;
+                box-shadow: var(--shadow-sm);
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <!-- 导航栏 -->
-    <div class="navbar">
-        <div class="container flex justify-between items-center h-full">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
             <a href="/" class="logo">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="url(#gradientPrimary)">
                     <defs>
@@ -295,113 +419,118 @@
                 </svg>
                 <span class="logo-text">叮叮博客</span>
             </a>
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="/" class="text-white hover:text-primary-light transition-colors">首页</a>
-                <a href="/archives.html" class="text-gray-400 hover:text-white transition-colors">归档</a>
-                <a href="/about.html" class="text-gray-400 hover:text-white transition-colors">关于</a>
-                <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
-                    <i class="fab fa-github"></i>
-                </a>
-            </div>
-            <button class="md:hidden text-white text-xl focus:outline-none">
-                <i class="fas fa-bars"></i>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/archives.html" class="nav-item">
+                <i class="fas fa-archive"></i>
+                <span>归档</span>
+            </a>
+            <a href="/about.html" class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>关于</span>
+            </a>
+            <a href="https://github.com" target="_blank" class="nav-item">
+                <i class="fab fa-github"></i>
+                <span>GitHub</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="theme-toggle" title="切换主题">
+                <i class="fas fa-moon"></i>
             </button>
         </div>
     </div>
 
-    <!-- 移动端导航菜单 -->
-    <div class="mobile-menu hidden bg-bg-color-light fixed inset-0 z-50 pt-16 px-4" style="display: none;">
-        <div class="flex flex-col space-y-4">
-            <a href="/" class="text-white text-xl py-2 border-b border-border-color">首页</a>
-            <a href="/archives.html" class="text-white text-xl py-2 border-b border-border-color">归档</a>
-            <a href="/about.html" class="text-white text-xl py-2 border-b border-border-color">关于</a>
-            <a href="https://github.com" target="_blank" class="text-white text-xl py-2 border-b border-border-color">
-                <i class="fab fa-github mr-2"></i> GitHub
-            </a>
-        </div>
-        <button class="absolute top-4 right-4 text-white text-xl close-menu">
-            <i class="fas fa-times"></i>
-        </button>
+    <!-- 移动端菜单按钮 -->
+    <button class="menu-toggle md:hidden">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- 主要内容包装器 -->
+    <div class="main-wrapper">
+        <!-- 主要内容区域 -->
+        <main class="container py-10">
+            <div id="main-content">
+                <!-- 主页文章列表 -->
+                <div id="home-content">
+                    <div class="mb-12">
+                        <div class="flex items-center justify-between mb-8">
+                            <h2 class="text-2xl font-bold text-white relative inline-block">
+                                最新文章
+                                <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-color to-accent-color transform -translate-y-2"></span>
+                            </h2>
+                            <div class="text-sm text-gray-400">
+                                <i class="fas fa-terminal mr-2"></i>
+                                <span class="hidden sm:inline">更新于 </span>
+                                <span id="current-date">加载中...</span>
+                            </div>
+                        </div>
+                        <div id="posts-container" class="space-y-6">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文章详情页，默认隐藏 -->
+                <div id="article-content" class="hidden">
+                    <div class="mb-6">
+                        <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i> 返回首页
+                        </button>
+                    </div>
+                    <div id="article-container" class="bg-bg-card rounded-lg overflow-hidden border border-border-color">
+                        <div class="p-6 md:p-8">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="border-t border-border-color py-8 mt-12">
+            <div class="container">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="url(#gradientFooter)">
+                                <defs>
+                                    <linearGradient id="gradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#6e56cf" />
+                                        <stop offset="100%" stop-color="#00b8d4" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
+                            </svg>
+                            <span class="text-white ml-2 font-medium">叮叮博客</span>
+                        </div>
+                    </div>
+                    <div class="text-gray-400 text-sm">
+                        &copy; <span id="year">2023</span> 叮叮博客 | 基于 Cloudflare Pages 构建
+                    </div>
+                    <div class="flex space-x-4 mt-4 md:mt-0">
+                        <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="mailto:contact@example.com" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <!-- 主要内容区域 -->
-    <main class="container py-10">
-        <div id="main-content">
-            <!-- 主页文章列表 -->
-            <div id="home-content">
-                <div class="mb-12">
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-2xl font-bold text-white relative inline-block">
-                            最新文章
-                            <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-color to-accent-color transform -translate-y-2"></span>
-                        </h2>
-                        <div class="text-sm text-gray-400">
-                            <i class="fas fa-terminal mr-2"></i>
-                            <span class="hidden sm:inline">更新于 </span>
-                            <span id="current-date">加载中...</span>
-                        </div>
-                    </div>
-                    <div id="posts-container" class="space-y-6">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 文章详情页，默认隐藏 -->
-            <div id="article-content" class="hidden">
-                <div class="mb-6">
-                    <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i> 返回首页
-                    </button>
-                </div>
-                <div id="article-container" class="bg-bg-card rounded-lg overflow-hidden border border-border-color">
-                    <div class="p-6 md:p-8">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 页脚 -->
-    <footer class="border-t border-border-color py-8 mt-12">
-        <div class="container">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="url(#gradientFooter)">
-                            <defs>
-                                <linearGradient id="gradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#6e56cf" />
-                                    <stop offset="100%" stop-color="#00b8d4" />
-                                </linearGradient>
-                            </defs>
-                            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
-                        </svg>
-                        <span class="text-white ml-2 font-medium">叮叮博客</span>
-                    </div>
-                </div>
-                <div class="text-gray-400 text-sm">
-                    &copy; <span id="year">2023</span> 叮叮博客 | 基于 Cloudflare Pages 构建
-                </div>
-                <div class="flex space-x-4 mt-4 md:mt-0">
-                    <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="mailto:contact@example.com" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-envelope"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <script>
         // 全局变量存储当前视图状态和文章ID
@@ -418,35 +547,39 @@
             document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
         }
         
-        // 初始化移动端菜单
-        function initMobileMenu() {
-            const menuButton = document.querySelector('.navbar button');
-            const mobileMenu = document.querySelector('.mobile-menu');
-            const closeButton = document.querySelector('.close-menu');
+        // 初始化侧边栏菜单（移动端）
+        function initSidebar() {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
             
-            menuButton.addEventListener('click', () => {
-                mobileMenu.style.display = 'block';
-                // 添加动画
-                setTimeout(() => {
-                    mobileMenu.style.opacity = '1';
-                }, 10);
-            });
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
             
-            closeButton.addEventListener('click', () => {
-                mobileMenu.style.opacity = '0';
-                setTimeout(() => {
-                    mobileMenu.style.display = 'none';
-                }, 300);
+            // 设置当前活动链接
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(link => {
+                link.classList.remove('active');
+                const href = link.getAttribute('href');
+                
+                if (currentPath === href || 
+                    (href !== '/' && currentPath.startsWith(href))) {
+                    link.classList.add('active');
+                } else if (currentPath === '/' && href === '/') {
+                    link.classList.add('active');
+                }
             });
         }
-        
+
         // 初始化时检查URL并设置页面
         document.addEventListener('DOMContentLoaded', async () => {
             // 更新日期
             updateCurrentDate();
             
-            // 初始化移动端菜单
-            initMobileMenu();
+            // 初始化侧边栏
+            initSidebar();
             
             const path = window.location.pathname;
             if (path.startsWith('/post/')) {

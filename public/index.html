@@ -6,19 +6,136 @@
     <title>叮叮博客</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            color: #374151;
-            background-color: #f9fafb;
+        :root {
+            /* 主色调 */
+            --primary-color: #6e56cf;
+            --primary-light: #9d8df1;
+            --primary-dark: #4c3599;
+            
+            /* 辅助色 */
+            --accent-color: #00b8d4;
+            --accent-light: #62ebff;
+            --accent-dark: #0087a1;
+            
+            /* 中性色 */
+            --bg-color: #121212;
+            --bg-color-light: #1f1f1f;
+            --bg-card: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #333333;
+            
+            /* 功能色 */
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --warning-color: #ff9800;
+            --info-color: #2196f3;
+            
+            /* 尺寸 */
+            --container-width: 1200px;
+            --header-height: 64px;
+            --border-radius: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            
+            /* 阴影 */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+            
+            /* 字体 */
+            --font-code: 'JetBrains Mono', monospace;
+            --font-body: 'Noto Sans SC', sans-serif;
+            
+            /* 动画 */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: var(--container-width);
+            margin: 0 auto;
+            padding: 0 var(--spacing-md);
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* 文章卡片样式 */
+        .article-card {
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+        
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+        }
+        
+        /* 点赞相关样式 */
         .like-icon {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
-            color: #f472b6;
+            color: var(--primary-light);
         }
         
         .like-button {
@@ -27,28 +144,34 @@
             gap: 0.5rem;
             cursor: pointer;
             transition: all 0.3s;
-            padding: 0.25rem 0.75rem;
+            padding: 0.5rem 1rem;
             border-radius: 9999px;
-            background-color: #fdf2f8;
-            color: #ec4899;
+            background-color: rgba(110, 86, 207, 0.1);
+            color: var(--primary-light);
             font-size: 0.875rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(110, 86, 207, 0.2);
+            box-shadow: var(--shadow-sm);
         }
+        
         .like-button:hover {
             transform: scale(1.05);
-            background-color: #fbcfe8;
-            box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.1), 0 2px 4px -1px rgba(236, 72, 153, 0.06);
+            background-color: rgba(110, 86, 207, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(110, 86, 207, 0.4), 0 2px 4px -1px rgba(110, 86, 207, 0.1);
         }
+        
         .like-button:active {
             transform: scale(0.95);
         }
+        
         .like-button.liked {
-            background-color: #fdf2f8;
-            border: 1px solid #fbcfe8;
+            background-color: rgba(110, 86, 207, 0.2);
+            border: 1px solid var(--primary-color);
         }
+        
         .like-animation {
             animation: likeEffect 0.8s ease-in-out;
         }
+        
         @keyframes likeEffect {
             0% { transform: scale(1); }
             25% { transform: scale(1.2); }
@@ -56,92 +179,227 @@
             75% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+        
         .like-button .heart-icon {
             position: relative;
             transition: all 0.3s;
         }
+        
         .like-button:hover .heart-icon {
             transform: scale(1.1);
         }
+        
         .like-button.liked .heart-icon {
             animation: pulse 1.5s infinite;
         }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+        
         .like-count {
             font-weight: 500;
             transition: all 0.3s;
         }
+        
         .like-count-change {
             animation: countChange 0.5s ease-out;
         }
+        
         @keyframes countChange {
-            0% { color: #ec4899; transform: scale(1.2); }
+            0% { color: var(--primary-light); transform: scale(1.2); }
             100% { color: inherit; transform: scale(1); }
         }
+        
         .operations-counter {
             font-size: 0.75rem;
             margin-top: 0.5rem;
-            color: #6b7280;
+            color: var(--text-secondary);
             text-align: center;
         }
+        
         .operations-counter.warning {
-            color: #f59e0b;
+            color: var(--warning-color);
         }
+        
         .operations-counter.danger {
-            color: #ef4444;
+            color: var(--error-color);
+        }
+        
+        /* 动画 */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(110, 86, 207, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* 响应式样式 */
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+            }
+            
+            .article-card-title {
+                font-size: 1.25rem;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold text-gray-900">叮叮博客</h1>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <div class="container flex justify-between items-center h-full">
+            <a href="/" class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="url(#gradientPrimary)">
+                    <defs>
+                        <linearGradient id="gradientPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6e56cf" />
+                            <stop offset="100%" stop-color="#00b8d4" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
+                </svg>
+                <span class="logo-text">叮叮博客</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="/" class="text-white hover:text-primary-light transition-colors">首页</a>
+                <a href="/archives.html" class="text-gray-400 hover:text-white transition-colors">归档</a>
+                <a href="/about.html" class="text-gray-400 hover:text-white transition-colors">关于</a>
+                <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+            <button class="md:hidden text-white text-xl focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-    </header>
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-            <div id="main-content">
-                <!-- 主页文章列表 -->
-                <div id="home-content">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-4">最新文章</h2>
-                        <div id="posts-container" class="space-y-4">
-                            <p class="text-gray-500">加载中...</p>
+    </div>
+
+    <!-- 移动端导航菜单 -->
+    <div class="mobile-menu hidden bg-bg-color-light fixed inset-0 z-50 pt-16 px-4" style="display: none;">
+        <div class="flex flex-col space-y-4">
+            <a href="/" class="text-white text-xl py-2 border-b border-border-color">首页</a>
+            <a href="/archives.html" class="text-white text-xl py-2 border-b border-border-color">归档</a>
+            <a href="/about.html" class="text-white text-xl py-2 border-b border-border-color">关于</a>
+            <a href="https://github.com" target="_blank" class="text-white text-xl py-2 border-b border-border-color">
+                <i class="fab fa-github mr-2"></i> GitHub
+            </a>
+        </div>
+        <button class="absolute top-4 right-4 text-white text-xl close-menu">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <main class="container py-10">
+        <div id="main-content">
+            <!-- 主页文章列表 -->
+            <div id="home-content">
+                <div class="mb-12">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold text-white relative inline-block">
+                            最新文章
+                            <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-color to-accent-color transform -translate-y-2"></span>
+                        </h2>
+                        <div class="text-sm text-gray-400">
+                            <i class="fas fa-terminal mr-2"></i>
+                            <span class="hidden sm:inline">更新于 </span>
+                            <span id="current-date">加载中...</span>
+                        </div>
+                    </div>
+                    <div id="posts-container" class="space-y-6">
+                        <div class="loading">
+                            <div class="spinner"></div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- 文章详情页，默认隐藏 -->
-                <div id="article-content" class="hidden">
-                    <div class="mb-4">
-                        <button id="back-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            返回首页
-                        </button>
-                    </div>
-                    <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
-                            <div class="animate-pulse">
-                                <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-                                <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                            </div>
+            </div>
+            
+            <!-- 文章详情页，默认隐藏 -->
+            <div id="article-content" class="hidden">
+                <div class="mb-6">
+                    <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i> 返回首页
+                    </button>
+                </div>
+                <div id="article-container" class="bg-bg-card rounded-lg overflow-hidden border border-border-color">
+                    <div class="p-6 md:p-8">
+                        <div class="loading">
+                            <div class="spinner"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-    <footer class="bg-white border-t mt-12 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-500 text-sm">
-                &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
-            </p>
+
+    <!-- 页脚 -->
+    <footer class="border-t border-border-color py-8 mt-12">
+        <div class="container">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="url(#gradientFooter)">
+                            <defs>
+                                <linearGradient id="gradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#6e56cf" />
+                                    <stop offset="100%" stop-color="#00b8d4" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" />
+                        </svg>
+                        <span class="text-white ml-2 font-medium">叮叮博客</span>
+                    </div>
+                </div>
+                <div class="text-gray-400 text-sm">
+                    &copy; <span id="year">2023</span> 叮叮博客 | 基于 Cloudflare Pages 构建
+                </div>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="mailto:contact@example.com" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -150,8 +408,46 @@
         let currentState = 'home';
         let currentArticleId = null;
         
-        // 初始化时检查URL
+        // 更新页脚年份
+        document.getElementById('year').textContent = new Date().getFullYear();
+        
+        // 更新当前日期
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
+        }
+        
+        // 初始化移动端菜单
+        function initMobileMenu() {
+            const menuButton = document.querySelector('.navbar button');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const closeButton = document.querySelector('.close-menu');
+            
+            menuButton.addEventListener('click', () => {
+                mobileMenu.style.display = 'block';
+                // 添加动画
+                setTimeout(() => {
+                    mobileMenu.style.opacity = '1';
+                }, 10);
+            });
+            
+            closeButton.addEventListener('click', () => {
+                mobileMenu.style.opacity = '0';
+                setTimeout(() => {
+                    mobileMenu.style.display = 'none';
+                }, 300);
+            });
+        }
+        
+        // 初始化时检查URL并设置页面
         document.addEventListener('DOMContentLoaded', async () => {
+            // 更新日期
+            updateCurrentDate();
+            
+            // 初始化移动端菜单
+            initMobileMenu();
+            
             const path = window.location.pathname;
             if (path.startsWith('/post/')) {
                 const postId = path.split('/').pop();
@@ -190,27 +486,43 @@
                         likesMap[posts[index].id] = item;
                     });
                     
-                    posts.forEach(post => {
-                        const postDate = new Date(post.published_at).toLocaleDateString('zh-CN');
+                    posts.forEach((post, index) => {
+                        const postDate = new Date(post.published_at);
+                        const formattedDate = postDate.toLocaleDateString('zh-CN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
                         const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false, remainingOperations: 0};
                         
                         const postElement = document.createElement('div');
-                        postElement.className = 'bg-white p-4 rounded shadow';
+                        postElement.className = 'article-card fade-in';
+                        postElement.style.animationDelay = `${index * 0.1}s`;
+                        
                         postElement.innerHTML = `
-                            <h3 class="text-xl font-bold">
-                                <a href="#" class="text-blue-600 hover:text-blue-800 article-link" data-id="${post.id}">
-                                    ${post.title}
-                                </a>
-                            </h3>
-                            <p class="text-gray-600 mt-2">${post.summary || '无摘要'}</p>
-                            <div class="flex justify-between items-center mt-2">
-                                <p class="text-gray-400 text-sm">发布于 ${postDate}</p>
-                                <span class="like-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeStatus.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                    </svg>
-                                    <span>${likeStatus.likes}</span>
-                                </span>
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-3">
+                                    <a href="#" class="text-white hover:text-primary-light transition-colors article-link" data-id="${post.id}">
+                                        ${post.title}
+                                    </a>
+                                </h3>
+                                <p class="text-text-secondary mb-4">${post.summary || '无摘要'}</p>
+                                <div class="flex flex-wrap justify-between items-center">
+                                    <div class="flex items-center space-x-4 mb-2 sm:mb-0">
+                                        <span class="text-text-secondary text-sm">
+                                            <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
+                                        </span>
+                                        <span class="like-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${likeStatus.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                            </svg>
+                                            <span>${likeStatus.likes}</span>
+                                        </span>
+                                    </div>
+                                    <a href="#" class="article-link inline-flex items-center text-primary-light hover:text-accent-light transition-colors text-sm" data-id="${post.id}">
+                                        阅读全文 <i class="fas fa-angle-right ml-1"></i>
+                                    </a>
+                                </div>
                             </div>
                         `;
                         
@@ -223,18 +535,29 @@
                             e.preventDefault();
                             const articleId = this.getAttribute('data-id');
                             navigateToArticle(articleId);
+                            history.pushState({}, '', `/post/${articleId}`);
                         });
                     });
                 } else {
-                    postsContainer.innerHTML = '<p class="text-gray-500">暂无文章</p>';
+                    postsContainer.innerHTML = `
+                        <div class="bg-bg-card border border-border-color rounded-lg p-6 text-center">
+                            <i class="fas fa-inbox text-4xl text-text-secondary mb-2"></i>
+                            <p class="text-text-secondary">暂无文章</p>
+                        </div>
+                    `;
                 }
                 
                 // 显示首页，隐藏文章详情页
                 showHomeView();
             } catch (error) {
                 console.error('获取文章失败:', error);
-                document.getElementById('posts-container').innerHTML = 
-                    '<p class="text-red-500">获取文章列表失败，请稍后再试</p>';
+                document.getElementById('posts-container').innerHTML = `
+                    <div class="bg-bg-card border border-border-color rounded-lg p-6 text-center">
+                        <i class="fas fa-exclamation-triangle text-4xl text-error-color mb-2"></i>
+                        <p class="text-error-color">获取文章列表失败，请稍后再试</p>
+                        <p class="text-text-secondary text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
             }
         }
         
@@ -264,7 +587,7 @@
             
             // 更新点赞按钮样式
             if (isLiked) {
-                likeIcon.setAttribute('fill', '#ec4899');
+                likeIcon.setAttribute('fill', 'currentColor');
                 likeButton.classList.add('liked');
                 likeButton.title = '点击取消点赞';
             } else {
@@ -298,7 +621,11 @@
                 showArticleView();
                 
                 const articleContainer = document.getElementById('article-container');
-                articleContainer.innerHTML = `<div class="p-6 text-center"><i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i><p class="mt-2 text-gray-500">正在加载文章...</p></div>`;
+                articleContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
                 
                 // 获取文章内容
                 const response = await fetch(`/api/post/${articleId}`);
@@ -317,18 +644,29 @@
                     day: 'numeric'
                 });
                 
+                // 设置文档标题
+                document.title = `${article.title} - 叮叮博客`;
+                
                 // 替换文章详情内容
                 articleContainer.innerHTML = `
-                    <div class="px-4 py-5 sm:p-6">
-                        <h2 class="text-3xl font-bold mb-4 text-gray-900">${article.title}</h2>
-                        <p class="text-gray-500 mb-6">${formattedDate}</p>
-                        <div class="prose max-w-none">
+                    <div class="p-6 md:p-8">
+                        <h1 class="text-2xl md:text-3xl font-bold mb-4 text-white">${article.title}</h1>
+                        <div class="flex items-center mb-8 text-text-secondary">
+                            <span class="inline-flex items-center">
+                                <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
+                            </span>
+                            <span class="mx-3">·</span>
+                            <span class="inline-flex items-center">
+                                <i class="fas fa-code mr-1"></i> Cloudflare Pages
+                            </span>
+                        </div>
+                        <div class="prose max-w-none text-text-primary mb-8 article-content">
                             ${article.content}
                         </div>
                         
                         <!-- 点赞按钮区域 -->
-                        <div class="mt-8 flex flex-col items-center">
-                            <button id="like-button" class="like-button bg-pink-50 hover:bg-pink-100 text-pink-600 font-medium py-2 px-6 rounded-full shadow-sm flex items-center gap-2">
+                        <div class="mt-10 flex flex-col items-center border-t border-border-color pt-8">
+                            <button id="like-button" class="like-button">
                                 <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
@@ -338,6 +676,17 @@
                         </div>
                     </div>
                 `;
+                
+                // 处理文章内容中的代码块
+                const codeBlocks = document.querySelectorAll('.article-content pre');
+                codeBlocks.forEach(block => {
+                    block.style.fontFamily = 'var(--font-code)';
+                    block.style.background = 'rgba(18, 18, 18, 0.6)';
+                    block.style.borderRadius = 'var(--border-radius)';
+                    block.style.padding = 'var(--spacing-md)';
+                    block.style.borderLeft = '4px solid var(--primary-color)';
+                    block.style.overflowX = 'auto';
+                });
                 
                 // 获取并显示点赞数
                 try {
@@ -406,12 +755,15 @@
                 
                 const articleContainer = document.getElementById('article-container');
                 articleContainer.innerHTML = `
-                    <div class="px-4 py-5 sm:p-6">
-                        <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
-                        <p class="text-gray-700">
-                            无法加载文章内容，请返回<button class="text-blue-500 hover:underline" id="back-to-home">首页</button>查看其他文章。
+                    <div class="p-6 md:p-8 text-center">
+                        <i class="fas fa-exclamation-circle text-4xl text-error-color mb-4"></i>
+                        <h2 class="text-2xl font-bold mb-4 text-error-color">加载文章失败</h2>
+                        <p class="text-text-secondary mb-6">
+                            无法加载文章内容，请返回<button class="text-primary-light hover:text-accent-light hover:underline ml-1" id="back-to-home">首页</button>查看其他文章。
                         </p>
-                        <p class="text-gray-500 mt-2">错误详情: ${error.message}</p>
+                        <div class="inline-block bg-bg-color-light p-4 rounded-lg text-left">
+                            <p class="font-mono text-sm text-error-color">Error: ${error.message}</p>
+                        </div>
                     </div>
                 `;
                 
@@ -437,6 +789,7 @@
         // 导航到文章页面
         function navigateToArticle(articleId) {
             loadArticle(articleId);
+            history.pushState({}, '', `/post/${articleId}`);
         }
         
         // 导航到首页
@@ -447,7 +800,10 @@
         }
         
         // 处理返回按钮点击
-        document.getElementById('back-button').addEventListener('click', navigateToHome);
+        document.getElementById('back-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateToHome();
+        });
         
         // 处理浏览器前进/后退按钮
         window.addEventListener('popstate', function(event) {

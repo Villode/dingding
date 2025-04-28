@@ -31,3 +31,6 @@ id = "97c1ad6d710b42129dc204075412907e"
 [[env.production.kv_namespaces]]
 binding = "BLOG_LIKES"
 id = "264e66d3659d4b209b247930cadf262f"
+
+binding = "API_STATS"
+id = "ef3827e2f45142f39a96c57f92baeb20"

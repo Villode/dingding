@@ -112,7 +112,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-white shadow rounded-lg p-4">
+                        <div class="bg-white shadow rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow" id="api-card">
                             <div class="flex items-center">
                                 <div class="flex-1">
                                     <h2 class="text-gray-500 text-sm">API调用</h2>
@@ -270,6 +270,71 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- API调用统计模态框 -->
+    <div id="api-stats-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 lg:w-3/4 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-700">API调用统计详情</h3>
+                <button id="close-api-stats-modal" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- 总调用次数 -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="text-blue-700 font-medium">总调用次数</h4>
+                    <p class="text-2xl font-bold text-blue-800" id="api-total-calls">加载中...</p>
+                </div>
+                
+                <!-- 日期选择器 -->
+                <div class="flex justify-end">
+                    <select id="api-stats-days" class="rounded-md border-gray-300 shadow-sm">
+                        <option value="7">最近7天</option>
+                        <option value="14">最近14天</option>
+                        <option value="30">最近30天</option>
+                    </select>
+                </div>
+                
+                <!-- 调用趋势图表 -->
+                <div class="bg-white rounded-lg p-4 border">
+                    <h4 class="text-gray-700 font-medium mb-2">API调用趋势</h4>
+                    <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center" id="api-trend-chart">
+                        <div class="text-center text-gray-500 w-full px-4">
+                            <i class="fas fa-spinner fa-spin text-xl"></i>
+                            <span class="ml-2">加载图表数据中...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API路径分布 -->
+                <div class="bg-white rounded-lg p-4 border">
+                    <h4 class="text-gray-700 font-medium mb-2">API调用分布</h4>
+                    <div class="max-h-80 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">API路径</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">调用次数</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">占比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="api-paths-table">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-center" colspan="3">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> 加载中...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -853,6 +918,25 @@
                     loadActivityData();
                 });
             });
+            
+            // 添加API调用卡片点击事件
+            document.getElementById('api-card').addEventListener('click', function() {
+                // 显示API统计模态框
+                document.getElementById('api-stats-modal').classList.remove('hidden');
+                // 加载API统计数据
+                loadApiStats();
+            });
+            
+            // 添加关闭API统计模态框事件
+            document.getElementById('close-api-stats-modal').addEventListener('click', function() {
+                document.getElementById('api-stats-modal').classList.add('hidden');
+            });
+            
+            // 添加API统计天数选择事件
+            document.getElementById('api-stats-days').addEventListener('change', function() {
+                // 重新加载API统计数据
+                loadApiStats();
+            });
         });
 
         // 加载控制面板统计数据
@@ -897,6 +981,172 @@
             } catch (error) {
                 console.error('加载统计数据失败:', error);
             }
+        }
+        
+        // 加载API调用统计数据
+        async function loadApiStats() {
+            try {
+                const daysSelect = document.getElementById('api-stats-days');
+                const days = daysSelect.value;
+                
+                // 显示加载状态
+                document.getElementById('api-total-calls').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                document.getElementById('api-trend-chart').innerHTML = `
+                    <div class="text-center text-gray-500 w-full px-4">
+                        <i class="fas fa-spinner fa-spin text-xl"></i>
+                        <span class="ml-2">加载图表数据中...</span>
+                    </div>
+                `;
+                document.getElementById('api-paths-table').innerHTML = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-center" colspan="3">
+                            <i class="fas fa-spinner fa-spin mr-2"></i> 加载中...
+                        </td>
+                    </tr>
+                `;
+                
+                // 获取API统计数据
+                const response = await authFetch(`/api/admin/api-stats?days=${days}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || errorData.message || '获取API统计数据失败');
+                }
+                
+                const data = await response.json();
+                
+                // 更新总调用次数
+                document.getElementById('api-total-calls').textContent = data.totalCalls;
+                
+                // 更新API调用趋势图表
+                updateApiTrendChart(data.dailyStats);
+                
+                // 更新API路径分布表格
+                updateApiPathsTable(data.pathStats);
+                
+            } catch (error) {
+                console.error('加载API统计数据失败:', error);
+                
+                // 显示错误信息
+                document.getElementById('api-total-calls').textContent = '加载失败';
+                document.getElementById('api-trend-chart').innerHTML = `
+                    <div class="text-center text-red-500 w-full px-4">
+                        <p class="mb-2">加载失败</p>
+                        <p class="text-sm">${error.message || '请稍后再试'}</p>
+                    </div>
+                `;
+                document.getElementById('api-paths-table').innerHTML = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-red-500 text-center" colspan="3">
+                            加载失败: ${error.message || '请稍后再试'}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // 更新API调用趋势图表
+        function updateApiTrendChart(dailyStats) {
+            if (!dailyStats || dailyStats.length === 0) {
+                document.getElementById('api-trend-chart').innerHTML = `
+                    <div class="text-center text-gray-500 w-full px-4">
+                        <p>暂无数据</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 准备图表数据
+            const chartContainer = document.getElementById('api-trend-chart');
+            chartContainer.innerHTML = '';
+            
+            // 找出最大值以便缩放
+            const maxCount = Math.max(...dailyStats.map(item => item.count));
+            
+            // 创建图表容器
+            const chartDiv = document.createElement('div');
+            chartDiv.className = 'w-full h-full flex flex-col';
+            
+            // 创建柱状图和标签
+            const barsContainer = document.createElement('div');
+            barsContainer.className = 'flex-1 flex items-end justify-between space-x-1';
+            
+            const labelsContainer = document.createElement('div');
+            labelsContainer.className = 'flex justify-between mt-2 text-xs text-gray-500';
+            
+            // 添加每一天的数据
+            dailyStats.forEach(day => {
+                // 计算柱子高度比例（最小高度10%）
+                const heightPercent = maxCount === 0 ? 10 : Math.max(10, Math.round((day.count / maxCount) * 100));
+                
+                // 创建柱子
+                const bar = document.createElement('div');
+                bar.className = 'bg-purple-500 hover:bg-purple-600 rounded-t w-full transition-all';
+                bar.style.height = `${heightPercent}%`;
+                bar.title = `${day.date}: ${day.count}次调用`;
+                
+                // 创建柱子容器
+                const barContainer = document.createElement('div');
+                barContainer.className = 'h-full flex items-end';
+                barContainer.style.flex = '1';
+                barContainer.appendChild(bar);
+                
+                barsContainer.appendChild(barContainer);
+                
+                // 创建日期标签
+                const dateLabel = document.createElement('div');
+                dateLabel.className = 'text-center overflow-hidden';
+                dateLabel.style.flex = '1';
+                dateLabel.textContent = day.date.split('-').slice(1).join('/'); // 只显示月/日
+                
+                labelsContainer.appendChild(dateLabel);
+            });
+            
+            chartDiv.appendChild(barsContainer);
+            chartDiv.appendChild(labelsContainer);
+            chartContainer.appendChild(chartDiv);
+        }
+        
+        // 更新API路径分布表格
+        function updateApiPathsTable(pathStats) {
+            const table = document.getElementById('api-paths-table');
+            
+            if (!pathStats || pathStats.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-center" colspan="3">
+                            暂无数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // 计算总调用次数（用于计算百分比）
+            const totalCalls = pathStats.reduce((sum, item) => sum + item.count, 0);
+            
+            // 清空表格内容
+            table.innerHTML = '';
+            
+            // 添加每个路径的数据
+            pathStats.forEach(path => {
+                const percent = totalCalls === 0 ? 0 : ((path.count / totalCalls) * 100).toFixed(1);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-gray-900">${path.path}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900">
+                        ${path.count}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900">
+                        ${percent}%
+                    </td>
+                `;
+                
+                table.appendChild(row);
+            });
         }
     </script>
 </body>

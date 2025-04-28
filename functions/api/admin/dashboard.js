@@ -1,6 +1,6 @@
 /**
  * 管理后台统计数据 API 端点
- * 返回文章总数、点赞总数等统计信息
+ * 返回文章总数、点赞总数、API调用次数等统计信息
  */
 
 export async function onRequestGet(context) {
@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
     const stats = {
       postCount: 0,
       likeCount: 0,
-      apiCalls: 0, // 暂时无法统计，返回0
+      apiCalls: 0,
       storageConfigs: 0
     };
     
@@ -60,6 +60,27 @@ export async function onRequestGet(context) {
       stats.likeCount = -1; // 使用-1表示功能不可用
       stats.likeStatus = 'unavailable';
       stats.likeMessage = 'BLOG_LIKES KV命名空间未配置';
+    }
+    
+    // 获取API调用统计
+    if (context.env.API_STATS) {
+      try {
+        // 使用KEY_PREFIX方式统计固定时间段内的API调用次数
+        const KEY_PREFIX = 'api:call:';
+        
+        // 获取当前日期和最近7天的日期
+        const now = new Date();
+        const todayKey = `${KEY_PREFIX}${now.toISOString().split('T')[0]}`;
+        
+        // 今日API调用次数
+        const todayCallCount = await context.env.API_STATS.get(todayKey) || '0';
+        stats.apiCalls = parseInt(todayCallCount, 10);
+        
+        // 如果有API_STATS配置，增加存储配置计数
+        stats.storageConfigs += 1;
+      } catch (error) {
+        console.error('获取API调用统计失败:', error);
+      }
     }
     
     return new Response(JSON.stringify(stats), {

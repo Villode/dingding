@@ -216,10 +216,22 @@ export async function onRequest(context) {
                           let imgSrc = href.trim();
                           
                           // 如果是完整 URL，提取文件名
-                          const fileName = imgSrc.split('/').pop();
-                          if (fileName) {
-                              // 如果已经是 /file/ 开头，保持不变
-                              if (!imgSrc.startsWith('/file/')) {
+                          if (imgSrc.startsWith('http://') || imgSrc.startsWith('https://')) {
+                              const url = new URL(imgSrc);
+                              // 如果是当前域名下的文件
+                              if (url.pathname.startsWith('/file/')) {
+                                  imgSrc = url.pathname; // 只保留路径部分
+                              } else {
+                                  // 如果是其他来源，提取文件名
+                                  const fileName = url.pathname.split('/').pop();
+                                  if (fileName) {
+                                      imgSrc = '/file/' + fileName;
+                                  }
+                              }
+                          } else if (!imgSrc.startsWith('/file/')) {
+                              // 如果是相对路径，添加 /file/ 前缀
+                              const fileName = imgSrc.split('/').pop();
+                              if (fileName) {
                                   imgSrc = '/file/' + fileName;
                               }
                           }
@@ -227,7 +239,6 @@ export async function onRequest(context) {
                           console.log('Processing image:', {
                               original: href,
                               processed: imgSrc,
-                              fileName,
                               title,
                               text
                           });

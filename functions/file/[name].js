@@ -18,7 +18,12 @@ export async function onRequestGet({ request, env, params }) {
             });
         }
 
-        const filePath = `my-file/${params.name}`;
+        // 从 URL 中提取文件名
+        const fileName = decodeURIComponent(params.name);
+        console.log('Requested file name:', fileName);
+
+        // 构建存储路径
+        const filePath = fileName;  // 直接使用文件名，不添加 my-file 前缀
         console.log('Attempting to fetch file:', filePath);
 
         // 从 R2 获取文件

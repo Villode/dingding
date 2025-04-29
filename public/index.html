@@ -1219,6 +1219,7 @@
             history.pushState({}, '', '/');
             currentArticleId = null;
             showHomeView();
+            loadArticleList(); // 添加重新加载文章列表
         }
         
         // 处理返回按钮点击

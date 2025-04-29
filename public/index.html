@@ -880,6 +880,15 @@
             margin-right: 6px;
             color: #666;
         }
+        
+        /* 添加图片样式 */
+        .article-content-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -1307,7 +1316,15 @@
                 const renderer = new marked.Renderer();
                 renderer.image = function(href, title, text) {
                     if (!href) return ''; // 如果没有图片地址，返回空字符串
-                    return `<img src="${href}" alt="${text || ''}" title="${title || ''}" loading="lazy">`;
+                    
+                    // 处理图片路径
+                    let imgSrc = href;
+                    if (!href.startsWith('http') && !href.startsWith('data:')) {
+                        // 如果是相对路径，确保以 / 开头
+                        imgSrc = href.startsWith('/') ? href : '/' + href;
+                    }
+                    
+                    return `<img src="${imgSrc}" alt="${text || ''}" title="${title || ''}" class="article-content-img" loading="lazy">`;
                 };
                 
                 marked.setOptions({
@@ -1318,6 +1335,19 @@
                     smartLists: true,
                     smartypants: true
                 });
+                
+                // 添加图片样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    .article-content-img {
+                        max-width: 100%;
+                        height: auto;
+                        border-radius: 8px;
+                        margin: 1rem 0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    }
+                `;
+                document.head.appendChild(style);
                 
                 // 渲染文章
                 articleContainer.innerHTML = `

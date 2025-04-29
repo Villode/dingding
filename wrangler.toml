@@ -65,3 +65,11 @@ id = "264e66d3659d4b209b247930cadf262f"
 [[env.production.kv_namespaces]]
 binding = "API_STATS"
 id = "ef3827e2f45142f39a96c57f92baeb20"
+
+# R2 存储桶配置
+[[env.production.r2_buckets]]
+binding = "BLOG_BUCKET"
+bucket_name = "my-file"
+
+[env.production.vars]
+BLOG_ASSETS_URL = "https://4da8db966519a4b5380f0f4de6ce98ef.r2.cloudflarestorage.com/my-file"

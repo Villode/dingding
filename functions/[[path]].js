@@ -213,27 +213,22 @@ export async function onRequest(context) {
                               return '';
                           }
                           
+                          console.log('Image rendering raw href:', href);
+                          
                           let imgSrc = href.trim();
                           
-                          // 如果是 R2 URL，转换为直接的文件路径
-                          if (imgSrc.includes('r2.cloudflarestorage.com')) {
-                              const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
-                              if (filePathMatch) {
-                                  const filePath = filePathMatch[1];
-                                  imgSrc = '/api/file/' + filePath;
-                              }
-                          }
-                          // 如果是 Workers URL，也转换为 api/file 路径
-                          else if (imgSrc.includes('dingding-blog.uzz.workers.dev/file/')) {
-                              const filePathMatch = imgSrc.match(/\/file\/(.+)$/);
-                              if (filePathMatch) {
-                                  const filePath = filePathMatch[1];
-                                  imgSrc = '/api/file/' + filePath;
-                              }
+                          // 如果是 R2 URL，提取文件路径
+                          const r2Match = imgSrc.match(/\/my-file\/(.+)$/);
+                          if (r2Match) {
+                              imgSrc = '/api/file/' + r2Match[1];
                           }
                           
-                          console.log('Image rendering:', {href, title, text});
-                          console.log('Processing image:', {src: imgSrc, title, text});
+                          console.log('Processing image:', {
+                              original: href,
+                              processed: imgSrc,
+                              title,
+                              text
+                          });
                           
                           return '<figure class="article-image-container">' +
                               '<img src="' + imgSrc + '"' +
@@ -409,6 +404,13 @@ export async function onRequest(context) {
         // 移除开头的'api/'来获取实际的API路径
         const apiPath = path.substring(4);
         
+        // 处理文件请求
+        if (apiPath.startsWith('file/')) {
+          console.log('处理文件请求:', apiPath);
+          const { onRequestGet: getFileHandler } = await import('./api/file/[name].js');
+          return getFileHandler(context);
+        }
+        
         // 处理文章列表API
         if (apiPath === 'posts' && method === 'GET') {
           console.log('处理文章列表API');
@@ -449,90 +451,12 @@ export async function onRequest(context) {
           return deletePostHandler(context);
         }
         
-        // 处理文件请求
-        if (path.startsWith('api/file/')) {
-          console.log('处理文件请求:', path);
-          // 从路径中提取文件名
-          const filePath = path.replace('api/file/', '');
-          if (!filePath) {
-              return new Response('File path is required', { status: 400 });
-          }
-          
-          try {
-              // 从 R2 获取文件
-              const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
-              if (!file) {
-                  return new Response('File not found', { status: 404 });
-              }
-              
-              // 准备响应头
-              const headers = new Headers();
-              headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
-              headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
-              headers.set('Access-Control-Allow-Origin', '*');
-              headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-              
-              // 如果是图片，添加额外的缓存和安全头
-              if (file.httpMetadata.contentType?.startsWith('image/')) {
-                  headers.set('Content-Security-Policy', "default-src 'self'");
-                  headers.set('X-Content-Type-Options', 'nosniff');
-              }
-              
-              // 返回文件内容
-              return new Response(file.body, {
-                  headers
-              });
-          } catch (error) {
-              console.error('Error fetching file:', error);
-              return new Response('Internal Server Error', { status: 500 });
-          }
-        }
-        
         // 如果没有匹配的API路径，返回404
         console.log('API路径不匹配:', apiPath);
         return new Response('API not found: ' + apiPath, { status: 404 });
       } catch (error) {
         console.error('处理API请求出错:', error);
         return new Response('API错误: ' + error.message, { status: 500 });
-      }
-    }
-    
-    // 处理文件请求
-    if (path.startsWith('api/file/')) {
-      console.log('处理文件请求:', path);
-      // 从路径中提取文件名
-      const filePath = path.replace('api/file/', '');
-      if (!filePath) {
-          return new Response('File path is required', { status: 400 });
-      }
-      
-      try {
-          // 从 R2 获取文件
-          const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
-          if (!file) {
-              return new Response('File not found', { status: 404 });
-          }
-          
-          // 准备响应头
-          const headers = new Headers();
-          headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
-          headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
-          headers.set('Access-Control-Allow-Origin', '*');
-          headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-          
-          // 如果是图片，添加额外的缓存和安全头
-          if (file.httpMetadata.contentType?.startsWith('image/')) {
-              headers.set('Content-Security-Policy', "default-src 'self'");
-              headers.set('X-Content-Type-Options', 'nosniff');
-          }
-          
-          // 返回文件内容
-          return new Response(file.body, {
-              headers
-          });
-      } catch (error) {
-          console.error('Error fetching file:', error);
-          return new Response('Internal Server Error', { status: 500 });
       }
     }
     

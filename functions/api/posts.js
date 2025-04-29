@@ -115,7 +115,7 @@ async function enrichPostsWithCategoriesAndTags(posts, db) {
     
     if (validPosts.length === 0) {
       console.log("没有有效的文章数据");
-      return Response.json([]);
+    return Response.json([]);
     }
     
     // 获取所有文章ID

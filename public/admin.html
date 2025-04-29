@@ -195,6 +195,13 @@
                     </div>
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
+                        <div class="mt-2 flex space-x-2">
+                            <button type="button" id="upload-image-btn" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-image mr-2"></i>
+                                插入图片
+                            </button>
+                            <input type="file" id="image-input" accept="image/*" class="hidden">
+                        </div>
                         <textarea id="content" name="content" rows="12" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
                 </form>
@@ -241,6 +248,11 @@
         let allCategories = [];
         let selectedTags = [];
         let selectedCategories = [];
+
+        // 图片上传相关
+        const uploadImageBtn = document.getElementById('upload-image-btn');
+        const imageInput = document.getElementById('image-input');
+        const contentTextarea = document.getElementById('content');
 
         // 检查登录状态
         function checkAuth() {
@@ -570,6 +582,53 @@
             
             // 添加刷新按钮事件监听
             document.querySelector('button:has(.fa-sync-alt)').addEventListener('click', loadPosts);
+
+            // 图片上传相关
+            uploadImageBtn.addEventListener('click', () => {
+                imageInput.click();
+            });
+
+            imageInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // 显示上传中状态
+                uploadImageBtn.disabled = true;
+                uploadImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>上传中...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('image', file);
+
+                    const response = await authFetch('/api/admin/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('上传图片失败');
+                    }
+
+                    const data = await response.json();
+                    
+                    // 在光标位置插入图片markdown
+                    const imageMarkdown = `![${file.name}](${data.url})`;
+                    const cursorPos = contentTextarea.selectionStart;
+                    const textBefore = contentTextarea.value.substring(0, cursorPos);
+                    const textAfter = contentTextarea.value.substring(cursorPos);
+                    contentTextarea.value = textBefore + imageMarkdown + textAfter;
+                    
+                    // 重置文件输入
+                    imageInput.value = '';
+                } catch (error) {
+                    console.error('上传图片失败:', error);
+                    alert('上传图片失败: ' + error.message);
+                } finally {
+                    // 恢复按钮状态
+                    uploadImageBtn.disabled = false;
+                    uploadImageBtn.innerHTML = '<i class="fas fa-image mr-2"></i>插入图片';
+                }
+            });
         });
 
         // 加载标签列表

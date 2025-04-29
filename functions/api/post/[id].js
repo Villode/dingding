@@ -38,21 +38,21 @@ export async function onRequestGet({ params, env }) {
           FROM posts p
           WHERE p.id = ?
         `).bind(id).first();
-        
+    
         if (!postQuery) {
-          return new Response(
-            JSON.stringify({ 
-              error: "文章不存在" 
-            }), 
-            { 
-              status: 404,
-              headers: {
-                "Content-Type": "application/json"
-              }
-            }
-          );
+      return new Response(
+        JSON.stringify({ 
+          error: "文章不存在" 
+        }), 
+        { 
+          status: 404,
+          headers: {
+            "Content-Type": "application/json"
+          }
         }
-        
+      );
+    }
+    
         // 为文章添加分类和标签信息
         return await enrichPostWithCategoryAndTags(postQuery, env.DB);
       } catch (dbError) {

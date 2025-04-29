@@ -3,7 +3,7 @@ export async function onRequestPost(context) {
     // 检查认证
     const authResult = await validateAuth(context);
     if (!authResult.valid) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: '未授权访问' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -34,24 +34,30 @@ export async function onRequestPost(context) {
         .replace(/-+$/, '');
     }
     
-    // 开始事务
-    await env.DB.prepare('BEGIN').run();
+    // 不使用SQL事务，而是使用batch操作
+    let result;
+    let categoryId = id;
     
-    try {
-      // 检查slug是否已存在（除了当前更新的分类）
-      let slugCheckQuery = 'SELECT id FROM categories WHERE slug = ? AND id != ?';
-      let slugCheckParams = [categorySlug, id || '0'];
+    // 更新或创建分类
+    if (categoryId) {
+      // 先检查分类是否存在
+      const existingCategory = await env.DB.prepare("SELECT id FROM categories WHERE id = ?")
+        .bind(categoryId)
+        .first();
       
-      if (!id) {
-        // 新建分类时只需检查slug是否存在
-        slugCheckQuery = 'SELECT id FROM categories WHERE slug = ?';
-        slugCheckParams = [categorySlug];
+      if (!existingCategory) {
+        return new Response(JSON.stringify({ error: '分类不存在' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
       
-      const slugExists = await env.DB.prepare(slugCheckQuery).bind(...slugCheckParams).first();
+      // 检查slug是否与其他分类冲突
+      const slugExists = await env.DB.prepare("SELECT id FROM categories WHERE slug = ? AND id != ?")
+        .bind(categorySlug, categoryId)
+        .first();
       
       if (slugExists) {
-        await env.DB.prepare('ROLLBACK').run();
         return new Response(JSON.stringify({ 
           error: '该分类别名已存在，请使用其他别名'
         }), {
@@ -66,7 +72,6 @@ export async function onRequestPost(context) {
           .bind(parent_id).first();
           
         if (!parentExists) {
-          await env.DB.prepare('ROLLBACK').run();
           return new Response(JSON.stringify({ 
             error: '父分类不存在'
           }), {
@@ -75,31 +80,25 @@ export async function onRequestPost(context) {
           });
         }
         
-        // 检查是否形成循环关系（防止将父分类设置为自己的子分类）
-        if (id) {
-          const checkCircular = async (currentId, targetId) => {
-            if (currentId === targetId) {
-              return true;
-            }
-            
-            const children = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?')
-              .bind(currentId).all();
-              
-            if (!children.success || !children.results) {
-              return false;
-            }
-            
-            for (const child of children.results) {
-              if (await checkCircular(child.id, targetId)) {
-                return true;
-              }
-            }
-            
-            return false;
-          };
+        // 防止循环引用
+        if (parent_id === categoryId) {
+          return new Response(JSON.stringify({ 
+            error: '不能将分类自身设为父分类'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        
+        // 检查是否会形成循环
+        let currentParentId = parent_id;
+        while (currentParentId) {
+          const parent = await env.DB.prepare('SELECT parent_id FROM categories WHERE id = ?')
+            .bind(currentParentId).first();
           
-          if (await checkCircular(id, parent_id)) {
-            await env.DB.prepare('ROLLBACK').run();
+          if (!parent) break;
+          
+          if (parent.parent_id === categoryId) {
             return new Response(JSON.stringify({ 
               error: '不能将分类的子分类设为其父分类，这会导致循环引用'
             }), {
@@ -107,74 +106,95 @@ export async function onRequestPost(context) {
               headers: { 'Content-Type': 'application/json' }
             });
           }
+          
+          currentParentId = parent.parent_id;
         }
       }
       
-      let result;
+      // 更新分类
+      const updateStmt = env.DB.prepare(`
+        UPDATE categories 
+        SET name = ?, 
+            slug = ?, 
+            description = ?, 
+            parent_id = ?,
+            updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `);
       
-      // 更新或创建分类
-      if (id) {
-        // 更新现有分类
-        const updateSql = `
-          UPDATE categories 
-          SET name = ?, 
-              slug = ?, 
-              description = ?, 
-              parent_id = ?,
-              updated_at = datetime('now') 
-          WHERE id = ?
-        `;
-        
-        await env.DB.prepare(updateSql)
-          .bind(name, categorySlug, description || null, parent_id || null, id)
-          .run();
-          
-        // 获取更新后的分类信息
-        result = await env.DB.prepare(`
+      // 使用批处理更新并获取结果
+      const batchResults = await env.DB.batch([
+        updateStmt.bind(name, categorySlug, description || null, parent_id || null, categoryId),
+        env.DB.prepare(`
           SELECT c.*, p.name as parent_name
           FROM categories c
           LEFT JOIN categories p ON c.parent_id = p.id
           WHERE c.id = ?
-        `).bind(id).first();
-      } else {
-        // 创建新分类
-        const insertSql = `
-          INSERT INTO categories (name, slug, description, parent_id, created_at, updated_at)
-          VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-        `;
-        
-        const insert = await env.DB.prepare(insertSql)
-          .bind(name, categorySlug, description || null, parent_id || null)
-          .run();
-          
-        if (!insert.success) {
-          throw new Error('Failed to create category');
-        }
-        
-        // 获取新创建的分类信息
-        result = await env.DB.prepare(`
-          SELECT c.*, p.name as parent_name
-          FROM categories c
-          LEFT JOIN categories p ON c.parent_id = p.id
-          WHERE c.id = ?
-        `).bind(insert.meta.last_row_id).first();
+        `).bind(categoryId)
+      ]);
+      
+      result = batchResults[1].results[0];
+    } else {
+      // 创建新分类
+      // 检查slug是否已存在
+      const slugExists = await env.DB.prepare("SELECT id FROM categories WHERE slug = ?")
+        .bind(categorySlug)
+        .first();
+      
+      if (slugExists) {
+        return new Response(JSON.stringify({ 
+          error: '该分类别名已存在，请使用其他别名'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
       
-      // 提交事务
-      await env.DB.prepare('COMMIT').run();
+      // 如果有父分类，检查父分类是否存在
+      if (parent_id) {
+        const parentExists = await env.DB.prepare('SELECT id FROM categories WHERE id = ?')
+          .bind(parent_id).first();
+          
+        if (!parentExists) {
+          return new Response(JSON.stringify({ 
+            error: '父分类不存在'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
       
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // 插入新分类
+      const insertStmt = env.DB.prepare(`
+        INSERT INTO categories (name, slug, description, parent_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `);
       
-    } catch (error) {
-      // 发生错误时回滚事务
-      await env.DB.prepare('ROLLBACK').run();
-      throw error;
+      const insert = await insertStmt.bind(name, categorySlug, description || null, parent_id || null).run();
+      
+      if (!insert.success) {
+        throw new Error('创建分类失败');
+      }
+      
+      categoryId = insert.meta?.last_row_id;
+      
+      // 获取新创建的分类数据
+      result = await env.DB.prepare(`
+        SELECT c.*, p.name as parent_name
+        FROM categories c
+        LEFT JOIN categories p ON c.parent_id = p.id
+        WHERE c.id = ?
+      `).bind(categoryId).first();
     }
     
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+    console.error('保存分类失败:', error);
+    return new Response(JSON.stringify({ error: error.message || '服务器内部错误' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

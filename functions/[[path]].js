@@ -224,9 +224,45 @@ export async function onRequest(context) {
       }
     }
     
-    // 对于其他请求，继续传递给下一个处理程序
-    console.log('无匹配路由，交给静态资源处理器');
-    return context.next();
+    // 只处理 /file/ 路径的请求
+    if (!url.pathname.startsWith('/file/')) {
+        return new Response('Not Found', { status: 404 });
+    }
+    
+    // 从路径中提取文件名
+    const filePath = url.pathname.replace('/file/', '');
+    if (!filePath) {
+        return new Response('File path is required', { status: 400 });
+    }
+    
+    try {
+        // 从 R2 获取文件
+        const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
+        if (!file) {
+            return new Response('File not found', { status: 404 });
+        }
+        
+        // 准备响应头
+        const headers = new Headers();
+        headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
+        headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
+        headers.set('Access-Control-Allow-Origin', '*'); // 允许所有域名访问
+        headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        
+        // 如果是图片，添加额外的缓存和安全头
+        if (file.httpMetadata.contentType?.startsWith('image/')) {
+            headers.set('Content-Security-Policy', "default-src 'self'");
+            headers.set('X-Content-Type-Options', 'nosniff');
+        }
+        
+        // 返回文件内容
+        return new Response(file.body, {
+            headers
+        });
+    } catch (error) {
+        console.error('Error fetching file:', error);
+        return new Response('Internal Server Error', { status: 500 });
+    }
   } catch (error) {
     console.error('处理请求时出错:', error);
     return new Response('Internal Server Error: ' + error.message, { status: 500 });

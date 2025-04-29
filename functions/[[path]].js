@@ -213,19 +213,18 @@ export async function onRequest(context) {
                               return '';
                           }
                           
-                          console.log('Image rendering raw href:', href);
-                          
                           let imgSrc = href.trim();
                           
-                          // 如果是 R2 URL，提取文件路径
-                          const r2Match = imgSrc.match(/\/my-file\/(.+)$/);
-                          if (r2Match) {
-                              imgSrc = '/api/file/' + r2Match[1];
+                          // 如果是完整 URL，提取文件名
+                          const fileName = imgSrc.split('/').pop();
+                          if (fileName) {
+                              imgSrc = '/api/file/' + fileName;
                           }
                           
                           console.log('Processing image:', {
                               original: href,
                               processed: imgSrc,
+                              fileName,
                               title,
                               text
                           });

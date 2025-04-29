@@ -60,10 +60,34 @@ export async function onRequest(context) {
                       max-width: 100%;
                       height: auto;
                       border-radius: 8px;
-                      margin: 1rem 0;
+                      margin: 1rem auto; /* 居中显示 */
                       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                       cursor: pointer;
                       transition: transform 0.2s ease;
+                      display: block; /* 确保图片块级显示 */
+                  }
+
+                  /* 默认中等大小显示 */
+                  .article-content .article-image-container {
+                      max-width: 600px;
+                      margin: 2rem auto;
+                  }
+
+                  /* 小图模式 */
+                  .article-content .article-image-container.small-image {
+                      max-width: 300px;
+                  }
+
+                  /* 大图模式 */
+                  .article-content .article-image-container.large-image {
+                      max-width: 800px;
+                  }
+                  
+                  .article-content .article-image-container figcaption {
+                      text-align: center;
+                      color: #666;
+                      font-size: 0.9em;
+                      margin-top: 0.5rem;
                   }
                   
                   .article-content img:hover {
@@ -231,6 +255,68 @@ export async function onRequest(context) {
                   .image-load-error:hover::before {
                       color: #FA541C;
                   }
+
+                  .image-size-controls {
+                      display: flex;
+                      justify-content: center;
+                      gap: 0.5rem;
+                      margin: 0.5rem 0;
+                  }
+
+                  .image-size-controls button {
+                      padding: 0.25rem 0.75rem;
+                      border: 1px solid #e5e7eb;
+                      background-color: white;
+                      border-radius: 0.375rem;
+                      font-size: 0.875rem;
+                      color: #4b5563;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                  }
+
+                  .image-size-controls button:hover {
+                      background-color: #f3f4f6;
+                      border-color: #d1d5db;
+                  }
+
+                  .image-size-controls button.active {
+                      background-color: #2563eb;
+                      border-color: #2563eb;
+                      color: white;
+                  }
+
+                  .article-content-img {
+                      max-width: 100%;
+                      height: auto;
+                      margin: 1rem auto;
+                      display: block;
+                      border-radius: 0.5rem;
+                      transition: all 0.3s ease;
+                  }
+
+                  .article-image-container {
+                      text-align: center;
+                      margin: 2rem 0;
+                  }
+
+                  .article-image-container.small-image img {
+                      max-width: 50%;
+                  }
+
+                  .article-image-container.large-image img {
+                      max-width: 100%;
+                  }
+
+                  /* 默认中等大小 */
+                  .article-image-container img {
+                      max-width: 75%;
+                  }
+
+                  .article-image-container figcaption {
+                      color: #666;
+                      font-size: 0.875rem;
+                      margin-top: 0.5rem;
+                  }
               </style>
           </head>
           <body class="bg-gray-100 min-h-screen">
@@ -325,6 +411,11 @@ export async function onRequest(context) {
                               ' onerror="handleImageError(this)"' +
                               '/>' +
                               (title ? '<figcaption>' + title + '</figcaption>' : '') +
+                              '<div class="image-size-controls">' +
+                              '<button onclick="setImageSize(this, \'small\'); event.stopPropagation();" class="size-btn">小图</button>' +
+                              '<button onclick="setImageSize(this, \'medium\'); event.stopPropagation();" class="size-btn">中图</button>' +
+                              '<button onclick="setImageSize(this, \'large\'); event.stopPropagation();" class="size-btn">大图</button>' +
+                              '</div>' +
                               '</figure>';
                       };
                       
@@ -505,6 +596,26 @@ export async function onRequest(context) {
                           closeImagePreview();
                       }
                   });
+
+                  // 图片大小控制功能
+                  function setImageSize(button, size) {
+                      const figure = button.closest('.article-image-container');
+                      
+                      // 移除所有大小相关的类
+                      figure.classList.remove('small-image', 'large-image');
+                      
+                      // 根据选择添加相应的类
+                      if (size === 'small') {
+                          figure.classList.add('small-image');
+                      } else if (size === 'large') {
+                          figure.classList.add('large-image');
+                      }
+                      
+                      // 更新按钮状态
+                      const buttons = figure.querySelectorAll('.size-btn');
+                      buttons.forEach(btn => btn.classList.remove('active'));
+                      button.classList.add('active');
+                  }
               </script>
           </body>
           </html>`,

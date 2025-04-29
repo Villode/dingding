@@ -1315,13 +1315,14 @@
                 // 配置 marked
                 const renderer = new marked.Renderer();
                 renderer.image = function(href, title, text) {
-                    if (!href) return ''; // 如果没有图片地址，返回空字符串
+                    // 确保 href 是字符串类型
+                    if (!href || typeof href !== 'string') return ''; 
                     
                     // 处理图片路径
                     let imgSrc = href;
-                    if (!href.startsWith('http') && !href.startsWith('data:')) {
+                    if (!imgSrc.startsWith('http') && !imgSrc.startsWith('data:')) {
                         // 如果是相对路径，确保以 / 开头
-                        imgSrc = href.startsWith('/') ? href : '/' + href;
+                        imgSrc = imgSrc.startsWith('/') ? imgSrc : '/' + imgSrc;
                     }
                     
                     return `<img src="${imgSrc}" alt="${text || ''}" title="${title || ''}" class="article-content-img" loading="lazy">`;

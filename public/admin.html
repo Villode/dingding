@@ -7,6 +7,40 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        /* 模态框动画 */
+        .modal-overlay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+        }
+        .modal-container {
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal-container.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        /* 模态框滚动条样式 */
+        .modal-body {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 3px;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="flex h-screen overflow-hidden">
@@ -99,37 +133,46 @@
                             </div>
                         </div>
                     </div>
-
-                    <div id="post-form-container" class="bg-white rounded-lg shadow overflow-hidden hidden">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h2 class="text-xl font-bold mb-4 text-gray-900" id="form-title">新建文章</h2>
-                            <form id="post-form" class="space-y-4">
-                                <input type="hidden" id="post-id" name="id">
-                                <div>
-                                    <label for="title" class="block text-sm font-medium text-gray-700">标题</label>
-                                    <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <div>
-                                    <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
-                                    <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                                </div>
-                                <div>
-                                    <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
-                                    <textarea id="content" name="content" rows="12" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                                </div>
-                                <div class="flex justify-between">
-                                    <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded flex items-center">
-                                        <i class="fas fa-times mr-2"></i> 取消
-                                    </button>
-                                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
-                                        <i class="fas fa-save mr-2"></i> 保存
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- 文章编辑模态框 -->
+    <div id="post-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50"></div>
+        <div class="modal-container bg-white w-full max-w-4xl mx-auto rounded shadow-lg z-50 overflow-hidden">
+            <div class="modal-header flex justify-between items-center px-6 py-4 bg-gray-100 border-b">
+                <h3 class="text-xl font-bold text-gray-900" id="modal-title">新建文章</h3>
+                <button id="modal-close-btn" class="text-gray-700 hover:text-gray-900">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body p-6 max-h-[70vh] overflow-y-auto">
+                <form id="post-form" class="space-y-4">
+                    <input type="hidden" id="post-id" name="id">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">标题</label>
+                        <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
+                        <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
+                        <textarea id="content" name="content" rows="12" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer px-6 py-4 bg-gray-100 border-t flex justify-between">
+                <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-times mr-2"></i> 取消
+                </button>
+                <button type="button" id="save-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-save mr-2"></i> 保存
+                </button>
+            </div>
         </div>
     </div>
 
@@ -137,14 +180,18 @@
         // 获取DOM元素
         const postsList = document.getElementById('posts-list');
         const newPostBtn = document.getElementById('new-post-btn');
-        const postFormContainer = document.getElementById('post-form-container');
+        const postModal = document.getElementById('post-modal');
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const modalContainer = document.querySelector('.modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
         const postForm = document.getElementById('post-form');
-        const formTitle = document.getElementById('form-title');
         const postIdInput = document.getElementById('post-id');
         const titleInput = document.getElementById('title');
         const summaryInput = document.getElementById('summary');
         const contentInput = document.getElementById('content');
         const cancelBtn = document.getElementById('cancel-btn');
+        const saveBtn = document.getElementById('save-btn');
         const logoutBtn = document.getElementById('logout-btn');
 
         // 检查登录状态
@@ -253,15 +300,40 @@
             }
         }
 
+        // 打开模态框
+        function openModal() {
+            postModal.classList.remove('hidden');
+            // 添加渐入效果
+            setTimeout(() => {
+                modalOverlay.classList.add('show');
+                modalContainer.classList.add('show');
+            }, 10);
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            // 添加渐出效果
+            modalOverlay.classList.remove('show');
+            modalContainer.classList.remove('show');
+            setTimeout(() => {
+                postModal.classList.add('hidden');
+                // 恢复背景滚动
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
         // 新建文章
         function createNewPost() {
-            formTitle.textContent = '新建文章';
+            modalTitle.textContent = '新建文章';
             postIdInput.value = '';
             titleInput.value = '';
             summaryInput.value = '';
             contentInput.value = '';
-            postFormContainer.classList.remove('hidden');
-            postFormContainer.scrollIntoView({ behavior: 'smooth' });
+            openModal();
+            // 自动聚焦标题输入框
+            setTimeout(() => titleInput.focus(), 300);
         }
 
         // 编辑文章
@@ -272,14 +344,15 @@
                 
                 const post = await response.json();
                 
-                formTitle.textContent = '编辑文章';
+                modalTitle.textContent = '编辑文章';
                 postIdInput.value = post.id;
                 titleInput.value = post.title;
                 summaryInput.value = post.summary || '';
                 contentInput.value = post.content;
                 
-                postFormContainer.classList.remove('hidden');
-                postFormContainer.scrollIntoView({ behavior: 'smooth' });
+                openModal();
+                // 自动聚焦标题输入框
+                setTimeout(() => titleInput.focus(), 300);
             } catch (error) {
                 console.error('编辑文章失败:', error);
                 alert('获取文章详情失败，请重试');
@@ -311,9 +384,7 @@
         }
 
         // 提交表单
-        async function submitPostForm(event) {
-            event.preventDefault();
-            
+        async function submitPostForm() {
             if (!titleInput.value.trim()) {
                 alert('请输入文章标题');
                 titleInput.focus();
@@ -335,9 +406,8 @@
             };
             
             try {
-                const submitButton = postForm.querySelector('button[type="submit"]');
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
                 
                 const response = await authFetch('/api/admin/post', {
                     method: 'POST',
@@ -355,22 +425,14 @@
                 const result = await response.json();
                 
                 alert(`文章 "${postData.title}" 已成功保存`);
-                postFormContainer.classList.add('hidden');
+                closeModal();
                 loadPosts(); // 重新加载文章列表
-                
-                // 如果是新建文章，清空表单
-                if (!postIdInput.value) {
-                    titleInput.value = '';
-                    summaryInput.value = '';
-                    contentInput.value = '';
-                }
             } catch (error) {
                 console.error('保存文章失败:', error);
                 alert(`保存文章失败: ${error.message}`);
             } finally {
-                const submitButton = postForm.querySelector('button[type="submit"]');
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-save mr-2"></i> 保存';
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> 保存';
             }
         }
 
@@ -381,6 +443,15 @@
                 window.location.href = '/login.html';
             }
         }
+
+        // 处理ESC键关闭模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !postModal.classList.contains('hidden')) {
+                if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                    closeModal();
+                }
+            }
+        });
 
         // 事件监听
         document.addEventListener('DOMContentLoaded', () => {
@@ -400,12 +471,23 @@
             
             // 添加事件监听
             newPostBtn.addEventListener('click', createNewPost);
-            cancelBtn.addEventListener('click', () => {
+            modalCloseBtn.addEventListener('click', () => {
                 if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
-                    postFormContainer.classList.add('hidden');
+                    closeModal();
                 }
             });
-            postForm.addEventListener('submit', submitPostForm);
+            cancelBtn.addEventListener('click', () => {
+                if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                    closeModal();
+                }
+            });
+            // 点击模态框背景关闭模态框
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay && confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                    closeModal();
+                }
+            });
+            saveBtn.addEventListener('click', submitPostForm);
             logoutBtn.addEventListener('click', logout);
             
             // 添加刷新按钮事件监听

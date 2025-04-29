@@ -1096,8 +1096,6 @@
                         const postElement = document.createElement('div');
                         postElement.className = 'article-card';
                         
-                        const category = index % 3 === 0 ? '技术' : (index % 3 === 1 ? '生活' : '其他');
-                        
                         postElement.innerHTML = `
                             <div class="article-preview">
                                 <div class="article-header">
@@ -1243,8 +1241,7 @@
                 showArticleView();
                 
                 const articleContainer = document.getElementById('article-container');
-                articleContainer.innerHTML = `
-                    <div class="loading">
+                articleContainer.innerHTML = `                    <div class="loading">
                         <div class="spinner"></div>
                     </div>
                 `;

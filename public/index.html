@@ -1315,17 +1315,44 @@
                 // 配置 marked
                 const renderer = new marked.Renderer();
                 renderer.image = function(href, title, text) {
-                    // 确保 href 是字符串类型
-                    if (!href || typeof href !== 'string') return ''; 
+                    // 添加调试日志
+                    console.log('Image rendering:', { href, title, text });
                     
-                    // 处理图片路径
-                    let imgSrc = href;
-                    if (!imgSrc.startsWith('http') && !imgSrc.startsWith('data:')) {
-                        // 如果是相对路径，确保以 / 开头
-                        imgSrc = imgSrc.startsWith('/') ? imgSrc : '/' + imgSrc;
+                    // 确保 href 是字符串类型
+                    if (!href || typeof href !== 'string') {
+                        console.warn('Invalid image href:', href);
+                        return '';
                     }
                     
-                    return `<img src="${imgSrc}" alt="${text || ''}" title="${title || ''}" class="article-content-img" loading="lazy">`;
+                    // 处理图片路径
+                    let imgSrc = href.trim();
+                    
+                    // 调试日志
+                    console.log('Original imgSrc:', imgSrc);
+                    
+                    // 处理相对路径
+                    if (!imgSrc.match(/^(https?:\/\/|data:|\/)/)) {
+                        imgSrc = '/' + imgSrc;
+                    }
+                    
+                    // 调试日志
+                    console.log('Processed imgSrc:', imgSrc);
+                    
+                    // 构建完整的 img 标签
+                    const imgTag = `
+                        <figure class="article-image-container">
+                            <img src="${imgSrc}" 
+                                 alt="${text || ''}" 
+                                 title="${title || ''}" 
+                                 class="article-content-img" 
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.classList.add('image-load-error'); console.error('Image load failed:', this.src);"
+                            />
+                            ${title ? `<figcaption>${title}</figcaption>` : ''}
+                        </figure>
+                    `;
+                    
+                    return imgTag;
                 };
                 
                 marked.setOptions({
@@ -1334,21 +1361,59 @@
                     breaks: true,
                     sanitize: false,
                     smartLists: true,
-                    smartypants: true
+                    smartypants: true,
+                    xhtml: true
                 });
                 
-                // 添加图片样式
+                // 添加新的图片样式
                 const style = document.createElement('style');
                 style.textContent = `
+                    .article-image-container {
+                        margin: 1.5rem 0;
+                        text-align: center;
+                    }
+                    
                     .article-content-img {
                         max-width: 100%;
                         height: auto;
                         border-radius: 8px;
-                        margin: 1rem 0;
                         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                        display: inline-block;
+                    }
+                    
+                    .article-image-container figcaption {
+                        margin-top: 0.5rem;
+                        color: #666;
+                        font-size: 0.9em;
+                        text-align: center;
+                    }
+                    
+                    .image-load-error {
+                        position: relative;
+                        min-height: 100px;
+                        background-color: #f3f4f6;
+                        border: 1px dashed #d1d5db;
+                    }
+                    
+                    .image-load-error::before {
+                        content: "图片加载失败";
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: #666;
+                        font-size: 0.9em;
                     }
                 `;
                 document.head.appendChild(style);
+                
+                // 添加图片加载失败的处理
+                window.addEventListener('error', function(e) {
+                    if (e.target.tagName === 'IMG') {
+                        console.error('Image load error:', e.target.src);
+                        e.target.classList.add('image-load-error');
+                    }
+                }, true);
                 
                 // 渲染文章
                 articleContainer.innerHTML = `

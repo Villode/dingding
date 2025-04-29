@@ -163,6 +163,36 @@
                         <label for="summary" class="block text-sm font-medium text-gray-700">摘要</label>
                         <textarea id="summary" name="summary" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="tags" class="block text-sm font-medium text-gray-700">标签</label>
+                            <div class="mt-1 bg-white border border-gray-300 rounded-md shadow-sm">
+                                <div id="selected-tags" class="flex flex-wrap gap-2 p-2 min-h-[42px]"></div>
+                                <div class="border-t border-gray-200">
+                                    <div class="p-2">
+                                        <div id="tags-list" class="flex flex-wrap gap-2 max-h-28 overflow-y-auto"></div>
+                                        <div id="tags-loading" class="text-center py-2 text-gray-500 text-sm">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> 加载标签中...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="categories" class="block text-sm font-medium text-gray-700">分类</label>
+                            <div class="mt-1 bg-white border border-gray-300 rounded-md shadow-sm">
+                                <div id="selected-categories" class="flex flex-wrap gap-2 p-2 min-h-[42px]"></div>
+                                <div class="border-t border-gray-200">
+                                    <div class="p-2">
+                                        <div id="categories-list" class="flex flex-wrap gap-2 max-h-28 overflow-y-auto"></div>
+                                        <div id="categories-loading" class="text-center py-2 text-gray-500 text-sm">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> 加载分类中...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700">内容</label>
                         <textarea id="content" name="content" rows="12" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
@@ -197,6 +227,20 @@
         const cancelBtn = document.getElementById('cancel-btn');
         const saveBtn = document.getElementById('save-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        
+        // 标签和分类相关元素
+        const selectedTagsContainer = document.getElementById('selected-tags');
+        const tagsListContainer = document.getElementById('tags-list');
+        const tagsLoadingContainer = document.getElementById('tags-loading');
+        const selectedCategoriesContainer = document.getElementById('selected-categories');
+        const categoriesListContainer = document.getElementById('categories-list');
+        const categoriesLoadingContainer = document.getElementById('categories-loading');
+        
+        // 存储标签和分类数据
+        let allTags = [];
+        let allCategories = [];
+        let selectedTags = [];
+        let selectedCategories = [];
 
         // 检查登录状态
         function checkAuth() {
@@ -314,6 +358,9 @@
             }, 10);
             // 禁止背景滚动
             document.body.style.overflow = 'hidden';
+            // 加载标签和分类数据
+            loadTags();
+            loadCategories();
         }
 
         // 关闭模态框
@@ -335,6 +382,11 @@
             titleInput.value = '';
             summaryInput.value = '';
             contentInput.value = '';
+            // 重置标签和分类选择
+            selectedTags = [];
+            selectedCategories = [];
+            renderSelectedTags();
+            renderSelectedCategories();
             openModal();
             // 自动聚焦标题输入框
             setTimeout(() => titleInput.focus(), 300);
@@ -343,16 +395,35 @@
         // 编辑文章
         async function editPost(postId) {
             try {
-                const response = await fetch(`/api/post/${postId}`);
+                // 清空当前选择的标签和分类
+                selectedTags = [];
+                selectedCategories = [];
+                
+                // 从新API获取文章详情
+                const response = await authFetch(`/api/admin/post?id=${postId}`);
                 if (!response.ok) throw new Error('获取文章详情失败');
                 
-                const post = await response.json();
+                const data = await response.json();
+                const post = data.post;
+                
+                // 设置标签和分类
+                if (data.tags && Array.isArray(data.tags)) {
+                    selectedTags = data.tags;
+                }
+                
+                if (data.categories && Array.isArray(data.categories)) {
+                    selectedCategories = data.categories;
+                }
                 
                 modalTitle.textContent = '编辑文章';
                 postIdInput.value = post.id;
                 titleInput.value = post.title;
                 summaryInput.value = post.summary || '';
                 contentInput.value = post.content;
+                
+                // 渲染已选标签和分类
+                renderSelectedTags();
+                renderSelectedCategories();
                 
                 openModal();
                 // 自动聚焦标题输入框
@@ -406,7 +477,10 @@
                 title: titleInput.value.trim(),
                 summary: summaryInput.value.trim(),
                 content: contentInput.value.trim(),
-                published_at: new Date().toISOString()
+                published_at: new Date().toISOString(),
+                // 添加标签和分类ID数组
+                tags: selectedTags.map(tag => tag.id),
+                categories: selectedCategories.map(category => category.id)
             };
             
             try {
@@ -497,6 +571,239 @@
             // 添加刷新按钮事件监听
             document.querySelector('button:has(.fa-sync-alt)').addEventListener('click', loadPosts);
         });
+
+        // 加载标签列表
+        async function loadTags() {
+            try {
+                tagsLoadingContainer.style.display = 'block';
+                tagsListContainer.style.display = 'none';
+                
+                const response = await authFetch('/api/admin/tags');
+                if (!response.ok) throw new Error('获取标签列表失败');
+                
+                allTags = await response.json();
+                
+                renderTagsList();
+                
+            } catch (error) {
+                console.error('加载标签列表失败:', error);
+                tagsLoadingContainer.innerHTML = '<p class="text-red-500">获取标签失败，请刷新重试</p>';
+            } finally {
+                tagsLoadingContainer.style.display = 'none';
+                tagsListContainer.style.display = 'flex';
+            }
+        }
+        
+        // 加载分类列表
+        async function loadCategories() {
+            try {
+                categoriesLoadingContainer.style.display = 'block';
+                categoriesListContainer.style.display = 'none';
+                
+                const response = await authFetch('/api/admin/categories');
+                if (!response.ok) throw new Error('获取分类列表失败');
+                
+                const data = await response.json();
+                allCategories = data.categories || [];
+                
+                renderCategoriesList();
+                
+            } catch (error) {
+                console.error('加载分类列表失败:', error);
+                categoriesLoadingContainer.innerHTML = '<p class="text-red-500">获取分类失败，请刷新重试</p>';
+            } finally {
+                categoriesLoadingContainer.style.display = 'none';
+                categoriesListContainer.style.display = 'flex';
+            }
+        }
+        
+        // 渲染标签列表
+        function renderTagsList() {
+            tagsListContainer.innerHTML = '';
+            
+            if (allTags.length === 0) {
+                tagsListContainer.innerHTML = '<p class="text-gray-500 text-sm">暂无标签</p>';
+                return;
+            }
+            
+            allTags.forEach(tag => {
+                // 创建标签元素
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag-item px-3 py-1 rounded-full text-sm cursor-pointer transition-colors';
+                tagElement.style.backgroundColor = tag.color || '#4299e1';
+                tagElement.style.color = getContrastColor(tag.color || '#4299e1');
+                tagElement.setAttribute('data-id', tag.id);
+                tagElement.textContent = tag.name;
+                
+                // 如果标签已被选中，添加不透明度
+                if (selectedTags.find(t => t.id === tag.id)) {
+                    tagElement.style.opacity = '0.6';
+                }
+                
+                // 点击标签切换选中状态
+                tagElement.addEventListener('click', () => {
+                    toggleTag(tag);
+                });
+                
+                tagsListContainer.appendChild(tagElement);
+            });
+        }
+        
+        // 渲染分类列表
+        function renderCategoriesList() {
+            categoriesListContainer.innerHTML = '';
+            
+            if (allCategories.length === 0) {
+                categoriesListContainer.innerHTML = '<p class="text-gray-500 text-sm">暂无分类</p>';
+                return;
+            }
+            
+            allCategories.forEach(category => {
+                // 创建分类元素
+                const categoryElement = document.createElement('span');
+                categoryElement.className = 'category-item px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm cursor-pointer hover:bg-gray-200 transition-colors';
+                categoryElement.setAttribute('data-id', category.id);
+                categoryElement.textContent = category.name;
+                
+                // 如果分类已被选中，添加样式
+                if (selectedCategories.find(c => c.id === category.id)) {
+                    categoryElement.classList.add('bg-indigo-100', 'text-indigo-700');
+                    categoryElement.classList.remove('bg-gray-100', 'text-gray-700');
+                }
+                
+                // 点击分类切换选中状态
+                categoryElement.addEventListener('click', () => {
+                    toggleCategory(category);
+                });
+                
+                categoriesListContainer.appendChild(categoryElement);
+            });
+        }
+        
+        // 切换标签选中状态
+        function toggleTag(tag) {
+            const index = selectedTags.findIndex(t => t.id === tag.id);
+            
+            if (index === -1) {
+                // 添加标签
+                selectedTags.push(tag);
+            } else {
+                // 移除标签
+                selectedTags.splice(index, 1);
+            }
+            
+            // 更新UI
+            renderSelectedTags();
+            renderTagsList();
+        }
+        
+        // 切换分类选中状态
+        function toggleCategory(category) {
+            const index = selectedCategories.findIndex(c => c.id === category.id);
+            
+            if (index === -1) {
+                // 添加分类
+                selectedCategories.push(category);
+            } else {
+                // 移除分类
+                selectedCategories.splice(index, 1);
+            }
+            
+            // 更新UI
+            renderSelectedCategories();
+            renderCategoriesList();
+        }
+        
+        // 渲染已选标签
+        function renderSelectedTags() {
+            selectedTagsContainer.innerHTML = '';
+            
+            if (selectedTags.length === 0) {
+                selectedTagsContainer.innerHTML = '<span class="text-gray-400 text-sm">未选择标签</span>';
+                return;
+            }
+            
+            selectedTags.forEach(tag => {
+                // 创建已选标签元素
+                const tagElement = document.createElement('span');
+                tagElement.className = 'flex items-center gap-1 px-2 py-1 rounded-full text-sm';
+                tagElement.style.backgroundColor = tag.color || '#4299e1';
+                tagElement.style.color = getContrastColor(tag.color || '#4299e1');
+                
+                tagElement.innerHTML = `
+                    ${tag.name}
+                    <button type="button" class="remove-tag-btn ml-1 text-xs" data-id="${tag.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                selectedTagsContainer.appendChild(tagElement);
+                
+                // 添加移除按钮事件
+                tagElement.querySelector('.remove-tag-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleTag(tag);
+                });
+            });
+        }
+        
+        // 渲染已选分类
+        function renderSelectedCategories() {
+            selectedCategoriesContainer.innerHTML = '';
+            
+            if (selectedCategories.length === 0) {
+                selectedCategoriesContainer.innerHTML = '<span class="text-gray-400 text-sm">未选择分类</span>';
+                return;
+            }
+            
+            selectedCategories.forEach(category => {
+                // 创建已选分类元素
+                const categoryElement = document.createElement('span');
+                categoryElement.className = 'flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-sm';
+                
+                categoryElement.innerHTML = `
+                    ${category.name}
+                    <button type="button" class="remove-category-btn ml-1 text-xs" data-id="${category.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                selectedCategoriesContainer.appendChild(categoryElement);
+                
+                // 添加移除按钮事件
+                categoryElement.querySelector('.remove-category-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleCategory(category);
+                });
+            });
+        }
+        
+        // 获取对比色以确保文字可读性
+        function getContrastColor(hexColor) {
+            // 移除#前缀
+            hexColor = hexColor.replace('#', '');
+            
+            // 转换为RGB
+            const r = parseInt(hexColor.substr(0, 2), 16);
+            const g = parseInt(hexColor.substr(2, 2), 16);
+            const b = parseInt(hexColor.substr(4, 2), 16);
+            
+            // 计算亮度
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            
+            // 返回黑色或白色文本
+            return brightness > 128 ? '#000000' : '#ffffff';
+        }
+        
+        // 重置标签和分类选择
+        function resetTagsAndCategories() {
+            selectedTags = [];
+            selectedCategories = [];
+            renderSelectedTags();
+            renderSelectedCategories();
+            if (allTags.length > 0) renderTagsList();
+            if (allCategories.length > 0) renderCategoriesList();
+        }
     </script>
 </body>
 </html> 

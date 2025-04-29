@@ -186,90 +186,78 @@ export async function onRequestDelete(context) {
     // 检查认证
     const authResult = await validateAuth(context);
     if (!authResult.valid) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: '未授权访问' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
-    // 获取URL参数中的分类ID
-    const url = new URL(context.request.url);
-    const id = url.searchParams.get('id');
-    
-    if (!id) {
-      return new Response(JSON.stringify({ error: '缺少分类ID' }), {
+
+    const { env, params } = context;
+    const categoryId = params.id;
+
+    if (!categoryId) {
+      return new Response(JSON.stringify({ error: '分类ID不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
-    const { env } = context;
-    
-    // 开始事务
-    await env.DB.prepare('BEGIN').run();
-    
-    try {
-      // 检查分类是否存在
-      const category = await env.DB.prepare('SELECT * FROM categories WHERE id = ?')
-        .bind(id).first();
-        
-      if (!category) {
-        await env.DB.prepare('ROLLBACK').run();
-        return new Response(JSON.stringify({ error: '分类不存在' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      // 检查分类是否有子分类
-      const childrenCheck = await env.DB.prepare('SELECT id FROM categories WHERE parent_id = ?')
-        .bind(id).all();
-        
-      if (childrenCheck.success && childrenCheck.results && childrenCheck.results.length > 0) {
-        await env.DB.prepare('ROLLBACK').run();
-        return new Response(JSON.stringify({ 
-          error: '该分类有子分类，无法删除。请先删除或移动其子分类。'
-        }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      // 检查该分类是否被文章使用
-      const postsCheck = await env.DB.prepare('SELECT id FROM posts WHERE category_id = ? LIMIT 1')
-        .bind(id).first();
-        
-      if (postsCheck) {
-        await env.DB.prepare('ROLLBACK').run();
-        return new Response(JSON.stringify({ 
-          error: '该分类下有文章，无法删除。请先移动或删除相关文章。'
-        }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      // 删除分类
-      await env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(id).run();
-      
-      // 提交事务
-      await env.DB.prepare('COMMIT').run();
-      
-      return new Response(JSON.stringify({ 
-        success: true,
-        message: '分类删除成功'
-      }), {
+
+    // 检查分类是否存在
+    const categoryExists = await env.DB.prepare(
+      "SELECT id FROM categories WHERE id = ?"
+    ).bind(categoryId).first();
+
+    if (!categoryExists) {
+      return new Response(JSON.stringify({ error: '分类不存在' }), {
+        status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
-      
-    } catch (error) {
-      // 发生错误时回滚事务
-      await env.DB.prepare('ROLLBACK').run();
-      throw error;
     }
-    
+
+    // 检查是否有子分类
+    const hasChildren = await env.DB.prepare(
+      "SELECT COUNT(*) as count FROM categories WHERE parent_id = ?"
+    ).bind(categoryId).first();
+
+    if (hasChildren && hasChildren.count > 0) {
+      return new Response(JSON.stringify({ 
+        error: '无法删除含有子分类的分类，请先删除所有子分类' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 检查该分类是否关联了文章
+    const hasAssociatedPosts = await env.DB.prepare(
+      "SELECT COUNT(*) as count FROM posts WHERE category_id = ?"
+    ).bind(categoryId).first();
+
+    if (hasAssociatedPosts && hasAssociatedPosts.count > 0) {
+      return new Response(JSON.stringify({ 
+        error: '无法删除已关联文章的分类，请先更改相关文章的分类或删除相关文章' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 删除分类
+    await env.DB.prepare(
+      "DELETE FROM categories WHERE id = ?"
+    ).bind(categoryId).run();
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: '分类已成功删除'
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+    console.error('删除分类失败:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message || '服务器内部错误' 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

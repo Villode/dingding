@@ -341,7 +341,15 @@ export async function onRequestGet(context) {
     const postsCount = postsCountResult ? postsCountResult.count : 0;
 
     const category = {
-      ...result,
+      id: result.id,
+      name: result.name,
+      slug: result.slug,
+      description: result.description,
+      parent_id: result.parent_id,
+      parent: result.parent_id,
+      parent_name: result.parent_name,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
       children,
       postsCount
     };
@@ -351,7 +359,7 @@ export async function onRequestGet(context) {
     });
 
   } catch (error) {
-    console.error('Error fetching category:', error);
+    console.error('获取分类详情失败:', error);
     return new Response(JSON.stringify({ 
       error: error.message || '服务器内部错误' 
     }), {

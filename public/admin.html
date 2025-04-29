@@ -604,7 +604,17 @@
                 if (!response.ok) throw new Error('获取分类列表失败');
                 
                 const data = await response.json();
-                allCategories = data.categories || [];
+                console.log('分类数据:', data);
+                
+                // 检查数据格式
+                if (Array.isArray(data)) {
+                    allCategories = data;
+                } else if (data && data.categories && Array.isArray(data.categories)) {
+                    allCategories = data.categories;
+                } else {
+                    console.error('分类数据格式不正确:', data);
+                    allCategories = [];
+                }
                 
                 renderCategoriesList();
                 

@@ -481,6 +481,13 @@
                 if (!response.ok) throw new Error('获取分类列表失败');
                 
                 const categories = await response.json();
+                console.log('API返回分类数据:', categories);
+                
+                // 检查数据结构
+                if (!Array.isArray(categories)) {
+                    console.error('分类数据格式错误,需要数组但收到:', typeof categories, categories);
+                    throw new Error('分类数据格式错误');
+                }
                 
                 // 同时更新父级分类选择框
                 updateParentCategoryOptions(categories);
@@ -490,6 +497,7 @@
                     
                     // 生成分类树结构
                     const categoriesTree = buildCategoryTree(categories);
+                    console.log('构建的分类树:', categoriesTree);
                     renderCategoryTree(categoriesTree, categoriesList);
                 } else {
                     categoriesList.innerHTML = `
@@ -507,23 +515,30 @@
 
         // 构建分类树
         function buildCategoryTree(categories) {
+            console.log('开始构建分类树，输入数据:', categories);
             const tree = [];
             const map = {};
             
             // 创建ID到类别的映射
             categories.forEach(category => {
+                console.log('处理分类:', category.id, category.name, '父级:', category.parent);
                 map[category.id] = { ...category, children: [] };
             });
+            
+            console.log('分类映射:', map);
             
             // 构建树结构
             categories.forEach(category => {
                 if (category.parent && map[category.parent]) {
+                    console.log(`将分类 ${category.id}(${category.name}) 添加为 ${category.parent} 的子分类`);
                     map[category.parent].children.push(map[category.id]);
                 } else {
+                    console.log(`将分类 ${category.id}(${category.name}) 添加为顶级分类`);
                     tree.push(map[category.id]);
                 }
             });
             
+            console.log('最终分类树:', tree);
             return tree;
         }
 
@@ -726,21 +741,30 @@
                 const response = await authFetch(`/api/admin/category/${categoryId}`);
                 if (!response.ok) throw new Error('获取分类详情失败');
                 
-                const category = await response.json();
+                const data = await response.json();
+                console.log('获取到的分类详情:', data);
+                
+                // 检查返回数据结构
+                if (!data || !data.category) {
+                    console.error('分类详情数据格式错误:', data);
+                    throw new Error('分类详情数据格式错误');
+                }
+                
+                const category = data.category;
                 
                 categoryModalTitle.textContent = '编辑分类';
                 categoryIdInput.value = category.id;
-                categoryNameInput.value = category.name;
+                categoryNameInput.value = category.name || '';
                 categorySlugInput.value = category.slug || '';
                 categoryDescriptionInput.value = category.description || '';
-                categoryParentSelect.value = category.parent || '';
+                categoryParentSelect.value = category.parent_id || '';
                 
                 // 重新加载所有分类，更新父级选择框
                 const allCategoriesResponse = await authFetch('/api/admin/categories');
                 if (allCategoriesResponse.ok) {
                     const allCategories = await allCategoriesResponse.json();
                     updateParentCategoryOptions(allCategories);
-                    categoryParentSelect.value = category.parent || '';
+                    categoryParentSelect.value = category.parent_id || '';
                 }
                 
                 openModal(categoryModal);

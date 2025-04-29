@@ -3,7 +3,7 @@ export async function onRequestGet(context) {
     // 检查认证
     const authResult = await validateAuth(context);
     if (!authResult.valid) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: '未授权访问' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -22,34 +22,47 @@ export async function onRequestGet(context) {
     `).all();
     
     if (!result.success) {
-      throw new Error('Failed to fetch categories');
+      throw new Error('查询分类失败');
     }
     
     const categories = result.results || [];
     
+    // 控制台打印原始数据
+    console.log('原始分类数据:', categories);
+    
+    // 处理结果，将parent_id重命名为parent，与前端代码匹配
+    const formattedCategories = categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      parent: cat.parent_id, // 重命名为parent，与前端代码匹配
+      parent_name: cat.parent_name,
+      created_at: cat.created_at,
+      updated_at: cat.updated_at
+    }));
+    
     // 构建分类树结构
     const buildCategoryTree = (categories, parentId = null) => {
       return categories
-        .filter(cat => cat.parent_id === parentId)
+        .filter(cat => cat.parent === parentId)
         .map(cat => ({
           ...cat,
           children: buildCategoryTree(categories, cat.id)
         }));
     };
     
-    const categoryTree = buildCategoryTree(categories);
+    const categoryTree = buildCategoryTree(formattedCategories);
     
-    return new Response(JSON.stringify({
-      categories,
-      categoryTree
-    }), {
+    // 修改返回格式，确保categories是数组
+    return new Response(JSON.stringify(formattedCategories), {
       headers: { 'Content-Type': 'application/json' }
     });
     
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('获取分类列表失败:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Internal Server Error' 
+      error: error.message || '服务器内部错误' 
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

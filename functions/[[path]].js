@@ -61,7 +61,7 @@ export async function onRequest(context) {
                 <title>文章详情 - 叮叮博客</title>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-                <script src="/lib/marked.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
                 <style>
                     .article-content img {
                         max-width: 100%;

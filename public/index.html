@@ -284,7 +284,7 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 40px;
+            width: 60px;
             background-color: #FFFFFF;
             z-index: 100;
             border-right: 1px solid #EEEEEE;
@@ -295,7 +295,12 @@
         }
         
         .sidebar-logo {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .sidebar-logo svg {
+            width: 28px;
+            height: 28px;
         }
         
         .sidebar-nav {
@@ -303,7 +308,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px;
+            gap: 30px;
         }
         
         .nav-item {
@@ -311,8 +316,8 @@
             align-items: center;
             justify-content: center;
             color: #666;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             text-decoration: none;
             transition: color var(--transition-fast);
         }
@@ -321,19 +326,23 @@
             color: var(--primary-color);
         }
         
+        .nav-item i {
+            font-size: 18px;
+        }
+        
         .sidebar-footer {
             margin-top: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            padding-top: 20px;
+            gap: 20px;
+            padding-top: 30px;
         }
         
         /* 主内容区调整 */
         .main-wrapper {
-            margin-left: 40px;
-            width: calc(100% - 40px);
+            margin-left: 60px;
+            width: calc(100% - 60px);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -351,9 +360,9 @@
             border-bottom: 1px solid #EEEEEE;
             position: fixed;
             top: 0;
-            left: 40px;
+            left: 60px;
             right: 0;
-            width: calc(100% - 40px);
+            width: calc(100% - 60px);
             z-index: 99;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
@@ -598,7 +607,7 @@
             }
             
             .sidebar.active {
-                width: 40px;
+                width: 60px;
                 opacity: 1;
             }
             

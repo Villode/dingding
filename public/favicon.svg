@@ -1,18 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <linearGradient id="gradientPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#3b82f6" />
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4299e1" />
+      <stop offset="100%" stop-color="#667eea" />
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="0.8" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
   </defs>
-  <path 
-    d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5l6 3v1L12 11 6 8.5v-1l6-3zm-6 5L12 11v7.5L6 15V9.5zm12 0V15l-6 3.5V11l6-3.5z" 
-    fill="url(#gradientPrimary)" 
-    filter="url(#glow)" 
-  />
-  <circle cx="12" cy="7" r="1" fill="#fff" />
+  <rect x="10" y="10" width="80" height="80" rx="15" fill="url(#grad)" />
+  <text x="50" y="65" font-family="Arial, sans-serif" font-size="50" font-weight="bold" text-anchor="middle" fill="white">D</text>
+  <path d="M70 25 L75 30 L70 35" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M30 65 L25 70 L30 75" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 </svg> 

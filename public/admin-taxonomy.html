@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签与分类管理 - 叮叮博客</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        /* 模态框动画 */
+        .modal-overlay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+        }
+        .modal-container {
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal-container.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        /* 模态框滚动条样式 */
+        .modal-body {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 3px;
+        }
+        /* 标签样式 */
+        .tag-item {
+            transition: all 0.2s ease;
+        }
+        .tag-item:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 bg-gray-800">
+                <div class="flex items-center justify-center h-16 px-4 bg-gray-900">
+                    <h1 class="text-xl font-semibold text-white flex items-center">
+                        <img src="/favicon.svg" alt="叮叮博客" class="h-8 w-8 mr-2">
+                        叮叮博客 管理系统
+                    </h1>
+                </div>
+                <div class="flex flex-col flex-grow px-4 mt-5">
+                    <nav class="flex-1 space-y-1">
+                        <a href="/admin-dashboard.html" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="text-sm">控制面板</span>
+                        </a>
+                        <a href="/admin.html" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-file-alt mr-3"></i>
+                            <span class="text-sm">文章管理</span>
+                        </a>
+                        <a href="/admin-taxonomy.html" class="flex items-center px-4 py-3 text-white bg-blue-600 rounded-md group">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span class="text-sm">标签与分类</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-folder mr-3"></i>
+                            <span class="text-sm">文件管理</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-database mr-3"></i>
+                            <span class="text-sm">KV存储配置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span class="text-sm">系统设置</span>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-3 text-gray-300 rounded-md hover:bg-gray-700 group">
+                            <i class="fas fa-key mr-3"></i>
+                            <span class="text-sm">密钥管理</span>
+                        </a>
+                    </nav>
+                    <a href="#" id="logout-btn" class="flex items-center px-4 py-3 mt-auto text-gray-300 rounded-md hover:bg-gray-700 group">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        <span class="text-sm">退出登录</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- 顶部栏 -->
+            <header class="bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                    <button class="md:hidden px-4 py-2 text-gray-700 bg-white rounded-md">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center ml-auto">
+                        <button id="refresh-btn" class="p-2 text-gray-400 bg-white rounded-full hover:text-gray-700 focus:outline-none">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                        <div class="ml-3 relative">
+                            <div class="flex items-center">
+                                <span class="text-gray-700 mr-2">管理员</span>
+                                <i class="fas fa-user-circle text-2xl text-gray-700"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-100">
+                <div class="max-w-7xl mx-auto">
+                    <!-- 标签和分类选项卡 -->
+                    <div class="mb-6">
+                        <div class="flex border-b border-gray-200">
+                            <button id="tags-tab" class="py-2 px-4 border-b-2 border-blue-500 text-blue-600 font-medium">
+                                <i class="fas fa-tags mr-2"></i>标签管理
+                            </button>
+                            <button id="categories-tab" class="py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                                <i class="fas fa-folder mr-2"></i>分类管理
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 标签管理面板 -->
+                    <div id="tags-panel">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800">标签管理</h2>
+                            <button id="new-tag-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center text-sm">
+                                <i class="fas fa-plus mr-2"></i> 新建标签
+                            </button>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:p-6">
+                                <div id="tags-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    <!-- 标签列表将通过JavaScript动态加载 -->
+                                    <div class="flex items-center justify-center p-6 col-span-full">
+                                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> 
+                                        <span class="text-gray-600">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分类管理面板 -->
+                    <div id="categories-panel" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800">分类管理</h2>
+                            <button id="new-category-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center text-sm">
+                                <i class="fas fa-plus mr-2"></i> 新建分类
+                            </button>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:p-6">
+                                <div id="categories-list" class="space-y-3">
+                                    <!-- 分类列表将通过JavaScript动态加载 -->
+                                    <div class="flex items-center justify-center p-6">
+                                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> 
+                                        <span class="text-gray-600">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 标签编辑模态框 -->
+    <div id="tag-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50"></div>
+        <div class="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-hidden">
+            <div class="modal-header flex justify-between items-center px-6 py-4 bg-gray-100 border-b">
+                <h3 class="text-xl font-bold text-gray-900" id="tag-modal-title">新建标签</h3>
+                <button id="tag-modal-close-btn" class="text-gray-700 hover:text-gray-900">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body p-6">
+                <form id="tag-form" class="space-y-4">
+                    <input type="hidden" id="tag-id" name="id">
+                    <div>
+                        <label for="tag-name" class="block text-sm font-medium text-gray-700">标签名称</label>
+                        <input type="text" id="tag-name" name="name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="tag-slug" class="block text-sm font-medium text-gray-700">标签别名</label>
+                        <input type="text" id="tag-slug" name="slug" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">用于URL的标识符，只能包含字母、数字、连字符和下划线</p>
+                    </div>
+                    <div>
+                        <label for="tag-color" class="block text-sm font-medium text-gray-700">标签颜色</label>
+                        <div class="flex mt-1">
+                            <input type="color" id="tag-color" name="color" class="h-10 w-10 rounded border border-gray-300">
+                            <input type="text" id="tag-color-hex" class="ml-2 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="#5a67d8">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer px-6 py-4 bg-gray-100 border-t flex justify-between">
+                <button type="button" id="tag-cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-times mr-2"></i> 取消
+                </button>
+                <button type="button" id="tag-save-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-save mr-2"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分类编辑模态框 -->
+    <div id="category-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50"></div>
+        <div class="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-hidden">
+            <div class="modal-header flex justify-between items-center px-6 py-4 bg-gray-100 border-b">
+                <h3 class="text-xl font-bold text-gray-900" id="category-modal-title">新建分类</h3>
+                <button id="category-modal-close-btn" class="text-gray-700 hover:text-gray-900">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body p-6">
+                <form id="category-form" class="space-y-4">
+                    <input type="hidden" id="category-id" name="id">
+                    <div>
+                        <label for="category-name" class="block text-sm font-medium text-gray-700">分类名称</label>
+                        <input type="text" id="category-name" name="name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="category-slug" class="block text-sm font-medium text-gray-700">分类别名</label>
+                        <input type="text" id="category-slug" name="slug" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">用于URL的标识符，只能包含字母、数字、连字符和下划线</p>
+                    </div>
+                    <div>
+                        <label for="category-description" class="block text-sm font-medium text-gray-700">分类描述</label>
+                        <textarea id="category-description" name="description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="category-parent" class="block text-sm font-medium text-gray-700">父级分类</label>
+                        <select id="category-parent" name="parent" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">无 (顶级分类)</option>
+                            <!-- 父级分类选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer px-6 py-4 bg-gray-100 border-t flex justify-between">
+                <button type="button" id="category-cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-times mr-2"></i> 取消
+                </button>
+                <button type="button" id="category-save-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-save mr-2"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 元素
+        const tagsTab = document.getElementById('tags-tab');
+        const categoriesTab = document.getElementById('categories-tab');
+        const tagsPanel = document.getElementById('tags-panel');
+        const categoriesPanel = document.getElementById('categories-panel');
+        const tagsList = document.getElementById('tags-list');
+        const categoriesList = document.getElementById('categories-list');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // 标签相关元素
+        const newTagBtn = document.getElementById('new-tag-btn');
+        const tagModal = document.getElementById('tag-modal');
+        const tagModalTitle = document.getElementById('tag-modal-title');
+        const tagModalCloseBtn = document.getElementById('tag-modal-close-btn');
+        const tagForm = document.getElementById('tag-form');
+        const tagIdInput = document.getElementById('tag-id');
+        const tagNameInput = document.getElementById('tag-name');
+        const tagSlugInput = document.getElementById('tag-slug');
+        const tagColorInput = document.getElementById('tag-color');
+        const tagColorHexInput = document.getElementById('tag-color-hex');
+        const tagCancelBtn = document.getElementById('tag-cancel-btn');
+        const tagSaveBtn = document.getElementById('tag-save-btn');
+
+        // 分类相关元素
+        const newCategoryBtn = document.getElementById('new-category-btn');
+        const categoryModal = document.getElementById('category-modal');
+        const categoryModalTitle = document.getElementById('category-modal-title');
+        const categoryModalCloseBtn = document.getElementById('category-modal-close-btn');
+        const categoryForm = document.getElementById('category-form');
+        const categoryIdInput = document.getElementById('category-id');
+        const categoryNameInput = document.getElementById('category-name');
+        const categorySlugInput = document.getElementById('category-slug');
+        const categoryDescriptionInput = document.getElementById('category-description');
+        const categoryParentSelect = document.getElementById('category-parent');
+        const categoryCancelBtn = document.getElementById('category-cancel-btn');
+        const categorySaveBtn = document.getElementById('category-save-btn');
+
+        // 模态框公共方法
+        const openModal = (modal, overlay, container) => {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.querySelector('.modal-overlay').classList.add('show');
+                modal.querySelector('.modal-container').classList.add('show');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeModal = (modal) => {
+            modal.querySelector('.modal-overlay').classList.remove('show');
+            modal.querySelector('.modal-container').classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        };
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                // 如果没有登录凭证，重定向到登录页面
+                window.location.href = '/login.html';
+                return false;
+            }
+            return token;
+        }
+
+        // 添加Authorization头到fetch请求
+        async function authFetch(url, options = {}) {
+            const token = checkAuth();
+            if (!token) return;
+
+            // 创建新的headers对象
+            const newHeaders = new Headers(options.headers || {});
+            newHeaders.set('Authorization', `Bearer ${token}`);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: newHeaders
+                });
+                
+                // 检查响应状态
+                if (response.status === 401) {
+                    // 未授权，需要重新登录
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('请求出错:', error);
+                throw error;
+            }
+        }
+
+        // 切换标签和分类面板
+        function switchTab(tabName) {
+            if (tabName === 'tags') {
+                tagsTab.classList.add('border-blue-500', 'text-blue-600');
+                tagsTab.classList.remove('border-transparent', 'text-gray-500');
+                categoriesTab.classList.add('border-transparent', 'text-gray-500');
+                categoriesTab.classList.remove('border-blue-500', 'text-blue-600');
+                tagsPanel.classList.remove('hidden');
+                categoriesPanel.classList.add('hidden');
+                loadTags();
+            } else {
+                categoriesTab.classList.add('border-blue-500', 'text-blue-600');
+                categoriesTab.classList.remove('border-transparent', 'text-gray-500');
+                tagsTab.classList.add('border-transparent', 'text-gray-500');
+                tagsTab.classList.remove('border-blue-500', 'text-blue-600');
+                categoriesPanel.classList.remove('hidden');
+                tagsPanel.classList.add('hidden');
+                loadCategories();
+            }
+        }
+
+        // 加载标签列表
+        async function loadTags() {
+            try {
+                tagsList.innerHTML = `
+                    <div class="flex items-center justify-center p-6 col-span-full">
+                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> 
+                        <span class="text-gray-600">加载中...</span>
+                    </div>
+                `;
+                
+                const response = await authFetch('/api/admin/tags');
+                if (!response.ok) throw new Error('获取标签列表失败');
+                
+                const tags = await response.json();
+                
+                if (tags && tags.length > 0) {
+                    tagsList.innerHTML = '';
+                    
+                    tags.forEach(tag => {
+                        const tagElement = document.createElement('div');
+                        tagElement.className = 'tag-item bg-white p-4 rounded-lg shadow border border-gray-100 hover:shadow-md transition-shadow flex justify-between items-center';
+                        
+                        // 标签颜色样式，默认为蓝色
+                        const tagColor = tag.color || '#4299e1';
+                        
+                        tagElement.innerHTML = `
+                            <div class="flex items-center">
+                                <span class="w-4 h-4 rounded-full mr-2" style="background-color: ${tagColor}"></span>
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${tag.name}</h3>
+                                    <p class="text-xs text-gray-500">${tag.slug || ''}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button class="edit-tag-btn p-1 text-gray-500 hover:text-indigo-600" data-id="${tag.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-tag-btn p-1 text-gray-500 hover:text-red-600" data-id="${tag.id}" data-name="${tag.name}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `;
+                        
+                        tagsList.appendChild(tagElement);
+                    });
+                    
+                    // 添加编辑和删除按钮的点击事件
+                    document.querySelectorAll('.edit-tag-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const tagId = this.getAttribute('data-id');
+                            editTag(tagId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-tag-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const tagId = this.getAttribute('data-id');
+                            const tagName = this.getAttribute('data-name');
+                            deleteTag(tagId, tagName);
+                        });
+                    });
+                } else {
+                    tagsList.innerHTML = `
+                        <div class="col-span-full bg-white p-6 rounded-lg shadow text-center">
+                            <i class="fas fa-tags text-gray-400 text-4xl mb-3"></i>
+                            <p class="text-gray-500">暂无标签，点击"新建标签"按钮创建</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载标签列表失败:', error);
+                tagsList.innerHTML = '<div class="col-span-full"><p class="text-red-500 p-4">获取标签列表失败，请刷新页面重试</p></div>';
+            }
+        }
+
+        // 加载分类列表
+        async function loadCategories() {
+            try {
+                categoriesList.innerHTML = `
+                    <div class="flex items-center justify-center p-6">
+                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> 
+                        <span class="text-gray-600">加载中...</span>
+                    </div>
+                `;
+                
+                const response = await authFetch('/api/admin/categories');
+                if (!response.ok) throw new Error('获取分类列表失败');
+                
+                const categories = await response.json();
+                
+                // 同时更新父级分类选择框
+                updateParentCategoryOptions(categories);
+                
+                if (categories && categories.length > 0) {
+                    categoriesList.innerHTML = '';
+                    
+                    // 生成分类树结构
+                    const categoriesTree = buildCategoryTree(categories);
+                    renderCategoryTree(categoriesTree, categoriesList);
+                } else {
+                    categoriesList.innerHTML = `
+                        <div class="bg-white p-6 rounded-lg shadow text-center">
+                            <i class="fas fa-folder text-gray-400 text-4xl mb-3"></i>
+                            <p class="text-gray-500">暂无分类，点击"新建分类"按钮创建</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载分类列表失败:', error);
+                categoriesList.innerHTML = '<p class="text-red-500 p-4">获取分类列表失败，请刷新页面重试</p>';
+            }
+        }
+
+        // 构建分类树
+        function buildCategoryTree(categories) {
+            const tree = [];
+            const map = {};
+            
+            // 创建ID到类别的映射
+            categories.forEach(category => {
+                map[category.id] = { ...category, children: [] };
+            });
+            
+            // 构建树结构
+            categories.forEach(category => {
+                if (category.parent && map[category.parent]) {
+                    map[category.parent].children.push(map[category.id]);
+                } else {
+                    tree.push(map[category.id]);
+                }
+            });
+            
+            return tree;
+        }
+
+        // 渲染分类树
+        function renderCategoryTree(categories, container, level = 0) {
+            categories.forEach(category => {
+                const categoryElement = document.createElement('div');
+                const indentClass = level > 0 ? `pl-${level * 6}` : '';
+                categoryElement.className = `bg-white p-4 rounded-lg shadow border border-gray-100 hover:shadow-md transition-shadow ${indentClass} mb-2`;
+                
+                categoryElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium text-gray-900">${'&nbsp;'.repeat(level * 2)}${level > 0 ? '└─ ' : ''}${category.name}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${category.description || '无描述'}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-category-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded text-sm flex items-center" data-id="${category.id}">
+                                <i class="fas fa-edit mr-1"></i> 编辑
+                            </button>
+                            <button class="delete-category-btn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm flex items-center" data-id="${category.id}" data-name="${category.name}">
+                                <i class="fas fa-trash-alt mr-1"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(categoryElement);
+                
+                if (category.children && category.children.length > 0) {
+                    renderCategoryTree(category.children, container, level + 1);
+                }
+            });
+            
+            // 添加编辑和删除按钮的点击事件
+            document.querySelectorAll('.edit-category-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    editCategory(categoryId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-category-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    const categoryName = this.getAttribute('data-name');
+                    deleteCategory(categoryId, categoryName);
+                });
+            });
+        }
+
+        // 更新父级分类选择框
+        function updateParentCategoryOptions(categories) {
+            // 清除现有选项，保留"无 (顶级分类)"选项
+            while (categoryParentSelect.options.length > 1) {
+                categoryParentSelect.remove(1);
+            }
+            
+            if (categories && categories.length > 0) {
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    
+                    // 如果正在编辑某个分类，不能选择自己作为父级
+                    if (categoryIdInput.value && categoryIdInput.value === category.id) {
+                        option.disabled = true;
+                    }
+                    
+                    categoryParentSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 新建标签
+        function createNewTag() {
+            tagModalTitle.textContent = '新建标签';
+            tagIdInput.value = '';
+            tagNameInput.value = '';
+            tagSlugInput.value = '';
+            
+            // 设置随机默认颜色
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            tagColorInput.value = randomColor;
+            tagColorHexInput.value = randomColor;
+            
+            openModal(tagModal);
+            setTimeout(() => tagNameInput.focus(), 300);
+        }
+
+        // 编辑标签
+        async function editTag(tagId) {
+            try {
+                const response = await authFetch(`/api/admin/tag/${tagId}`);
+                if (!response.ok) throw new Error('获取标签详情失败');
+                
+                const tag = await response.json();
+                
+                tagModalTitle.textContent = '编辑标签';
+                tagIdInput.value = tag.id;
+                tagNameInput.value = tag.name;
+                tagSlugInput.value = tag.slug || '';
+                tagColorInput.value = tag.color || '#4299e1';
+                tagColorHexInput.value = tag.color || '#4299e1';
+                
+                openModal(tagModal);
+                setTimeout(() => tagNameInput.focus(), 300);
+            } catch (error) {
+                console.error('编辑标签失败:', error);
+                alert('获取标签详情失败，请重试');
+            }
+        }
+
+        // 删除标签
+        async function deleteTag(tagId, tagName) {
+            if (!confirm(`确定要删除标签 "${tagName}" 吗？此操作可能会影响已关联的文章。`)) {
+                return;
+            }
+            
+            try {
+                const response = await authFetch(`/api/admin/tag/${tagId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '删除标签失败');
+                }
+                
+                alert('标签已成功删除');
+                loadTags(); // 重新加载标签列表
+            } catch (error) {
+                console.error('删除标签失败:', error);
+                alert(`删除标签失败: ${error.message}`);
+            }
+        }
+
+        // 提交标签表单
+        async function submitTagForm() {
+            if (!tagNameInput.value.trim()) {
+                alert('请输入标签名称');
+                tagNameInput.focus();
+                return;
+            }
+            
+            const tagData = {
+                id: tagIdInput.value || undefined,
+                name: tagNameInput.value.trim(),
+                slug: tagSlugInput.value.trim() || generateSlug(tagNameInput.value.trim()),
+                color: tagColorHexInput.value.trim()
+            };
+            
+            try {
+                tagSaveBtn.disabled = true;
+                tagSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
+                
+                const response = await authFetch('/api/admin/tag', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(tagData)
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '保存标签失败');
+                }
+                
+                const result = await response.json();
+                
+                alert(`标签 "${tagData.name}" 已成功保存`);
+                closeModal(tagModal);
+                loadTags(); // 重新加载标签列表
+            } catch (error) {
+                console.error('保存标签失败:', error);
+                alert(`保存标签失败: ${error.message}`);
+            } finally {
+                tagSaveBtn.disabled = false;
+                tagSaveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> 保存';
+            }
+        }
+
+        // 新建分类
+        function createNewCategory() {
+            categoryModalTitle.textContent = '新建分类';
+            categoryIdInput.value = '';
+            categoryNameInput.value = '';
+            categorySlugInput.value = '';
+            categoryDescriptionInput.value = '';
+            categoryParentSelect.value = '';
+            
+            openModal(categoryModal);
+            setTimeout(() => categoryNameInput.focus(), 300);
+        }
+
+        // 编辑分类
+        async function editCategory(categoryId) {
+            try {
+                const response = await authFetch(`/api/admin/category/${categoryId}`);
+                if (!response.ok) throw new Error('获取分类详情失败');
+                
+                const category = await response.json();
+                
+                categoryModalTitle.textContent = '编辑分类';
+                categoryIdInput.value = category.id;
+                categoryNameInput.value = category.name;
+                categorySlugInput.value = category.slug || '';
+                categoryDescriptionInput.value = category.description || '';
+                categoryParentSelect.value = category.parent || '';
+                
+                // 重新加载所有分类，更新父级选择框
+                const allCategoriesResponse = await authFetch('/api/admin/categories');
+                if (allCategoriesResponse.ok) {
+                    const allCategories = await allCategoriesResponse.json();
+                    updateParentCategoryOptions(allCategories);
+                    categoryParentSelect.value = category.parent || '';
+                }
+                
+                openModal(categoryModal);
+                setTimeout(() => categoryNameInput.focus(), 300);
+            } catch (error) {
+                console.error('编辑分类失败:', error);
+                alert('获取分类详情失败，请重试');
+            }
+        }
+
+        // 删除分类
+        async function deleteCategory(categoryId, categoryName) {
+            if (!confirm(`确定要删除分类 "${categoryName}" 吗？此操作可能会影响已关联的文章和子分类。`)) {
+                return;
+            }
+            
+            try {
+                const response = await authFetch(`/api/admin/category/${categoryId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '删除分类失败');
+                }
+                
+                alert('分类已成功删除');
+                loadCategories(); // 重新加载分类列表
+            } catch (error) {
+                console.error('删除分类失败:', error);
+                alert(`删除分类失败: ${error.message}`);
+            }
+        }
+
+        // 提交分类表单
+        async function submitCategoryForm() {
+            if (!categoryNameInput.value.trim()) {
+                alert('请输入分类名称');
+                categoryNameInput.focus();
+                return;
+            }
+            
+            const categoryData = {
+                id: categoryIdInput.value || undefined,
+                name: categoryNameInput.value.trim(),
+                slug: categorySlugInput.value.trim() || generateSlug(categoryNameInput.value.trim()),
+                description: categoryDescriptionInput.value.trim(),
+                parent: categoryParentSelect.value || null
+            };
+            
+            try {
+                categorySaveBtn.disabled = true;
+                categorySaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
+                
+                const response = await authFetch('/api/admin/category', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(categoryData)
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '保存分类失败');
+                }
+                
+                const result = await response.json();
+                
+                alert(`分类 "${categoryData.name}" 已成功保存`);
+                closeModal(categoryModal);
+                loadCategories(); // 重新加载分类列表
+            } catch (error) {
+                console.error('保存分类失败:', error);
+                alert(`保存分类失败: ${error.message}`);
+            } finally {
+                categorySaveBtn.disabled = false;
+                categorySaveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> 保存';
+            }
+        }
+
+        // 生成别名
+        function generateSlug(name) {
+            return name
+                .toLowerCase()
+                .replace(/[\s\W-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+
+        // 标签颜色输入同步
+        tagColorInput.addEventListener('input', function() {
+            tagColorHexInput.value = this.value;
+        });
+
+        tagColorHexInput.addEventListener('input', function() {
+            tagColorInput.value = this.value;
+        });
+
+        // 标签名称自动生成别名
+        tagNameInput.addEventListener('blur', function() {
+            if (!tagSlugInput.value && this.value) {
+                tagSlugInput.value = generateSlug(this.value);
+            }
+        });
+
+        // 分类名称自动生成别名
+        categoryNameInput.addEventListener('blur', function() {
+            if (!categorySlugInput.value && this.value) {
+                categorySlugInput.value = generateSlug(this.value);
+            }
+        });
+
+        // 标签模态框事件
+        tagModalCloseBtn.addEventListener('click', function() {
+            if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                closeModal(tagModal);
+            }
+        });
+
+        tagCancelBtn.addEventListener('click', function() {
+            if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                closeModal(tagModal);
+            }
+        });
+
+        // 分类模态框事件
+        categoryModalCloseBtn.addEventListener('click', function() {
+            if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                closeModal(categoryModal);
+            }
+        });
+
+        categoryCancelBtn.addEventListener('click', function() {
+            if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                closeModal(categoryModal);
+            }
+        });
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            // 验证登录状态
+            if (!checkAuth()) return;
+            
+            // 切换选项卡事件
+            tagsTab.addEventListener('click', () => switchTab('tags'));
+            categoriesTab.addEventListener('click', () => switchTab('categories'));
+            
+            // 新建按钮事件
+            newTagBtn.addEventListener('click', createNewTag);
+            newCategoryBtn.addEventListener('click', createNewCategory);
+            
+            // 保存按钮事件
+            tagSaveBtn.addEventListener('click', submitTagForm);
+            categorySaveBtn.addEventListener('click', submitCategoryForm);
+            
+            // 刷新按钮事件
+            refreshBtn.addEventListener('click', () => {
+                if (tagsPanel.classList.contains('hidden')) {
+                    loadCategories();
+                } else {
+                    loadTags();
+                }
+            });
+            
+            // 注销按钮事件
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('确定要注销吗？')) {
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/login.html';
+                }
+            });
+            
+            // 初始加载标签
+            loadTags();
+        });
+
+        // 处理ESC键关闭模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (!tagModal.classList.contains('hidden')) {
+                    if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                        closeModal(tagModal);
+                    }
+                } else if (!categoryModal.classList.contains('hidden')) {
+                    if (confirm('确定要取消编辑吗？未保存的内容将会丢失。')) {
+                        closeModal(categoryModal);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

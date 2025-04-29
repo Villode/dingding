@@ -2,6 +2,14 @@ import posts from './posts/data.js';
 
 export async function onRequestGet({ env }) {
   try {
+    // 添加一个调试参数，检查数据库结构
+    const url = new URL(env.request?.url || 'http://localhost');
+    const debug = url.searchParams.get('debug') === 'true';
+    
+    if (debug && env.DB) {
+      return await diagnoseDatabaseIssues(env.DB);
+    }
+    
     // 检查是否有BLOG_POSTS KV命名空间绑定
     if (env.BLOG_POSTS) {
       // 尝试从KV获取文章列表
@@ -189,5 +197,80 @@ async function enrichPostsWithCategoriesAndTags(posts, db) {
     console.error("为文章添加分类和标签信息时出错:", error);
     // 如果添加分类和标签失败，仍返回原始文章数据
     return Response.json(posts);
+  }
+}
+
+// 诊断函数：检查数据库表结构和内容
+async function diagnoseDatabaseIssues(db) {
+  try {
+    const diagnostics = {
+      tables: {},
+      counts: {},
+      samples: {},
+      message: "这是一个数据库诊断报告，用于检查分类和标签问题",
+    };
+    
+    // 检查表结构
+    const tablesQuery = await db.prepare(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' 
+      AND name IN ('posts', 'categories', 'tags', 'posts_tags', 'posts_categories')
+    `).all();
+    
+    const tables = tablesQuery.results?.map(t => t.name) || [];
+    diagnostics.tables.list = tables;
+    
+    // 检查表中的数据数量
+    for (const table of tables) {
+      try {
+        const countQuery = await db.prepare(`SELECT COUNT(*) as count FROM ${table}`).first();
+        diagnostics.counts[table] = countQuery?.count || 0;
+        
+        // 获取每个表的示例数据
+        if (countQuery?.count > 0) {
+          const sampleQuery = await db.prepare(`SELECT * FROM ${table} LIMIT 2`).all();
+          diagnostics.samples[table] = sampleQuery.results || [];
+        }
+      } catch (error) {
+        diagnostics.counts[table] = `错误: ${error.message}`;
+      }
+    }
+    
+    // 特别检查posts表的category_id字段
+    try {
+      const postsWithCategory = await db.prepare(`
+        SELECT id, title, category_id FROM posts WHERE category_id IS NOT NULL LIMIT 5
+      `).all();
+      diagnostics.postsWithCategory = postsWithCategory.results || [];
+    } catch (error) {
+      diagnostics.postsWithCategory = `错误: ${error.message}`;
+    }
+    
+    // 检查posts_tags表的关联数据
+    try {
+      const postTagsQuery = await db.prepare(`
+        SELECT post_id, tag_id FROM posts_tags LIMIT 5
+      `).all();
+      diagnostics.postTagsRelations = postTagsQuery.results || [];
+    } catch (error) {
+      diagnostics.postTagsRelations = `错误: ${error.message}`;
+    }
+    
+    return Response.json(diagnostics, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    return Response.json({
+      error: '诊断过程出错',
+      message: error.message,
+      stack: error.stack,
+    }, {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 } 

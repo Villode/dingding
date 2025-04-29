@@ -1068,6 +1068,22 @@
                     console.log("第一篇文章:", posts[0]);
                     console.log("文章分类:", posts[0].category);
                     console.log("文章标签:", posts[0].tags);
+                    
+                    // 添加更清晰的调试信息
+                    console.group("API数据分析");
+                    console.log("获取到 " + posts.length + " 篇文章");
+                    
+                    posts.forEach((post, index) => {
+                        console.group(`文章 ${index+1}: ${post.title}`);
+                        console.log("ID:", post.id);
+                        console.log("文章分类:", post.category ? `${post.category.name} (ID: ${post.category.id})` : "无分类");
+                        console.log("文章标签:", post.tags && post.tags.length ? 
+                                   post.tags.map(t => `${t.name}(${t.color})`).join(", ") : "无标签");
+                        console.log("原始数据:", post);
+                        console.groupEnd();
+                    });
+                    
+                    console.groupEnd();
                 }
                 
                 const postsContainer = document.getElementById('posts-container');

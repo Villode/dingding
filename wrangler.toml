@@ -5,6 +5,12 @@ compatibility_date = "2023-12-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "public"
 
+# D1数据库配置
+[[d1_databases]]
+binding = "DB"
+database_name = "dingding-blog-db"
+database_id = "bfa25d27-a21f-4091-af68-4ccc469bdb1e"
+
 # KV命名空间配置
 [[kv_namespaces]]
 binding = "BLOG_POSTS"
@@ -18,7 +24,15 @@ id = "264e66d3659d4b209b247930cadf262f"
 binding = "API_STATS"
 id = "ef3827e2f45142f39a96c57f92baeb20"
 
-# 预览环境KV配置
+# 预览环境配置
+[env.preview]
+# D1数据库配置
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "dingding-blog-db"
+database_id = "bfa25d27-a21f-4091-af68-4ccc469bdb1e"
+
+# KV命名空间配置
 [[env.preview.kv_namespaces]]
 binding = "BLOG_POSTS"
 id = "97c1ad6d710b42129dc204075412907e"
@@ -31,7 +45,15 @@ id = "264e66d3659d4b209b247930cadf262f"
 binding = "API_STATS"
 id = "ef3827e2f45142f39a96c57f92baeb20"
 
-# 生产环境KV配置
+# 生产环境配置
+[env.production]
+# D1数据库配置
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "dingding-blog-db"
+database_id = "bfa25d27-a21f-4091-af68-4ccc469bdb1e"
+
+# KV命名空间配置
 [[env.production.kv_namespaces]]
 binding = "BLOG_POSTS"
 id = "97c1ad6d710b42129dc204075412907e" 

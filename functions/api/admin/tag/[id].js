@@ -20,16 +20,10 @@ export async function onRequestGet(context) {
       });
     }
 
-    // 从KV存储中获取标签
+    // 从D1数据库中获取标签
     const { env } = context;
-    let tag = null;
-
-    if (env.BLOG_TAGS) {
-      const tagData = await env.BLOG_TAGS.get(tagId, { type: 'json' });
-      if (tagData) {
-        tag = { ...tagData, id: tagId };
-      }
-    }
+    const stmt = env.DB.prepare("SELECT id, name, slug, color, created_at, updated_at FROM tags WHERE id = ?");
+    const tag = await stmt.bind(tagId).first();
 
     if (!tag) {
       return new Response(JSON.stringify({ error: 'Tag not found' }), {
@@ -72,24 +66,37 @@ export async function onRequestDelete(context) {
       });
     }
 
-    // 从KV存储中删除标签
+    // 从D1数据库中删除标签
     const { env } = context;
     
-    if (env.BLOG_TAGS) {
+    // 开始事务
+    await env.DB.prepare("BEGIN").run();
+    
+    try {
       // 检查标签是否存在
-      const tagExists = await env.BLOG_TAGS.get(tagId);
-      if (!tagExists) {
+      const checkStmt = env.DB.prepare("SELECT id FROM tags WHERE id = ?");
+      const existingTag = await checkStmt.bind(tagId).first();
+      
+      if (!existingTag) {
+        await env.DB.prepare("ROLLBACK").run();
         return new Response(JSON.stringify({ error: 'Tag not found' }), {
           status: 404,
           headers: { 'Content-Type': 'application/json' }
         });
       }
       
-      // 删除标签
-      await env.BLOG_TAGS.delete(tagId);
+      // 先删除标签与文章的关联
+      await env.DB.prepare("DELETE FROM post_tags WHERE tag_id = ?").bind(tagId).run();
       
-      // 在实际应用中，还应该处理与此标签相关的文章
-      // 例如从文章中移除对此标签的引用
+      // 删除标签
+      await env.DB.prepare("DELETE FROM tags WHERE id = ?").bind(tagId).run();
+      
+      // 提交事务
+      await env.DB.prepare("COMMIT").run();
+    } catch (err) {
+      // 回滚事务
+      await env.DB.prepare("ROLLBACK").run();
+      throw err;
     }
 
     // 返回成功响应

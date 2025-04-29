@@ -61,6 +61,118 @@ export async function onRequest(context) {
                 <title>文章详情 - 叮叮博客</title>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+                <script src="/lib/marked.min.js"></script>
+                <style>
+                    .article-content img {
+                        max-width: 100%;
+                        height: auto;
+                        border-radius: 8px;
+                        margin: 1rem 0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    }
+                    
+                    .article-content {
+                        color: #333333;
+                        line-height: 1.8;
+                    }
+                    
+                    .article-content h1,
+                    .article-content h2,
+                    .article-content h3,
+                    .article-content h4,
+                    .article-content h5,
+                    .article-content h6 {
+                        color: #222222;
+                        margin-top: 1.5em;
+                        margin-bottom: 0.8em;
+                        font-weight: 600;
+                    }
+                    
+                    .article-content p {
+                        margin-bottom: 1em;
+                    }
+                    
+                    .article-content a {
+                        color: #FA541C;
+                        text-decoration: none;
+                        border-bottom: 1px solid rgba(250, 84, 28, 0.2);
+                    }
+                    
+                    .article-content a:hover {
+                        border-bottom-color: #FA541C;
+                    }
+                    
+                    .article-content blockquote {
+                        border-left: 4px solid #FA541C;
+                        padding-left: 1rem;
+                        margin-left: 0;
+                        color: #555555;
+                        font-style: italic;
+                        margin: 1.5em 0;
+                    }
+                    
+                    .article-content code {
+                        background: #f5f5f5;
+                        padding: 0.2em 0.4em;
+                        border-radius: 3px;
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 0.9em;
+                        color: #333;
+                    }
+                    
+                    .article-content pre {
+                        background: #f5f5f5;
+                        padding: 1em;
+                        border-radius: 5px;
+                        overflow-x: auto;
+                        margin: 1.5em 0;
+                    }
+                    
+                    .article-content pre code {
+                        background: none;
+                        padding: 0;
+                    }
+                    
+                    .article-content ul, 
+                    .article-content ol {
+                        margin-bottom: 1em;
+                        padding-left: 1.5em;
+                    }
+                    
+                    .article-content li {
+                        margin-bottom: 0.5em;
+                    }
+                    
+                    .image-load-error {
+                        position: relative;
+                        min-height: 200px;
+                        min-width: 300px;
+                        background-color: #f3f4f6;
+                        border: 1px dashed #d1d5db;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .image-load-error::before {
+                        content: "图片加载失败 (点击重试)";
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: #666;
+                        font-size: 0.9em;
+                        white-space: nowrap;
+                    }
+                    
+                    .image-load-error:hover {
+                        background-color: #e5e7eb;
+                        border-color: #FA541C;
+                    }
+                    
+                    .image-load-error:hover::before {
+                        color: #FA541C;
+                    }
+                </style>
             </head>
             <body class="bg-gray-100 min-h-screen">
                 <header class="bg-white shadow">
@@ -94,8 +206,127 @@ export async function onRequest(context) {
                     </div>
                 </footer>
                 <script>
-                    document.addEventListener('DOMContentLoaded', async () => {
+                    // 配置 marked
+                    function initMarked() {
+                        if (typeof marked === 'undefined') {
+                            console.error('Marked.js not loaded');
+                            return false;
+                        }
+                        
+                        const renderer = new marked.Renderer();
+                        renderer.image = function(href, title, text) {
+                            if (!href || typeof href !== 'string') {
+                                console.warn('Invalid image href:', href);
+                                return '';
+                            }
+                            
+                            let imgSrc = href.trim();
+                            
+                            // 如果是 R2 URL，转换为 Workers URL
+                            if (imgSrc.includes('r2.cloudflarestorage.com')) {
+                                const filePathMatch = imgSrc.match(/\\/my-file\\/(.+)$/);
+                                if (filePathMatch) {
+                                    const filePath = filePathMatch[1];
+                                    imgSrc = \`https://dingding-blog.uzz.workers.dev/file/\${filePath}\`;
+                                }
+                            }
+                            
+                            return \`
+                                <figure class="article-image-container">
+                                    <img src="\${imgSrc}" 
+                                         alt="\${text || ''}" 
+                                         title="\${title || ''}" 
+                                         class="article-content-img" 
+                                         loading="lazy"
+                                         onerror="handleImageError(this)"
+                                    />
+                                    \${title ? \`<figcaption>\${title}</figcaption>\` : ''}
+                                </figure>
+                            \`;
+                        };
+                        
+                        marked.setOptions({
+                            renderer: renderer,
+                            gfm: true,
+                            breaks: true,
+                            sanitize: false,
+                            smartLists: true,
+                            smartypants: true
+                        });
+                        
+                        return true;
+                    }
+                    
+                    function handleImageError(img) {
+                        if (img.retryCount === undefined) {
+                            img.retryCount = 0;
+                        }
+                        
+                        if (img.retryCount < 3) {
+                            img.retryCount++;
+                            console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
+                            
+                            // 清除错误处理器，防止无限循环
+                            img.onerror = null;
+                            
+                            // 添加时间戳参数避免缓存
+                            const timestamp = new Date().getTime();
+                            const separator = img.src.includes('?') ? '&' : '?';
+                            img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
+                            
+                            // 恢复错误处理器
+                            setTimeout(() => {
+                                img.onerror = () => handleImageError(img);
+                            }, 0);
+                        } else {
+                            console.error('Image load failed after 3 retries:', img.src);
+                            img.classList.add('image-load-error');
+                            img.dataset.originalSrc = img.src;
+                            
+                            // 添加点击重试事件
+                            img.onclick = function() {
+                                if (this.classList.contains('image-load-error')) {
+                                    this.classList.remove('image-load-error');
+                                    this.retryCount = 0;
+                                    const timestamp = new Date().getTime();
+                                    const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
+                                    this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
+                                }
+                            };
+                        }
+                    }
+                    
+                    // 等待 marked.js 加载完成
+                    function waitForMarked(maxAttempts = 10) {
+                        return new Promise((resolve, reject) => {
+                            let attempts = 0;
+                            
+                            function check() {
+                                attempts++;
+                                if (typeof marked !== 'undefined') {
+                                    resolve();
+                                } else if (attempts >= maxAttempts) {
+                                    reject(new Error('Markdown 解析器加载超时'));
+                                } else {
+                                    setTimeout(check, 500);
+                                }
+                            }
+                            
+                            check();
+                        });
+                    }
+                    
+                    // 主函数
+                    async function loadArticle() {
                         try {
+                            // 等待 marked.js 加载
+                            await waitForMarked();
+                            
+                            // 初始化 marked
+                            if (!initMarked()) {
+                                throw new Error('Markdown 解析器初始化失败');
+                            }
+                            
                             // 从URL获取文章ID
                             const urlPath = window.location.pathname;
                             const postId = urlPath.split('/').pop();
@@ -127,28 +358,37 @@ export async function onRequest(context) {
                                 day: 'numeric'
                             });
                             
-                            articleContainer.innerHTML = 
-                                '<div class="px-4 py-5 sm:p-6">' +
-                                    '<h2 class="text-3xl font-bold mb-4 text-gray-900">' + article.title + '</h2>' +
-                                    '<p class="text-gray-500 mb-6">' + formattedDate + '</p>' +
-                                    '<div class="prose max-w-none">' +
-                                        article.content +
-                                    '</div>' +
-                                '</div>';
+                            // 渲染文章内容
+                            const renderedContent = marked.parse(article.content || '');
+                            
+                            articleContainer.innerHTML = \`
+                                <div class="px-4 py-5 sm:p-6">
+                                    <h2 class="text-3xl font-bold mb-4 text-gray-900">\${article.title}</h2>
+                                    <p class="text-gray-500 mb-6">\${formattedDate}</p>
+                                    <div class="article-content">\${renderedContent}</div>
+                                </div>
+                            \`;
                         } catch (error) {
                             console.error('加载文章失败:', error);
                             
                             const articleContainer = document.getElementById('article-container');
-                            articleContainer.innerHTML = 
-                                '<div class="px-4 py-5 sm:p-6">' +
-                                    '<h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>' +
-                                    '<p class="text-gray-700">' +
-                                        '无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。' +
-                                    '</p>' +
-                                    '<p class="text-gray-500 mt-2">错误详情: ' + error.message + '</p>' +
-                                '</div>';
+                            articleContainer.innerHTML = \`
+                                <div class="px-4 py-5 sm:p-6">
+                                    <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
+                                    <p class="text-gray-700">
+                                        无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。
+                                    </p>
+                                    <p class="text-gray-500 mt-2">错误详情: \${error.message}</p>
+                                    <button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                        重试
+                                    </button>
+                                </div>
+                            \`;
                         }
-                    });
+                    }
+                    
+                    // 页面加载完成后执行
+                    document.addEventListener('DOMContentLoaded', loadArticle);
                 </script>
             </body>
             </html>`,

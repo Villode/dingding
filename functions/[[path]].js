@@ -215,27 +215,26 @@ export async function onRequest(context) {
                           
                           let imgSrc = href.trim();
                           
-                          // 如果是 R2 URL，转换为 Workers URL
+                          // 如果是 R2 URL，转换为直接的文件路径
                           if (imgSrc.includes('r2.cloudflarestorage.com')) {
-                              const filePathMatch = imgSrc.match(/\\/my-file\\/(.+)$/);
+                              const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
                               if (filePathMatch) {
                                   const filePath = filePathMatch[1];
-                                  imgSrc = \`https://dingding-blog.uzz.workers.dev/file/\${filePath}\`;
+                                  // 使用 /api/file/ 路径
+                                  imgSrc = '/api/file/' + filePath;
                               }
                           }
                           
-                          return \`
-                              <figure class="article-image-container">
-                                  <img src="\${imgSrc}" 
-                                       alt="\${text || ''}" 
-                                       title="\${title || ''}" 
-                                       class="article-content-img" 
-                                       loading="lazy"
-                                       onerror="handleImageError(this)"
-                                  />
-                                  \${title ? \`<figcaption>\${title}</figcaption>\` : ''}
-                              </figure>
-                          \`;
+                          return '<figure class="article-image-container">' +
+                              '<img src="' + imgSrc + '"' +
+                              ' alt="' + (text || '') + '"' +
+                              ' title="' + (title || '') + '"' +
+                              ' class="article-content-img"' +
+                              ' loading="lazy"' +
+                              ' onerror="handleImageError(this)"' +
+                              '/>' +
+                              (title ? '<figcaption>' + title + '</figcaption>' : '') +
+                              '</figure>';
                       };
                       
                       marked.setOptions({
@@ -251,21 +250,22 @@ export async function onRequest(context) {
                   }
                   
                   function handleImageError(img) {
-                      if (img.retryCount === undefined) {
+                      if (!img.retryCount) {
                           img.retryCount = 0;
                       }
                       
                       if (img.retryCount < 3) {
                           img.retryCount++;
-                          console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
+                          console.log('Retrying image load (' + img.retryCount + '/3): ' + img.src);
                           
                           // 清除错误处理器，防止无限循环
                           img.onerror = null;
                           
-                          // 添加时间戳参数避免缓存
-                          const timestamp = new Date().getTime();
-                          const separator = img.src.includes('?') ? '&' : '?';
-                          img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
+                          // 获取基础 URL（移除所有查询参数）
+                          const baseUrl = img.src.split('?')[0];
+                          
+                          // 添加新的时间戳参数，确保只有一个 t 参数
+                          img.src = baseUrl + '?t=' + Date.now();
                           
                           // 恢复错误处理器
                           setTimeout(() => {
@@ -274,16 +274,14 @@ export async function onRequest(context) {
                       } else {
                           console.error('Image load failed after 3 retries:', img.src);
                           img.classList.add('image-load-error');
-                          img.dataset.originalSrc = img.src;
+                          img.dataset.originalSrc = img.src.split('?')[0];
                           
                           // 添加点击重试事件
                           img.onclick = function() {
                               if (this.classList.contains('image-load-error')) {
                                   this.classList.remove('image-load-error');
                                   this.retryCount = 0;
-                                  const timestamp = new Date().getTime();
-                                  const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
-                                  this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
+                                  this.src = this.dataset.originalSrc + '?t=' + Date.now();
                               }
                           };
                       }
@@ -354,29 +352,28 @@ export async function onRequest(context) {
                           // 渲染文章内容
                           const renderedContent = marked.parse(article.content || '');
                           
-                          articleContainer.innerHTML = \`
-                              <div class="px-4 py-5 sm:p-6">
-                                  <h2 class="text-3xl font-bold mb-4 text-gray-900">\${article.title}</h2>
-                                  <p class="text-gray-500 mb-6">\${formattedDate}</p>
-                                  <div class="article-content">\${renderedContent}</div>
-                              </div>
-                          \`;
+                          // 使用字符串拼接而不是模板字符串
+                          articleContainer.innerHTML = 
+                              '<div class="px-4 py-5 sm:p-6">' +
+                              '<h2 class="text-3xl font-bold mb-4 text-gray-900">' + article.title + '</h2>' +
+                              '<p class="text-gray-500 mb-6">' + formattedDate + '</p>' +
+                              '<div class="article-content">' + renderedContent + '</div>' +
+                              '</div>';
                       } catch (error) {
                           console.error('加载文章失败:', error);
                           
                           const articleContainer = document.getElementById('article-container');
-                          articleContainer.innerHTML = \`
-                              <div class="px-4 py-5 sm:p-6">
-                                  <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
-                                  <p class="text-gray-700">
-                                      无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。
-                                  </p>
-                                  <p class="text-gray-500 mt-2">错误详情: \${error.message}</p>
-                                  <button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-                                      重试
-                                  </button>
-                              </div>
-                          \`;
+                          articleContainer.innerHTML = 
+                              '<div class="px-4 py-5 sm:p-6">' +
+                              '<h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>' +
+                              '<p class="text-gray-700">' +
+                              '无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。' +
+                              '</p>' +
+                              '<p class="text-gray-500 mt-2">错误详情: ' + error.message + '</p>' +
+                              '<button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">' +
+                              '重试' +
+                              '</button>' +
+                              '</div>';
                       }
                   }
                   
@@ -442,6 +439,45 @@ export async function onRequest(context) {
           return deletePostHandler(context);
         }
         
+        // 处理文件请求
+        if (path.startsWith('api/file/')) {
+          console.log('处理文件请求:', path);
+          // 从路径中提取文件名
+          const filePath = path.replace('api/file/', '');
+          if (!filePath) {
+              return new Response('File path is required', { status: 400 });
+          }
+          
+          try {
+              // 从 R2 获取文件
+              const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
+              if (!file) {
+                  return new Response('File not found', { status: 404 });
+              }
+              
+              // 准备响应头
+              const headers = new Headers();
+              headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
+              headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
+              headers.set('Access-Control-Allow-Origin', '*');
+              headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+              
+              // 如果是图片，添加额外的缓存和安全头
+              if (file.httpMetadata.contentType?.startsWith('image/')) {
+                  headers.set('Content-Security-Policy', "default-src 'self'");
+                  headers.set('X-Content-Type-Options', 'nosniff');
+              }
+              
+              // 返回文件内容
+              return new Response(file.body, {
+                  headers
+              });
+          } catch (error) {
+              console.error('Error fetching file:', error);
+              return new Response('Internal Server Error', { status: 500 });
+          }
+        }
+        
         // 如果没有匹配的API路径，返回404
         console.log('API路径不匹配:', apiPath);
         return new Response('API not found: ' + apiPath, { status: 404 });
@@ -452,10 +488,10 @@ export async function onRequest(context) {
     }
     
     // 处理文件请求
-    if (url.pathname.startsWith('/file/')) {
-      console.log('处理文件请求:', url.pathname);
+    if (path.startsWith('api/file/')) {
+      console.log('处理文件请求:', path);
       // 从路径中提取文件名
-      const filePath = url.pathname.replace('/file/', '');
+      const filePath = path.replace('api/file/', '');
       if (!filePath) {
           return new Response('File path is required', { status: 400 });
       }
@@ -471,7 +507,7 @@ export async function onRequest(context) {
           const headers = new Headers();
           headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
           headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
-          headers.set('Access-Control-Allow-Origin', '*'); // 允许所有域名访问
+          headers.set('Access-Control-Allow-Origin', '*');
           headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
           
           // 如果是图片，添加额外的缓存和安全头

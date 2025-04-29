@@ -1339,6 +1339,16 @@
                     
                     imgSrc = imgSrc.trim();
                     
+                    // 如果是 R2 URL，转换为 Workers URL
+                    if (imgSrc.includes('r2.cloudflarestorage.com')) {
+                        const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
+                        if (filePathMatch) {
+                            const filePath = filePathMatch[1];
+                            // 使用 Workers 域名
+                            imgSrc = `https://dingding-blog.uzz.workers.dev/file/${filePath}`;
+                        }
+                    }
+                    
                     // 调试日志
                     console.log('Processing image:', {
                         src: imgSrc,
@@ -1354,8 +1364,6 @@
                                  title="${title || ''}" 
                                  class="article-content-img" 
                                  loading="lazy"
-                                 referrerpolicy="no-referrer"
-                                 crossorigin="anonymous"
                                  onerror="handleImageError(this)"
                             />
                             ${title ? `<figcaption>${title}</figcaption>` : ''}
@@ -1409,7 +1417,9 @@
                                 if (this.classList.contains('image-load-error')) {
                                     this.classList.remove('image-load-error');
                                     this.retryCount = 0;
-                                    this.src = this.dataset.originalSrc;
+                                    const timestamp = new Date().getTime();
+                                    const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
+                                    this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
                                 }
                             };
                         }

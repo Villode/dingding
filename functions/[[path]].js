@@ -218,7 +218,7 @@ export async function onRequest(context) {
                           // 如果是完整 URL，提取文件名
                           const fileName = imgSrc.split('/').pop();
                           if (fileName) {
-                              imgSrc = '/api/file/' + fileName;
+                              imgSrc = '/file/' + fileName;  // 直接使用 /file/ 路径
                           }
                           
                           console.log('Processing image:', {

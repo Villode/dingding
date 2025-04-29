@@ -220,10 +220,20 @@ export async function onRequest(context) {
                               const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
                               if (filePathMatch) {
                                   const filePath = filePathMatch[1];
-                                  // 使用 /api/file/ 路径
                                   imgSrc = '/api/file/' + filePath;
                               }
                           }
+                          // 如果是 Workers URL，也转换为 api/file 路径
+                          else if (imgSrc.includes('dingding-blog.uzz.workers.dev/file/')) {
+                              const filePathMatch = imgSrc.match(/\/file\/(.+)$/);
+                              if (filePathMatch) {
+                                  const filePath = filePathMatch[1];
+                                  imgSrc = '/api/file/' + filePath;
+                              }
+                          }
+                          
+                          console.log('Image rendering:', {href, title, text});
+                          console.log('Processing image:', {src: imgSrc, title, text});
                           
                           return '<figure class="article-image-container">' +
                               '<img src="' + imgSrc + '"' +

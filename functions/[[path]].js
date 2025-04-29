@@ -57,43 +57,20 @@ export async function onRequest(context) {
               <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
               <style>
                   .article-content img {
-                      max-width: 100%;
+                      max-width: 60%;
                       height: auto;
+                      margin: 1rem auto;
+                      display: block;
                       border-radius: 8px;
-                      margin: 1rem auto; /* 居中显示 */
                       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                      cursor: pointer;
+                      cursor: zoom-in;
                       transition: transform 0.2s ease;
-                      display: block; /* 确保图片块级显示 */
                   }
 
-                  /* 默认中等大小显示 */
-                  .article-content .article-image-container {
-                      max-width: 600px;
-                      margin: 2rem auto;
-                  }
-
-                  /* 小图模式 */
-                  .article-content .article-image-container.small-image {
-                      max-width: 300px;
-                  }
-
-                  /* 大图模式 */
-                  .article-content .article-image-container.large-image {
-                      max-width: 800px;
-                  }
-                  
-                  .article-content .article-image-container figcaption {
-                      text-align: center;
-                      color: #666;
-                      font-size: 0.9em;
-                      margin-top: 0.5rem;
-                  }
-                  
                   .article-content img:hover {
                       transform: scale(1.02);
                   }
-                  
+
                   /* 图片预览模态框 */
                   .image-preview-modal {
                       display: none;
@@ -285,16 +262,6 @@ export async function onRequest(context) {
                       color: white;
                   }
 
-                  .article-content-img {
-                      max-width: 60%;
-                      height: auto;
-                      margin: 1rem auto;
-                      display: block;
-                      border-radius: 0.5rem;
-                      transition: all 0.3s ease;
-                      cursor: zoom-in;
-                  }
-
                   .article-image-container {
                       text-align: center;
                       margin: 2rem 0;
@@ -386,7 +353,6 @@ export async function onRequest(context) {
                               '<img src="' + imgSrc + '"' +
                               ' alt="' + (text || '') + '"' +
                               ' title="' + (title || '') + '"' +
-                              ' class="article-content-img"' +
                               ' loading="lazy"' +
                               ' onclick="openImagePreview(this)"' +
                               ' onerror="handleImageError(this)"' +

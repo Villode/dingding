@@ -1339,6 +1339,16 @@
                     
                     imgSrc = imgSrc.trim();
                     
+                    // 如果是 Cloudflare R2 的 URL，转换为通过我们的 API 代理
+                    if (imgSrc.includes('r2.cloudflarestorage.com')) {
+                        // 提取文件路径
+                        const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
+                        if (filePathMatch) {
+                            const filePath = filePathMatch[1];
+                            imgSrc = `/api/file/${filePath}`;
+                        }
+                    }
+                    
                     // 调试日志
                     console.log('Processing image:', {
                         src: imgSrc,
@@ -1346,7 +1356,7 @@
                         text: text
                     });
                     
-                    // 构建完整的 img 标签
+                    // 构建完整的 img 标签，添加重试逻辑
                     const imgTag = `
                         <figure class="article-image-container">
                             <img src="${imgSrc}" 
@@ -1354,7 +1364,8 @@
                                  title="${title || ''}" 
                                  class="article-content-img" 
                                  loading="lazy"
-                                 onerror="this.onerror=null; this.classList.add('image-load-error'); console.error('Image load failed:', this.src);"
+                                 onerror="this.onerror=null; this.classList.add('image-load-error'); this.dataset.originalSrc=this.src; console.error('Image load failed:', this.src);"
+                                 onclick="if(this.classList.contains('image-load-error')) { this.src = this.dataset.originalSrc; this.classList.remove('image-load-error'); }"
                             />
                             ${title ? `<figcaption>${title}</figcaption>` : ''}
                         </figure>
@@ -1387,6 +1398,7 @@
                         border-radius: 8px;
                         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                         display: inline-block;
+                        cursor: pointer;
                     }
                     
                     .article-image-container figcaption {
@@ -1401,16 +1413,22 @@
                         min-height: 100px;
                         background-color: #f3f4f6;
                         border: 1px dashed #d1d5db;
+                        cursor: pointer;
                     }
                     
                     .image-load-error::before {
-                        content: "图片加载失败";
+                        content: "图片加载失败 (点击重试)";
                         position: absolute;
                         top: 50%;
                         left: 50%;
                         transform: translate(-50%, -50%);
                         color: #666;
                         font-size: 0.9em;
+                        white-space: nowrap;
+                    }
+                    
+                    .image-load-error:hover::before {
+                        color: #FA541C;
                     }
                 `;
                 document.head.appendChild(style);

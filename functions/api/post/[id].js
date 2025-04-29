@@ -65,6 +65,9 @@ export async function onRequestGet({ params, env }) {
         delete post.category_name;
         delete post.category_slug;
         
+        // 添加调试日志
+        console.log(`文章ID ${id} 的详情数据:`, JSON.stringify(post, null, 2));
+        
         return Response.json(post);
       } catch (dbError) {
         console.error("数据库查询错误:", dbError);

@@ -71,6 +71,9 @@ export async function onRequestGet({ env }) {
           });
         }
         
+        // 添加调试日志
+        console.log("返回的文章数据:", JSON.stringify(posts, null, 2));
+        
         return Response.json(posts);
       } catch (dbError) {
         console.error("数据库查询错误:", dbError);

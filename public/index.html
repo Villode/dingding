@@ -1311,7 +1311,7 @@
                             </button>
                         </div>
                         <div class="operations-counter text-center mt-2 ${likeData.remainingOperations < 3 ? (likeData.remainingOperations < 1 ? 'danger' : 'warning') : ''}">
-                            今日剩余操作次数: ${likeData.remainingOperations || 0}/10
+                            今日剩余操作次数: ${likeData.remainingOperations || 0}
                         </div>
                     </div>
                 `;
@@ -1348,7 +1348,7 @@
                                 // 更新操作计数
                                 const counterElement = document.querySelector('.operations-counter');
                                 if (counterElement) {
-                                    counterElement.textContent = `今日剩余操作次数: ${result.remainingOperations}/10`;
+                                    counterElement.textContent = `今日剩余操作次数: ${result.remainingOperations}`;
                                     counterElement.className = `operations-counter text-center mt-2 ${
                                         result.remainingOperations < 3 ? (result.remainingOperations < 1 ? 'danger' : 'warning') : ''
                                     }`;

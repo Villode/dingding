@@ -1339,16 +1339,6 @@
                     
                     imgSrc = imgSrc.trim();
                     
-                    // 如果是 Cloudflare R2 的 URL，转换为通过我们的 API 代理
-                    if (imgSrc.includes('r2.cloudflarestorage.com')) {
-                        // 提取文件路径
-                        const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
-                        if (filePathMatch) {
-                            const filePath = filePathMatch[1];
-                            imgSrc = `/api/file/${filePath}`;
-                        }
-                    }
-                    
                     // 调试日志
                     console.log('Processing image:', {
                         src: imgSrc,
@@ -1356,7 +1346,7 @@
                         text: text
                     });
                     
-                    // 构建完整的 img 标签，添加重试逻辑
+                    // 构建完整的 img 标签，添加错误处理和预加载
                     const imgTag = `
                         <figure class="article-image-container">
                             <img src="${imgSrc}" 
@@ -1364,8 +1354,9 @@
                                  title="${title || ''}" 
                                  class="article-content-img" 
                                  loading="lazy"
-                                 onerror="this.onerror=null; this.classList.add('image-load-error'); this.dataset.originalSrc=this.src; console.error('Image load failed:', this.src);"
-                                 onclick="if(this.classList.contains('image-load-error')) { this.src = this.dataset.originalSrc; this.classList.remove('image-load-error'); }"
+                                 referrerpolicy="no-referrer"
+                                 crossorigin="anonymous"
+                                 onerror="handleImageError(this)"
                             />
                             ${title ? `<figcaption>${title}</figcaption>` : ''}
                         </figure>
@@ -1384,7 +1375,49 @@
                     xhtml: true
                 });
                 
-                // 添加新的图片样式
+                // 添加图片错误处理函数
+                const script = document.createElement('script');
+                script.textContent = `
+                    function handleImageError(img) {
+                        if (img.retryCount === undefined) {
+                            img.retryCount = 0;
+                        }
+
+                        if (img.retryCount < 3) {
+                            img.retryCount++;
+                            console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
+                            
+                            // 清除错误处理器，防止无限循环
+                            img.onerror = null;
+                            
+                            // 添加时间戳参数避免缓存
+                            const timestamp = new Date().getTime();
+                            const separator = img.src.includes('?') ? '&' : '?';
+                            img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
+                            
+                            // 恢复错误处理器
+                            setTimeout(() => {
+                                img.onerror = () => handleImageError(img);
+                            }, 0);
+                        } else {
+                            console.error('Image load failed after 3 retries:', img.src);
+                            img.classList.add('image-load-error');
+                            img.dataset.originalSrc = img.src;
+                            
+                            // 添加点击重试事件
+                            img.onclick = function() {
+                                if (this.classList.contains('image-load-error')) {
+                                    this.classList.remove('image-load-error');
+                                    this.retryCount = 0;
+                                    this.src = this.dataset.originalSrc;
+                                }
+                            };
+                        }
+                    }
+                `;
+                document.head.appendChild(script);
+                
+                // 更新图片样式
                 const style = document.createElement('style');
                 style.textContent = `
                     .article-image-container {
@@ -1399,6 +1432,11 @@
                         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                         display: inline-block;
                         cursor: pointer;
+                        transition: transform 0.2s ease;
+                    }
+                    
+                    .article-content-img:not(.image-load-error):hover {
+                        transform: scale(1.02);
                     }
                     
                     .article-image-container figcaption {
@@ -1410,10 +1448,12 @@
                     
                     .image-load-error {
                         position: relative;
-                        min-height: 100px;
+                        min-height: 200px;
+                        min-width: 300px;
                         background-color: #f3f4f6;
                         border: 1px dashed #d1d5db;
                         cursor: pointer;
+                        transition: all 0.3s ease;
                     }
                     
                     .image-load-error::before {
@@ -1425,6 +1465,12 @@
                         color: #666;
                         font-size: 0.9em;
                         white-space: nowrap;
+                        transition: color 0.3s ease;
+                    }
+                    
+                    .image-load-error:hover {
+                        background-color: #e5e7eb;
+                        border-color: #FA541C;
                     }
                     
                     .image-load-error:hover::before {
@@ -1432,14 +1478,6 @@
                     }
                 `;
                 document.head.appendChild(style);
-                
-                // 添加图片加载失败的处理
-                window.addEventListener('error', function(e) {
-                    if (e.target.tagName === 'IMG') {
-                        console.error('Image load error:', e.target.src);
-                        e.target.classList.add('image-load-error');
-                    }
-                }, true);
                 
                 // 渲染文章
                 articleContainer.innerHTML = `

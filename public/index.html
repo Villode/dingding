@@ -845,6 +845,32 @@
             margin-left: 4px;
             transition: all 0.3s;
         }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            color: #333333;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .back-button:hover {
+            background-color: #eaeaea;
+            color: #FA541C;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .back-button i {
+            margin-right: 6px;
+            color: #666;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -916,8 +942,8 @@
                     <!-- 文章详情页，默认隐藏 -->
                     <div id="article-content" class="hidden">
                         <div class="mb-6">
-                            <button id="back-button" class="flex items-center text-primary-light hover:text-accent-light transition-colors">
-                                <i class="fas fa-arrow-left mr-2"></i> 返回首页
+                            <button id="back-button" class="back-button">
+                                <i class="fas fa-arrow-left"></i> 返回首页
                             </button>
                         </div>
                         <div id="article-container" class="bg-white rounded-lg overflow-hidden shadow">

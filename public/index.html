@@ -1061,6 +1061,15 @@
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
                 
+                // 添加调试信息
+                console.log("API返回的文章数据:", posts);
+                // 特别检查第一篇文章的分类和标签
+                if (posts && posts.length > 0) {
+                    console.log("第一篇文章:", posts[0]);
+                    console.log("文章分类:", posts[0].category);
+                    console.log("文章标签:", posts[0].tags);
+                }
+                
                 const postsContainer = document.getElementById('posts-container');
                 
                 if (posts && posts.length > 0) {
@@ -1113,8 +1122,8 @@
                                     <a href="#" class="article-title article-link" data-id="${post.id}">${post.title}</a>
                                     <div class="article-summary">${post.summary || '无摘要'}</div>
                                     <div class="article-meta">
-                                        ${post.category ? `<span><i class="fas fa-folder"></i>${post.category.name}</span>` : ''}
                                         <span><i class="far fa-calendar-alt"></i>${formattedDate}</span>
+                                        ${post.category ? `<span><i class="fas fa-folder"></i>${post.category.name}</span>` : ''}
                                         ${post.tags && post.tags.length > 0 ? `<span><i class="fas fa-tags"></i>${post.tags.map(tag => `<span class="tag-item" style="color:${tag.color || '#4299e1'}">${tag.name}</span>`).join(' ')}</span>` : ''}
                                     </div>
                                 </div>

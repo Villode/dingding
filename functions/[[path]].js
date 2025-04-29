@@ -62,6 +62,72 @@ export async function onRequest(context) {
                       border-radius: 8px;
                       margin: 1rem 0;
                       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                      cursor: pointer;
+                      transition: transform 0.2s ease;
+                  }
+                  
+                  .article-content img:hover {
+                      transform: scale(1.02);
+                  }
+                  
+                  /* 图片预览模态框 */
+                  .image-preview-modal {
+                      display: none;
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      background-color: rgba(0, 0, 0, 0.9);
+                      z-index: 1000;
+                      cursor: zoom-out;
+                  }
+                  
+                  .image-preview-modal img {
+                      max-width: 90%;
+                      max-height: 90vh;
+                      margin: auto;
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      border-radius: 4px;
+                      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                  }
+                  
+                  .image-preview-modal .close-button {
+                      position: absolute;
+                      top: 20px;
+                      right: 20px;
+                      color: white;
+                      font-size: 24px;
+                      cursor: pointer;
+                      background: rgba(0, 0, 0, 0.5);
+                      width: 40px;
+                      height: 40px;
+                      border-radius: 50%;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      transition: background-color 0.2s ease;
+                  }
+                  
+                  .image-preview-modal .close-button:hover {
+                      background: rgba(0, 0, 0, 0.8);
+                  }
+                  
+                  .image-preview-modal .image-caption {
+                      position: absolute;
+                      bottom: 20px;
+                      left: 50%;
+                      transform: translateX(-50%);
+                      color: white;
+                      background: rgba(0, 0, 0, 0.7);
+                      padding: 8px 16px;
+                      border-radius: 4px;
+                      font-size: 14px;
+                      max-width: 80%;
+                      text-align: center;
                   }
                   
                   .article-content {
@@ -168,6 +234,12 @@ export async function onRequest(context) {
               </style>
           </head>
           <body class="bg-gray-100 min-h-screen">
+              <!-- 图片预览模态框 -->
+              <div id="imagePreviewModal" class="image-preview-modal" onclick="closeImagePreview()">
+                  <div class="close-button" onclick="closeImagePreview()">×</div>
+                  <img id="previewImage" src="" alt="" onclick="event.stopPropagation()">
+                  <div id="imageCaption" class="image-caption"></div>
+              </div>
               <header class="bg-white shadow">
                   <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                       <h1 class="text-3xl font-bold text-gray-900">
@@ -249,6 +321,7 @@ export async function onRequest(context) {
                               ' title="' + (title || '') + '"' +
                               ' class="article-content-img"' +
                               ' loading="lazy"' +
+                              ' onclick="openImagePreview(this)"' +
                               ' onerror="handleImageError(this)"' +
                               '/>' +
                               (title ? '<figcaption>' + title + '</figcaption>' : '') +
@@ -397,6 +470,41 @@ export async function onRequest(context) {
                   
                   // 页面加载完成后执行
                   document.addEventListener('DOMContentLoaded', loadArticle);
+                  
+                  // 图片预览功能
+                  function openImagePreview(img) {
+                      const modal = document.getElementById('imagePreviewModal');
+                      const previewImage = document.getElementById('previewImage');
+                      const caption = document.getElementById('imageCaption');
+                      
+                      previewImage.src = img.src;
+                      previewImage.alt = img.alt;
+                      
+                      // 设置说明文字（优先使用 title，如果没有则使用 alt）
+                      const captionText = img.title || img.alt;
+                      if (captionText) {
+                          caption.textContent = captionText;
+                          caption.style.display = 'block';
+                      } else {
+                          caption.style.display = 'none';
+                      }
+                      
+                      modal.style.display = 'block';
+                      document.body.style.overflow = 'hidden'; // 防止背景滚动
+                  }
+                  
+                  function closeImagePreview() {
+                      const modal = document.getElementById('imagePreviewModal');
+                      modal.style.display = 'none';
+                      document.body.style.overflow = ''; // 恢复滚动
+                  }
+                  
+                  // 按 ESC 键关闭预览
+                  document.addEventListener('keydown', function(event) {
+                      if (event.key === 'Escape') {
+                          closeImagePreview();
+                      }
+                  });
               </script>
           </body>
           </html>`,

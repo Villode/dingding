@@ -129,7 +129,8 @@ async function enrichPostsWithCategoriesAndTags(posts, db) {
     const categoriesQuery = await db.prepare(`
       SELECT p.id as post_id, c.id, c.name, c.slug
       FROM posts p
-      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN posts_categories pc ON p.id = pc.post_id
+      LEFT JOIN categories c ON pc.category_id = c.id
       WHERE p.id IN (${postIds.map(() => '?').join(',')})
     `).bind(...postIds).all();
     
@@ -153,7 +154,7 @@ async function enrichPostsWithCategoriesAndTags(posts, db) {
     const tagsQuery = await db.prepare(`
       SELECT pt.post_id, t.id, t.name, t.slug, t.color
       FROM posts p
-      LEFT JOIN posts_tags pt ON p.id = pt.post_id
+      LEFT JOIN post_tags pt ON p.id = pt.post_id
       LEFT JOIN tags t ON pt.tag_id = t.id
       WHERE p.id IN (${postIds.map(() => '?').join(',')})
     `).bind(...postIds).all();

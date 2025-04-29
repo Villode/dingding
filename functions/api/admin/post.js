@@ -137,16 +137,33 @@ export async function onRequestPost({ request, env }) {
           );
         }
         
-        // 处理标签关联 - 先删除现有关联
-        if (existingPost) {
-          batchOperations.push(
-            env.DB.prepare(`DELETE FROM post_tags WHERE post_id = ?`).bind(postId)
-          );
-        }
-        
-        // 添加新的标签关联
+        // 处理标签关联
         if (postData.tags && Array.isArray(postData.tags) && postData.tags.length > 0) {
-          for (const tagId of postData.tags) {
+          // 验证所有标签是否存在
+          const tagIds = postData.tags;
+          const existingTags = await env.DB.prepare(`
+            SELECT id FROM tags WHERE id IN (${tagIds.map(() => '?').join(',')})
+          `).bind(...tagIds).all();
+          
+          if (existingTags.results.length !== tagIds.length) {
+            return new Response(
+              JSON.stringify({ error: '存在无效的标签ID' }),
+              { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            );
+          }
+          
+          // 删除现有标签关联
+          if (existingPost) {
+            batchOperations.push(
+              env.DB.prepare(`DELETE FROM post_tags WHERE post_id = ?`).bind(postId)
+            );
+          }
+          
+          // 添加新的标签关联
+          for (const tagId of tagIds) {
             batchOperations.push(
               env.DB.prepare(`
                 INSERT INTO post_tags (post_id, tag_id) 
@@ -156,19 +173,36 @@ export async function onRequestPost({ request, env }) {
           }
         }
         
-        // 处理分类关联 - 先删除现有关联
-        if (existingPost) {
-          batchOperations.push(
-            env.DB.prepare(`DELETE FROM post_categories WHERE post_id = ?`).bind(postId)
-          );
-        }
-        
-        // 添加新的分类关联
+        // 处理分类关联
         if (postData.categories && Array.isArray(postData.categories) && postData.categories.length > 0) {
-          for (const categoryId of postData.categories) {
+          // 验证所有分类是否存在
+          const categoryIds = postData.categories;
+          const existingCategories = await env.DB.prepare(`
+            SELECT id FROM categories WHERE id IN (${categoryIds.map(() => '?').join(',')})
+          `).bind(...categoryIds).all();
+          
+          if (existingCategories.results.length !== categoryIds.length) {
+            return new Response(
+              JSON.stringify({ error: '存在无效的分类ID' }),
+              { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            );
+          }
+          
+          // 删除现有分类关联
+          if (existingPost) {
+            batchOperations.push(
+              env.DB.prepare(`DELETE FROM posts_categories WHERE post_id = ?`).bind(postId)
+            );
+          }
+          
+          // 添加新的分类关联
+          for (const categoryId of categoryIds) {
             batchOperations.push(
               env.DB.prepare(`
-                INSERT INTO post_categories (post_id, category_id) 
+                INSERT INTO posts_categories (post_id, category_id) 
                 VALUES (?, ?)
               `).bind(postId, categoryId)
             );

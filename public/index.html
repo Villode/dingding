@@ -1349,7 +1349,7 @@
                         </div>
                         ` : ''}
                         <div class="article-content prose max-w-none">
-                            ${marked(article.content)}
+                            ${marked.parse(article.content)}
                         </div>
                         <div class="mt-8 flex justify-center">
                             <button class="like-button ${likeData.isLiked ? 'liked' : ''}" id="like-button" data-id="${articleId}">

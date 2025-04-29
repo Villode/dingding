@@ -108,6 +108,23 @@ export async function onRequestGet({ params, env }) {
 // 辅助函数：为文章添加分类和标签信息
 async function enrichPostWithCategoryAndTags(post, db) {
   try {
+    // 确保文章有唯一标识符
+    if (!post || !post.id) {
+      console.error("无效的文章数据，缺少ID");
+      return new Response(
+        JSON.stringify({ 
+          error: "无效的文章数据", 
+          details: "文章缺少ID" 
+        }), 
+        { 
+          status: 400,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    }
+    
     // 输出调试信息
     console.log(`开始为文章ID: ${post.id} 添加分类和标签信息`);
     
@@ -115,11 +132,11 @@ async function enrichPostWithCategoryAndTags(post, db) {
     const categoryQuery = await db.prepare(`
       SELECT c.id, c.name, c.slug
       FROM posts p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ?
     `).bind(post.id).first();
     
-    if (categoryQuery) {
+    if (categoryQuery && categoryQuery.id) {
       console.log(`查询到文章分类: ${categoryQuery.name}`);
       post.category = {
         id: categoryQuery.id,
@@ -134,14 +151,23 @@ async function enrichPostWithCategoryAndTags(post, db) {
     // 2. 获取文章标签信息
     const tagsQuery = await db.prepare(`
       SELECT t.id, t.name, t.slug, t.color
-      FROM posts_tags pt
-      JOIN tags t ON pt.tag_id = t.id
-      WHERE pt.post_id = ?
+      FROM posts p
+      LEFT JOIN posts_tags pt ON p.id = pt.post_id
+      LEFT JOIN tags t ON pt.tag_id = t.id
+      WHERE p.id = ?
     `).bind(post.id).all();
     
     if (tagsQuery.results && tagsQuery.results.length > 0) {
-      console.log(`查询到${tagsQuery.results.length}个文章标签`);
-      post.tags = tagsQuery.results;
+      // 过滤出有效的标签（有id的标签）
+      const validTags = tagsQuery.results.filter(tag => tag.id);
+      console.log(`查询到${validTags.length}个有效文章标签`);
+      
+      post.tags = validTags.map(tag => ({
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        color: tag.color || '#4299e1' // 提供默认颜色
+      }));
     } else {
       console.log('没有查询到文章标签');
       post.tags = [];

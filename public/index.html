@@ -1303,10 +1303,11 @@
                     throw new Error('Markdown 解析器尚未加载，请刷新页面重试');
                 }
                 
-                // 使用marked渲染Markdown内容
+                // 配置 marked
                 const renderer = new marked.Renderer();
                 renderer.image = function(href, title, text) {
-                    return `<img src="${href}" alt="${text}" title="${title || ''}" loading="lazy">`;
+                    if (!href) return ''; // 如果没有图片地址，返回空字符串
+                    return `<img src="${href}" alt="${text || ''}" title="${title || ''}" loading="lazy">`;
                 };
                 
                 marked.setOptions({
@@ -1349,7 +1350,7 @@
                         </div>
                         ` : ''}
                         <div class="article-content prose max-w-none">
-                            ${marked.parse(article.content)}
+                            ${marked.parse(article.content || '')}
                         </div>
                         <div class="mt-8 flex justify-center">
                             <button class="like-button ${likeData.isLiked ? 'liked' : ''}" id="like-button" data-id="${articleId}">

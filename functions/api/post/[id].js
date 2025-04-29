@@ -10,21 +10,32 @@ export async function onRequestGet({ params, env }) {
       const kvPost = await env.BLOG_POSTS.get(`post:${id}`);
       
       if (kvPost) {
-        // 如果KV中有数据，返回KV数据
-        return Response.json(JSON.parse(kvPost));
+        // 如果KV中有数据，解析并添加分类和标签信息
+        const parsedPost = JSON.parse(kvPost);
+        
+        // 如果有DB绑定，用于获取分类和标签信息
+        if (env.DB) {
+          try {
+            return await enrichPostWithCategoryAndTags(parsedPost, env.DB);
+          } catch (error) {
+            console.error("为KV文章添加分类和标签时出错:", error);
+            // 如果添加分类和标签失败，仍返回原始文章数据
+            return Response.json(parsedPost);
+          }
+        }
+        
+        return Response.json(parsedPost);
       }
     }
     
     // 如果有D1数据库绑定，从数据库获取文章
     if (env.DB) {
       try {
-        // 获取文章详情，包括分类
+        // 获取文章详情
         const postQuery = await env.DB.prepare(`
           SELECT 
-            p.id, p.title, p.summary, p.content, p.published_at,
-            c.id as category_id, c.name as category_name, c.slug as category_slug
+            p.id, p.title, p.summary, p.content, p.published_at
           FROM posts p
-          LEFT JOIN categories c ON p.category_id = c.id
           WHERE p.id = ?
         `).bind(id).first();
         
@@ -42,33 +53,8 @@ export async function onRequestGet({ params, env }) {
           );
         }
         
-        // 获取文章的标签
-        const tagsQuery = await env.DB.prepare(`
-          SELECT t.id, t.name, t.slug, t.color
-          FROM posts_tags pt
-          JOIN tags t ON pt.tag_id = t.id
-          WHERE pt.post_id = ?
-        `).bind(id).all();
-        
-        const post = {
-          ...postQuery,
-          category: postQuery.category_id ? {
-            id: postQuery.category_id,
-            name: postQuery.category_name,
-            slug: postQuery.category_slug
-          } : null,
-          tags: tagsQuery.results || []
-        };
-        
-        // 删除不需要的字段
-        delete post.category_id;
-        delete post.category_name;
-        delete post.category_slug;
-        
-        // 添加调试日志
-        console.log(`文章ID ${id} 的详情数据:`, JSON.stringify(post, null, 2));
-        
-        return Response.json(post);
+        // 为文章添加分类和标签信息
+        return await enrichPostWithCategoryAndTags(postQuery, env.DB);
       } catch (dbError) {
         console.error("数据库查询错误:", dbError);
         // 数据库查询失败，返回错误信息
@@ -116,5 +102,63 @@ export async function onRequestGet({ params, env }) {
         }
       }
     );
+  }
+}
+
+// 辅助函数：为文章添加分类和标签信息
+async function enrichPostWithCategoryAndTags(post, db) {
+  try {
+    // 输出调试信息
+    console.log(`开始为文章ID: ${post.id} 添加分类和标签信息`);
+    
+    // 1. 获取文章分类信息
+    const categoryQuery = await db.prepare(`
+      SELECT c.id, c.name, c.slug
+      FROM posts p
+      JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ?
+    `).bind(post.id).first();
+    
+    if (categoryQuery) {
+      console.log(`查询到文章分类: ${categoryQuery.name}`);
+      post.category = {
+        id: categoryQuery.id,
+        name: categoryQuery.name,
+        slug: categoryQuery.slug
+      };
+    } else {
+      console.log('没有查询到文章分类');
+      post.category = null;
+    }
+    
+    // 2. 获取文章标签信息
+    const tagsQuery = await db.prepare(`
+      SELECT t.id, t.name, t.slug, t.color
+      FROM posts_tags pt
+      JOIN tags t ON pt.tag_id = t.id
+      WHERE pt.post_id = ?
+    `).bind(post.id).all();
+    
+    if (tagsQuery.results && tagsQuery.results.length > 0) {
+      console.log(`查询到${tagsQuery.results.length}个文章标签`);
+      post.tags = tagsQuery.results;
+    } else {
+      console.log('没有查询到文章标签');
+      post.tags = [];
+    }
+    
+    // 添加调试日志
+    console.log(`文章ID ${post.id} 的详情数据:`, JSON.stringify({
+      id: post.id,
+      title: post.title,
+      category: post.category ? post.category.name : null,
+      tagsCount: post.tags.length
+    }, null, 2));
+    
+    return Response.json(post);
+  } catch (error) {
+    console.error("为文章添加分类和标签信息时出错:", error);
+    // 如果添加分类和标签失败，仍返回原始文章数据
+    return Response.json(post);
   }
 } 

@@ -8,8 +8,22 @@ export async function onRequestGet({ env }) {
       const kvPosts = await env.BLOG_POSTS.get("posts:list");
       
       if (kvPosts) {
-        // 如果KV中有数据，返回KV数据
-        return Response.json(JSON.parse(kvPosts));
+        // 如果KV中有数据，解析并添加分类和标签信息
+        const parsedPosts = JSON.parse(kvPosts);
+        
+        // 检查是否有DB绑定，用于获取分类和标签信息
+        if (env.DB) {
+          try {
+            // 为每篇文章添加分类和标签信息
+            return await enrichPostsWithCategoriesAndTags(parsedPosts, env.DB);
+          } catch (error) {
+            console.error("从KV获取的文章添加分类和标签时出错:", error);
+            // 如果添加分类和标签失败，仍返回原始文章数据
+            return Response.json(parsedPosts);
+          }
+        }
+        
+        return Response.json(parsedPosts);
       }
     }
     
@@ -19,62 +33,21 @@ export async function onRequestGet({ env }) {
         // 获取文章列表，包括分类和标签
         const postsQuery = await env.DB.prepare(`
           SELECT 
-            p.id, p.title, p.summary, p.published_at,
-            c.id as category_id, c.name as category_name, c.slug as category_slug
+            p.id, p.title, p.summary, p.published_at
           FROM posts p
-          LEFT JOIN categories c ON p.category_id = c.id
           WHERE p.published_at IS NOT NULL
           ORDER BY p.published_at DESC
         `).all();
         
         const posts = postsQuery.results || [];
         
-        // 获取每篇文章的标签
-        if (posts.length > 0) {
-          const postIds = posts.map(post => post.id);
-          
-          const tagsQuery = await env.DB.prepare(`
-            SELECT pt.post_id, t.id as tag_id, t.name as tag_name, t.slug as tag_slug, t.color as tag_color
-            FROM posts_tags pt
-            JOIN tags t ON pt.tag_id = t.id
-            WHERE pt.post_id IN (${postIds.map(() => '?').join(',')})
-          `).bind(...postIds).all();
-          
-          const tagsMap = {};
-          if (tagsQuery.results) {
-            tagsQuery.results.forEach(tag => {
-              if (!tagsMap[tag.post_id]) {
-                tagsMap[tag.post_id] = [];
-              }
-              tagsMap[tag.post_id].push({
-                id: tag.tag_id,
-                name: tag.tag_name,
-                slug: tag.tag_slug,
-                color: tag.tag_color
-              });
-            });
-          }
-          
-          // 为每篇文章添加标签信息
-          posts.forEach(post => {
-            post.tags = tagsMap[post.id] || [];
-            post.category = post.category_id ? {
-              id: post.category_id,
-              name: post.category_name,
-              slug: post.category_slug
-            } : null;
-            
-            // 删除不需要的字段
-            delete post.category_id;
-            delete post.category_name;
-            delete post.category_slug;
-          });
+        // 如果没有文章，直接返回空数组
+        if (posts.length === 0) {
+          return Response.json([]);
         }
-        
-        // 添加调试日志
-        console.log("返回的文章数据:", JSON.stringify(posts, null, 2));
-        
-        return Response.json(posts);
+
+        // 为文章添加分类和标签信息
+        return await enrichPostsWithCategoriesAndTags(posts, env.DB);
       } catch (dbError) {
         console.error("数据库查询错误:", dbError);
         // 数据库查询失败，返回错误信息
@@ -123,5 +96,85 @@ export async function onRequestGet({ env }) {
         }
       }
     );
+  }
+}
+
+// 辅助函数：为文章添加分类和标签信息
+async function enrichPostsWithCategoriesAndTags(posts, db) {
+  try {
+    // 获取所有文章ID
+    const postIds = posts.map(post => post.id);
+    
+    // 记录执行的步骤，帮助调试
+    console.log(`开始为${posts.length}篇文章添加分类和标签信息`);
+    console.log(`文章ID列表: ${postIds.join(', ')}`);
+    
+    // 1. 获取文章分类信息
+    const categoriesQuery = await db.prepare(`
+      SELECT p.id as post_id, c.id, c.name, c.slug
+      FROM posts p
+      JOIN categories c ON p.category_id = c.id
+      WHERE p.id IN (${postIds.map(() => '?').join(',')})
+    `).bind(...postIds).all();
+    
+    const categoriesMap = {};
+    if (categoriesQuery.results && categoriesQuery.results.length > 0) {
+      console.log(`查询到${categoriesQuery.results.length}条分类信息`);
+      categoriesQuery.results.forEach(cat => {
+        categoriesMap[cat.post_id] = {
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug
+        };
+      });
+    } else {
+      console.log('没有查询到任何分类信息');
+    }
+    
+    // 2. 获取文章标签信息
+    const tagsQuery = await db.prepare(`
+      SELECT pt.post_id, t.id, t.name, t.slug, t.color
+      FROM posts_tags pt
+      JOIN tags t ON pt.tag_id = t.id
+      WHERE pt.post_id IN (${postIds.map(() => '?').join(',')})
+    `).bind(...postIds).all();
+    
+    const tagsMap = {};
+    if (tagsQuery.results && tagsQuery.results.length > 0) {
+      console.log(`查询到${tagsQuery.results.length}条标签信息`);
+      tagsQuery.results.forEach(tag => {
+        if (!tagsMap[tag.post_id]) {
+          tagsMap[tag.post_id] = [];
+        }
+        tagsMap[tag.post_id].push({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+          color: tag.color
+        });
+      });
+    } else {
+      console.log('没有查询到任何标签信息');
+    }
+    
+    // 3. 将分类和标签信息添加到文章中
+    posts.forEach(post => {
+      post.category = categoriesMap[post.id] || null;
+      post.tags = tagsMap[post.id] || [];
+    });
+    
+    // 添加调试日志
+    console.log("处理后的文章数据:", JSON.stringify(posts.map(p => ({ 
+      id: p.id, 
+      title: p.title.substring(0, 20), 
+      hasCategory: !!p.category, 
+      tagsCount: p.tags.length 
+    })), null, 2));
+    
+    return Response.json(posts);
+  } catch (error) {
+    console.error("为文章添加分类和标签信息时出错:", error);
+    // 如果添加分类和标签失败，仍返回原始文章数据
+    return Response.json(posts);
   }
 } 

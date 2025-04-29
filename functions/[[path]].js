@@ -45,15 +45,15 @@ export async function onRequest(context) {
       console.log('处理文章详情页面路由:', path);
       try {
         // 直接返回文章详情页模板
-        return new Response(
-          `<!DOCTYPE html>
-          <html lang="zh-CN">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>文章详情 - 叮叮博客</title>
-              <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>文章详情 - 叮叮博客</title>
+                <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
               <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
               <style>
                   .article-content img {
@@ -318,45 +318,45 @@ export async function onRequest(context) {
                       margin-top: 0.5rem;
                   }
               </style>
-          </head>
-          <body class="bg-gray-100 min-h-screen">
+            </head>
+            <body class="bg-gray-100 min-h-screen">
               <!-- 图片预览模态框 -->
               <div id="imagePreviewModal" class="image-preview-modal" onclick="closeImagePreview()">
                   <div class="close-button" onclick="closeImagePreview()">×</div>
                   <img id="previewImage" src="" alt="" onclick="event.stopPropagation()">
                   <div id="imageCaption" class="image-caption"></div>
               </div>
-              <header class="bg-white shadow">
-                  <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                      <h1 class="text-3xl font-bold text-gray-900">
-                          <a href="/" class="hover:text-gray-600">叮叮博客</a>
-                      </h1>
-                  </div>
-              </header>
-              <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                  <div class="px-4 py-6 sm:px-0">
-                      <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
-                          <!-- 文章内容将通过JavaScript动态加载 -->
-                          <div class="px-4 py-5 sm:p-6">
-                              <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
-                              <div class="animate-pulse">
-                                  <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-                                  <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                  <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                  <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </main>
-              <footer class="bg-white border-t mt-12 py-6">
-                  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                      <p class="text-center text-gray-500 text-sm">
-                          &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
-                      </p>
-                  </div>
-              </footer>
-              <script>
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            <a href="/" class="hover:text-gray-600">叮叮博客</a>
+                        </h1>
+                    </div>
+                </header>
+                <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                    <div class="px-4 py-6 sm:px-0">
+                        <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
+                            <!-- 文章内容将通过JavaScript动态加载 -->
+                            <div class="px-4 py-5 sm:p-6">
+                                <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
+                                <div class="animate-pulse">
+                                    <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <footer class="bg-white border-t mt-12 py-6">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <p class="text-center text-gray-500 text-sm">
+                            &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
+                        </p>
+                    </div>
+                </footer>
+                <script>
                   // 配置 marked
                   function initMarked() {
                       if (typeof marked === 'undefined') {
@@ -412,9 +412,9 @@ export async function onRequest(context) {
                               '/>' +
                               (title ? '<figcaption>' + title + '</figcaption>' : '') +
                               '<div class="image-size-controls">' +
-                              '<button onclick="setImageSize(this, \'small\'); event.stopPropagation();" class="size-btn">小图</button>' +
-                              '<button onclick="setImageSize(this, \'medium\'); event.stopPropagation();" class="size-btn">中图</button>' +
-                              '<button onclick="setImageSize(this, \'large\'); event.stopPropagation();" class="size-btn">大图</button>' +
+                              '<button onclick="setImageSize(this.parentElement.parentElement, \'small\'); event.stopPropagation();">小图</button>' +
+                              '<button onclick="setImageSize(this.parentElement.parentElement, \'medium\'); event.stopPropagation();" class="active">中图</button>' +
+                              '<button onclick="setImageSize(this.parentElement.parentElement, \'large\'); event.stopPropagation();">大图</button>' +
                               '</div>' +
                               '</figure>';
                       };
@@ -500,63 +500,63 @@ export async function onRequest(context) {
                               throw new Error('Markdown 解析器初始化失败');
                           }
                           
-                          // 从URL获取文章ID
-                          const urlPath = window.location.pathname;
-                          const postId = urlPath.split('/').pop();
-                          
-                          if (!postId) {
-                              throw new Error('文章ID无效');
-                          }
-                          
-                          // 获取文章数据
-                          const response = await fetch('/api/post/' + postId);
-                          
-                          if (!response.ok) {
-                              throw new Error('获取文章失败: ' + response.status);
-                          }
-                          
-                          const article = await response.json();
-                          
-                          // 更新页面标题
-                          document.title = article.title + ' - 叮叮博客';
-                          
-                          // 更新文章内容
-                          const articleContainer = document.getElementById('article-container');
-                          
-                          // 格式化日期
-                          const publishDate = new Date(article.published_at);
-                          const formattedDate = publishDate.toLocaleDateString('zh-CN', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                          });
-                          
+                            // 从URL获取文章ID
+                            const urlPath = window.location.pathname;
+                            const postId = urlPath.split('/').pop();
+                            
+                            if (!postId) {
+                                throw new Error('文章ID无效');
+                            }
+                            
+                            // 获取文章数据
+                            const response = await fetch('/api/post/' + postId);
+                            
+                            if (!response.ok) {
+                                throw new Error('获取文章失败: ' + response.status);
+                            }
+                            
+                            const article = await response.json();
+                            
+                            // 更新页面标题
+                            document.title = article.title + ' - 叮叮博客';
+                            
+                            // 更新文章内容
+                            const articleContainer = document.getElementById('article-container');
+                            
+                            // 格式化日期
+                            const publishDate = new Date(article.published_at);
+                            const formattedDate = publishDate.toLocaleDateString('zh-CN', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            
                           // 渲染文章内容
                           const renderedContent = marked.parse(article.content || '');
                           
                           // 使用字符串拼接而不是模板字符串
-                          articleContainer.innerHTML = 
-                              '<div class="px-4 py-5 sm:p-6">' +
-                              '<h2 class="text-3xl font-bold mb-4 text-gray-900">' + article.title + '</h2>' +
-                              '<p class="text-gray-500 mb-6">' + formattedDate + '</p>' +
+                            articleContainer.innerHTML = 
+                                '<div class="px-4 py-5 sm:p-6">' +
+                                    '<h2 class="text-3xl font-bold mb-4 text-gray-900">' + article.title + '</h2>' +
+                                    '<p class="text-gray-500 mb-6">' + formattedDate + '</p>' +
                               '<div class="article-content">' + renderedContent + '</div>' +
-                              '</div>';
-                      } catch (error) {
-                          console.error('加载文章失败:', error);
-                          
-                          const articleContainer = document.getElementById('article-container');
-                          articleContainer.innerHTML = 
-                              '<div class="px-4 py-5 sm:p-6">' +
-                              '<h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>' +
-                              '<p class="text-gray-700">' +
-                              '无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。' +
-                              '</p>' +
-                              '<p class="text-gray-500 mt-2">错误详情: ' + error.message + '</p>' +
+                                '</div>';
+                        } catch (error) {
+                            console.error('加载文章失败:', error);
+                            
+                            const articleContainer = document.getElementById('article-container');
+                            articleContainer.innerHTML = 
+                                '<div class="px-4 py-5 sm:p-6">' +
+                                    '<h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>' +
+                                    '<p class="text-gray-700">' +
+                                        '无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。' +
+                                    '</p>' +
+                                    '<p class="text-gray-500 mt-2">错误详情: ' + error.message + '</p>' +
                               '<button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">' +
                               '重试' +
                               '</button>' +
-                              '</div>';
-                      }
+                                '</div>';
+                        }
                   }
                   
                   // 页面加载完成后执行
@@ -564,6 +564,10 @@ export async function onRequest(context) {
                   
                   // 图片预览功能
                   function openImagePreview(img) {
+                      if (img.classList.contains('image-load-error')) {
+                          return; // 如果图片加载失败，不执行预览
+                      }
+                      
                       const modal = document.getElementById('imagePreviewModal');
                       const previewImage = document.getElementById('previewImage');
                       const caption = document.getElementById('imageCaption');
@@ -598,8 +602,8 @@ export async function onRequest(context) {
                   });
 
                   // 图片大小控制功能
-                  function setImageSize(button, size) {
-                      const figure = button.closest('.article-image-container');
+                  function setImageSize(figure, size) {
+                      if (!figure) return;
                       
                       // 移除所有大小相关的类
                       figure.classList.remove('small-image', 'large-image');
@@ -612,17 +616,23 @@ export async function onRequest(context) {
                       }
                       
                       // 更新按钮状态
-                      const buttons = figure.querySelectorAll('.size-btn');
-                      buttons.forEach(btn => btn.classList.remove('active'));
-                      button.classList.add('active');
+                      const buttons = figure.querySelectorAll('.image-size-controls button');
+                      buttons.forEach(btn => {
+                          btn.classList.remove('active');
+                          if ((size === 'small' && btn.textContent === '小图') ||
+                              (size === 'medium' && btn.textContent === '中图') ||
+                              (size === 'large' && btn.textContent === '大图')) {
+                              btn.classList.add('active');
+                          }
+                      });
                   }
-              </script>
-          </body>
-          </html>`,
-          {
-            headers: { 'Content-Type': 'text/html' },
-          }
-        );
+                </script>
+            </body>
+            </html>`,
+            {
+              headers: { 'Content-Type': 'text/html' },
+            }
+          );
       } catch (error) {
         console.error('处理文章详情页面路由出错:', error);
         return new Response('获取文章详情页面出错: ' + error.message, { status: 500 });

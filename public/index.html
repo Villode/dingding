@@ -243,6 +243,13 @@
             margin-right: 5px;
         }
         
+        .tag-item {
+            display: inline-block;
+            margin-right: 5px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
         .article-divider {
             display: none;
         }
@@ -1108,8 +1115,9 @@
                                     <a href="#" class="article-title article-link" data-id="${post.id}">${post.title}</a>
                                     <div class="article-summary">${post.summary || '无摘要'}</div>
                                     <div class="article-meta">
-                                        <span><i class="fas fa-folder"></i>${category}</span>
+                                        ${post.category ? `<span><i class="fas fa-folder"></i>${post.category.name}</span>` : ''}
                                         <span><i class="far fa-calendar-alt"></i>${formattedDate}</span>
+                                        ${post.tags && post.tags.length > 0 ? `<span><i class="fas fa-tags"></i>${post.tags.map(tag => `<span class="tag-item" style="color:${tag.color || '#4299e1'}">${tag.name}</span>`).join(' ')}</span>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1278,7 +1286,23 @@
                                 <i class="fas fa-heart mr-1"></i>
                                 ${likeData.likes}
                             </span>
+                            ${article.category ? `
+                            <span class="flex items-center mr-4">
+                                <i class="fas fa-folder mr-1"></i>
+                                ${article.category.name}
+                            </span>
+                            ` : ''}
                         </div>
+                        ${article.tags && article.tags.length > 0 ? `
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${article.tags.map(tag => `
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                                      style="background-color: ${tag.color}25; color: ${tag.color}">
+                                    <i class="fas fa-tag mr-1"></i>${tag.name}
+                                </span>
+                            `).join('')}
+                        </div>
+                        ` : ''}
                         <div class="article-content prose max-w-none">
                             ${article.content}
                         </div>

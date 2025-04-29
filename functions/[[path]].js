@@ -31,14 +31,12 @@ export async function onRequest(context) {
     // 处理管理后台页面路由
     if (path === 'admin' && method === 'GET') {
       console.log('处理管理后台路由，交给静态文件处理器');
-      // 直接将请求传递给静态文件处理器
       return context.next();
     }
     
     // 处理登录页面路由
     if (path === 'login' && method === 'GET') {
       console.log('处理登录页面路由，交给静态文件处理器');
-      // 直接将请求传递给静态文件处理器
       return context.next();
     }
     
@@ -46,362 +44,351 @@ export async function onRequest(context) {
     if (path.startsWith('post/') && method === 'GET') {
       console.log('处理文章详情页面路由:', path);
       try {
-        // 直接获取 post.html 内容作为模板
-        const postHtmlResponse = await fetch(new URL('/post.html', url.origin));
-        
-        if (!postHtmlResponse.ok) {
-          // 如果无法获取 post.html，返回内联的文章详情页模板
-          console.warn('无法获取 post.html，使用内联模板');
-          return new Response(
-            `<!DOCTYPE html>
-            <html lang="zh-CN">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>文章详情 - 叮叮博客</title>
-                <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-                <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-                <style>
-                    .article-content img {
-                        max-width: 100%;
-                        height: auto;
-                        border-radius: 8px;
-                        margin: 1rem 0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                    }
-                    
-                    .article-content {
-                        color: #333333;
-                        line-height: 1.8;
-                    }
-                    
-                    .article-content h1,
-                    .article-content h2,
-                    .article-content h3,
-                    .article-content h4,
-                    .article-content h5,
-                    .article-content h6 {
-                        color: #222222;
-                        margin-top: 1.5em;
-                        margin-bottom: 0.8em;
-                        font-weight: 600;
-                    }
-                    
-                    .article-content p {
-                        margin-bottom: 1em;
-                    }
-                    
-                    .article-content a {
-                        color: #FA541C;
-                        text-decoration: none;
-                        border-bottom: 1px solid rgba(250, 84, 28, 0.2);
-                    }
-                    
-                    .article-content a:hover {
-                        border-bottom-color: #FA541C;
-                    }
-                    
-                    .article-content blockquote {
-                        border-left: 4px solid #FA541C;
-                        padding-left: 1rem;
-                        margin-left: 0;
-                        color: #555555;
-                        font-style: italic;
-                        margin: 1.5em 0;
-                    }
-                    
-                    .article-content code {
-                        background: #f5f5f5;
-                        padding: 0.2em 0.4em;
-                        border-radius: 3px;
-                        font-family: 'JetBrains Mono', monospace;
-                        font-size: 0.9em;
-                        color: #333;
-                    }
-                    
-                    .article-content pre {
-                        background: #f5f5f5;
-                        padding: 1em;
-                        border-radius: 5px;
-                        overflow-x: auto;
-                        margin: 1.5em 0;
-                    }
-                    
-                    .article-content pre code {
-                        background: none;
-                        padding: 0;
-                    }
-                    
-                    .article-content ul, 
-                    .article-content ol {
-                        margin-bottom: 1em;
-                        padding-left: 1.5em;
-                    }
-                    
-                    .article-content li {
-                        margin-bottom: 0.5em;
-                    }
-                    
-                    .image-load-error {
-                        position: relative;
-                        min-height: 200px;
-                        min-width: 300px;
-                        background-color: #f3f4f6;
-                        border: 1px dashed #d1d5db;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .image-load-error::before {
-                        content: "图片加载失败 (点击重试)";
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        color: #666;
-                        font-size: 0.9em;
-                        white-space: nowrap;
-                    }
-                    
-                    .image-load-error:hover {
-                        background-color: #e5e7eb;
-                        border-color: #FA541C;
-                    }
-                    
-                    .image-load-error:hover::before {
-                        color: #FA541C;
-                    }
-                </style>
-            </head>
-            <body class="bg-gray-100 min-h-screen">
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        <h1 class="text-3xl font-bold text-gray-900">
-                            <a href="/" class="hover:text-gray-600">叮叮博客</a>
-                        </h1>
-                    </div>
-                </header>
-                <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                    <div class="px-4 py-6 sm:px-0">
-                        <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
-                            <!-- 文章内容将通过JavaScript动态加载 -->
-                            <div class="px-4 py-5 sm:p-6">
-                                <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
-                                <div class="animate-pulse">
-                                    <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-                                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-                <footer class="bg-white border-t mt-12 py-6">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <p class="text-center text-gray-500 text-sm">
-                            &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
-                        </p>
-                    </div>
-                </footer>
-                <script>
-                    // 配置 marked
-                    function initMarked() {
-                        if (typeof marked === 'undefined') {
-                            console.error('Marked.js not loaded');
-                            return false;
-                        }
-                        
-                        const renderer = new marked.Renderer();
-                        renderer.image = function(href, title, text) {
-                            if (!href || typeof href !== 'string') {
-                                console.warn('Invalid image href:', href);
-                                return '';
-                            }
-                            
-                            let imgSrc = href.trim();
-                            
-                            // 如果是 R2 URL，转换为 Workers URL
-                            if (imgSrc.includes('r2.cloudflarestorage.com')) {
-                                const filePathMatch = imgSrc.match(/\\/my-file\\/(.+)$/);
-                                if (filePathMatch) {
-                                    const filePath = filePathMatch[1];
-                                    imgSrc = \`https://dingding-blog.uzz.workers.dev/file/\${filePath}\`;
-                                }
-                            }
-                            
-                            return \`
-                                <figure class="article-image-container">
-                                    <img src="\${imgSrc}" 
-                                         alt="\${text || ''}" 
-                                         title="\${title || ''}" 
-                                         class="article-content-img" 
-                                         loading="lazy"
-                                         onerror="handleImageError(this)"
-                                    />
-                                    \${title ? \`<figcaption>\${title}</figcaption>\` : ''}
-                                </figure>
-                            \`;
-                        };
-                        
-                        marked.setOptions({
-                            renderer: renderer,
-                            gfm: true,
-                            breaks: true,
-                            sanitize: false,
-                            smartLists: true,
-                            smartypants: true
-                        });
-                        
-                        return true;
-                    }
-                    
-                    function handleImageError(img) {
-                        if (img.retryCount === undefined) {
-                            img.retryCount = 0;
-                        }
-                        
-                        if (img.retryCount < 3) {
-                            img.retryCount++;
-                            console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
-                            
-                            // 清除错误处理器，防止无限循环
-                            img.onerror = null;
-                            
-                            // 添加时间戳参数避免缓存
-                            const timestamp = new Date().getTime();
-                            const separator = img.src.includes('?') ? '&' : '?';
-                            img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
-                            
-                            // 恢复错误处理器
-                            setTimeout(() => {
-                                img.onerror = () => handleImageError(img);
-                            }, 0);
-                        } else {
-                            console.error('Image load failed after 3 retries:', img.src);
-                            img.classList.add('image-load-error');
-                            img.dataset.originalSrc = img.src;
-                            
-                            // 添加点击重试事件
-                            img.onclick = function() {
-                                if (this.classList.contains('image-load-error')) {
-                                    this.classList.remove('image-load-error');
-                                    this.retryCount = 0;
-                                    const timestamp = new Date().getTime();
-                                    const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
-                                    this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
-                                }
-                            };
-                        }
-                    }
-                    
-                    // 等待 marked.js 加载完成
-                    function waitForMarked(maxAttempts = 10) {
-                        return new Promise((resolve, reject) => {
-                            let attempts = 0;
-                            
-                            function check() {
-                                attempts++;
-                                if (typeof marked !== 'undefined') {
-                                    resolve();
-                                } else if (attempts >= maxAttempts) {
-                                    reject(new Error('Markdown 解析器加载超时'));
-                                } else {
-                                    setTimeout(check, 500);
-                                }
-                            }
-                            
-                            check();
-                        });
-                    }
-                    
-                    // 主函数
-                    async function loadArticle() {
-                        try {
-                            // 等待 marked.js 加载
-                            await waitForMarked();
-                            
-                            // 初始化 marked
-                            if (!initMarked()) {
-                                throw new Error('Markdown 解析器初始化失败');
-                            }
-                            
-                            // 从URL获取文章ID
-                            const urlPath = window.location.pathname;
-                            const postId = urlPath.split('/').pop();
-                            
-                            if (!postId) {
-                                throw new Error('文章ID无效');
-                            }
-                            
-                            // 获取文章数据
-                            const response = await fetch('/api/post/' + postId);
-                            
-                            if (!response.ok) {
-                                throw new Error('获取文章失败: ' + response.status);
-                            }
-                            
-                            const article = await response.json();
-                            
-                            // 更新页面标题
-                            document.title = article.title + ' - 叮叮博客';
-                            
-                            // 更新文章内容
-                            const articleContainer = document.getElementById('article-container');
-                            
-                            // 格式化日期
-                            const publishDate = new Date(article.published_at);
-                            const formattedDate = publishDate.toLocaleDateString('zh-CN', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
-                            
-                            // 渲染文章内容
-                            const renderedContent = marked.parse(article.content || '');
-                            
-                            articleContainer.innerHTML = \`
-                                <div class="px-4 py-5 sm:p-6">
-                                    <h2 class="text-3xl font-bold mb-4 text-gray-900">\${article.title}</h2>
-                                    <p class="text-gray-500 mb-6">\${formattedDate}</p>
-                                    <div class="article-content">\${renderedContent}</div>
-                                </div>
-                            \`;
-                        } catch (error) {
-                            console.error('加载文章失败:', error);
-                            
-                            const articleContainer = document.getElementById('article-container');
-                            articleContainer.innerHTML = \`
-                                <div class="px-4 py-5 sm:p-6">
-                                    <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
-                                    <p class="text-gray-700">
-                                        无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。
-                                    </p>
-                                    <p class="text-gray-500 mt-2">错误详情: \${error.message}</p>
-                                    <button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-                                        重试
-                                    </button>
-                                </div>
-                            \`;
-                        }
-                    }
-                    
-                    // 页面加载完成后执行
-                    document.addEventListener('DOMContentLoaded', loadArticle);
-                </script>
-            </body>
-            </html>`,
-            {
-              headers: { 'Content-Type': 'text/html' },
-            }
-          );
-        }
-        
-        // 返回post.html的内容
-        return new Response(await postHtmlResponse.text(), {
-          headers: { 'Content-Type': 'text/html' },
-        });
+        // 直接返回文章详情页模板
+        return new Response(
+          `<!DOCTYPE html>
+          <html lang="zh-CN">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>文章详情 - 叮叮博客</title>
+              <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+              <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+              <style>
+                  .article-content img {
+                      max-width: 100%;
+                      height: auto;
+                      border-radius: 8px;
+                      margin: 1rem 0;
+                      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                  }
+                  
+                  .article-content {
+                      color: #333333;
+                      line-height: 1.8;
+                  }
+                  
+                  .article-content h1,
+                  .article-content h2,
+                  .article-content h3,
+                  .article-content h4,
+                  .article-content h5,
+                  .article-content h6 {
+                      color: #222222;
+                      margin-top: 1.5em;
+                      margin-bottom: 0.8em;
+                      font-weight: 600;
+                  }
+                  
+                  .article-content p {
+                      margin-bottom: 1em;
+                  }
+                  
+                  .article-content a {
+                      color: #FA541C;
+                      text-decoration: none;
+                      border-bottom: 1px solid rgba(250, 84, 28, 0.2);
+                  }
+                  
+                  .article-content a:hover {
+                      border-bottom-color: #FA541C;
+                  }
+                  
+                  .article-content blockquote {
+                      border-left: 4px solid #FA541C;
+                      padding-left: 1rem;
+                      margin-left: 0;
+                      color: #555555;
+                      font-style: italic;
+                      margin: 1.5em 0;
+                  }
+                  
+                  .article-content code {
+                      background: #f5f5f5;
+                      padding: 0.2em 0.4em;
+                      border-radius: 3px;
+                      font-family: 'JetBrains Mono', monospace;
+                      font-size: 0.9em;
+                      color: #333;
+                  }
+                  
+                  .article-content pre {
+                      background: #f5f5f5;
+                      padding: 1em;
+                      border-radius: 5px;
+                      overflow-x: auto;
+                      margin: 1.5em 0;
+                  }
+                  
+                  .article-content pre code {
+                      background: none;
+                      padding: 0;
+                  }
+                  
+                  .article-content ul, 
+                  .article-content ol {
+                      margin-bottom: 1em;
+                      padding-left: 1.5em;
+                  }
+                  
+                  .article-content li {
+                      margin-bottom: 0.5em;
+                  }
+                  
+                  .image-load-error {
+                      position: relative;
+                      min-height: 200px;
+                      min-width: 300px;
+                      background-color: #f3f4f6;
+                      border: 1px dashed #d1d5db;
+                      cursor: pointer;
+                      transition: all 0.3s ease;
+                  }
+                  
+                  .image-load-error::before {
+                      content: "图片加载失败 (点击重试)";
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      color: #666;
+                      font-size: 0.9em;
+                      white-space: nowrap;
+                  }
+                  
+                  .image-load-error:hover {
+                      background-color: #e5e7eb;
+                      border-color: #FA541C;
+                  }
+                  
+                  .image-load-error:hover::before {
+                      color: #FA541C;
+                  }
+              </style>
+          </head>
+          <body class="bg-gray-100 min-h-screen">
+              <header class="bg-white shadow">
+                  <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                      <h1 class="text-3xl font-bold text-gray-900">
+                          <a href="/" class="hover:text-gray-600">叮叮博客</a>
+                      </h1>
+                  </div>
+              </header>
+              <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                  <div class="px-4 py-6 sm:px-0">
+                      <div id="article-container" class="bg-white shadow overflow-hidden rounded-lg">
+                          <!-- 文章内容将通过JavaScript动态加载 -->
+                          <div class="px-4 py-5 sm:p-6">
+                              <h2 class="text-2xl font-bold mb-4 text-gray-500">加载中...</h2>
+                              <div class="animate-pulse">
+                                  <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
+                                  <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                  <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                  <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </main>
+              <footer class="bg-white border-t mt-12 py-6">
+                  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                      <p class="text-center text-gray-500 text-sm">
+                          &copy; 2023 叮叮博客 | 基于 Cloudflare Pages 构建
+                      </p>
+                  </div>
+              </footer>
+              <script>
+                  // 配置 marked
+                  function initMarked() {
+                      if (typeof marked === 'undefined') {
+                          console.error('Marked.js not loaded');
+                          return false;
+                      }
+                      
+                      const renderer = new marked.Renderer();
+                      renderer.image = function(href, title, text) {
+                          if (!href || typeof href !== 'string') {
+                              console.warn('Invalid image href:', href);
+                              return '';
+                          }
+                          
+                          let imgSrc = href.trim();
+                          
+                          // 如果是 R2 URL，转换为 Workers URL
+                          if (imgSrc.includes('r2.cloudflarestorage.com')) {
+                              const filePathMatch = imgSrc.match(/\\/my-file\\/(.+)$/);
+                              if (filePathMatch) {
+                                  const filePath = filePathMatch[1];
+                                  imgSrc = \`https://dingding-blog.uzz.workers.dev/file/\${filePath}\`;
+                              }
+                          }
+                          
+                          return \`
+                              <figure class="article-image-container">
+                                  <img src="\${imgSrc}" 
+                                       alt="\${text || ''}" 
+                                       title="\${title || ''}" 
+                                       class="article-content-img" 
+                                       loading="lazy"
+                                       onerror="handleImageError(this)"
+                                  />
+                                  \${title ? \`<figcaption>\${title}</figcaption>\` : ''}
+                              </figure>
+                          \`;
+                      };
+                      
+                      marked.setOptions({
+                          renderer: renderer,
+                          gfm: true,
+                          breaks: true,
+                          sanitize: false,
+                          smartLists: true,
+                          smartypants: true
+                      });
+                      
+                      return true;
+                  }
+                  
+                  function handleImageError(img) {
+                      if (img.retryCount === undefined) {
+                          img.retryCount = 0;
+                      }
+                      
+                      if (img.retryCount < 3) {
+                          img.retryCount++;
+                          console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
+                          
+                          // 清除错误处理器，防止无限循环
+                          img.onerror = null;
+                          
+                          // 添加时间戳参数避免缓存
+                          const timestamp = new Date().getTime();
+                          const separator = img.src.includes('?') ? '&' : '?';
+                          img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
+                          
+                          // 恢复错误处理器
+                          setTimeout(() => {
+                              img.onerror = () => handleImageError(img);
+                          }, 0);
+                      } else {
+                          console.error('Image load failed after 3 retries:', img.src);
+                          img.classList.add('image-load-error');
+                          img.dataset.originalSrc = img.src;
+                          
+                          // 添加点击重试事件
+                          img.onclick = function() {
+                              if (this.classList.contains('image-load-error')) {
+                                  this.classList.remove('image-load-error');
+                                  this.retryCount = 0;
+                                  const timestamp = new Date().getTime();
+                                  const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
+                                  this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
+                              }
+                          };
+                      }
+                  }
+                  
+                  // 等待 marked.js 加载完成
+                  function waitForMarked(maxAttempts = 10) {
+                      return new Promise((resolve, reject) => {
+                          let attempts = 0;
+                          
+                          function check() {
+                              attempts++;
+                              if (typeof marked !== 'undefined') {
+                                  resolve();
+                              } else if (attempts >= maxAttempts) {
+                                  reject(new Error('Markdown 解析器加载超时'));
+                              } else {
+                                  setTimeout(check, 500);
+                              }
+                          }
+                          
+                          check();
+                      });
+                  }
+                  
+                  // 主函数
+                  async function loadArticle() {
+                      try {
+                          // 等待 marked.js 加载
+                          await waitForMarked();
+                          
+                          // 初始化 marked
+                          if (!initMarked()) {
+                              throw new Error('Markdown 解析器初始化失败');
+                          }
+                          
+                          // 从URL获取文章ID
+                          const urlPath = window.location.pathname;
+                          const postId = urlPath.split('/').pop();
+                          
+                          if (!postId) {
+                              throw new Error('文章ID无效');
+                          }
+                          
+                          // 获取文章数据
+                          const response = await fetch('/api/post/' + postId);
+                          
+                          if (!response.ok) {
+                              throw new Error('获取文章失败: ' + response.status);
+                          }
+                          
+                          const article = await response.json();
+                          
+                          // 更新页面标题
+                          document.title = article.title + ' - 叮叮博客';
+                          
+                          // 更新文章内容
+                          const articleContainer = document.getElementById('article-container');
+                          
+                          // 格式化日期
+                          const publishDate = new Date(article.published_at);
+                          const formattedDate = publishDate.toLocaleDateString('zh-CN', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                          });
+                          
+                          // 渲染文章内容
+                          const renderedContent = marked.parse(article.content || '');
+                          
+                          articleContainer.innerHTML = \`
+                              <div class="px-4 py-5 sm:p-6">
+                                  <h2 class="text-3xl font-bold mb-4 text-gray-900">\${article.title}</h2>
+                                  <p class="text-gray-500 mb-6">\${formattedDate}</p>
+                                  <div class="article-content">\${renderedContent}</div>
+                              </div>
+                          \`;
+                      } catch (error) {
+                          console.error('加载文章失败:', error);
+                          
+                          const articleContainer = document.getElementById('article-container');
+                          articleContainer.innerHTML = \`
+                              <div class="px-4 py-5 sm:p-6">
+                                  <h2 class="text-2xl font-bold mb-4 text-red-500">加载文章失败</h2>
+                                  <p class="text-gray-700">
+                                      无法加载文章内容，请返回<a href="/" class="text-blue-500 hover:underline">首页</a>查看其他文章。
+                                  </p>
+                                  <p class="text-gray-500 mt-2">错误详情: \${error.message}</p>
+                                  <button onclick="loadArticle()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                      重试
+                                  </button>
+                              </div>
+                          \`;
+                      }
+                  }
+                  
+                  // 页面加载完成后执行
+                  document.addEventListener('DOMContentLoaded', loadArticle);
+              </script>
+          </body>
+          </html>`,
+          {
+            headers: { 'Content-Type': 'text/html' },
+          }
+        );
       } catch (error) {
         console.error('处理文章详情页面路由出错:', error);
         return new Response('获取文章详情页面出错: ' + error.message, { status: 500 });
@@ -464,45 +451,48 @@ export async function onRequest(context) {
       }
     }
     
-    // 只处理 /file/ 路径的请求
-    if (!url.pathname.startsWith('/file/')) {
-        return new Response('Not Found', { status: 404 });
+    // 处理文件请求
+    if (url.pathname.startsWith('/file/')) {
+      console.log('处理文件请求:', url.pathname);
+      // 从路径中提取文件名
+      const filePath = url.pathname.replace('/file/', '');
+      if (!filePath) {
+          return new Response('File path is required', { status: 400 });
+      }
+      
+      try {
+          // 从 R2 获取文件
+          const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
+          if (!file) {
+              return new Response('File not found', { status: 404 });
+          }
+          
+          // 准备响应头
+          const headers = new Headers();
+          headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
+          headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
+          headers.set('Access-Control-Allow-Origin', '*'); // 允许所有域名访问
+          headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+          
+          // 如果是图片，添加额外的缓存和安全头
+          if (file.httpMetadata.contentType?.startsWith('image/')) {
+              headers.set('Content-Security-Policy', "default-src 'self'");
+              headers.set('X-Content-Type-Options', 'nosniff');
+          }
+          
+          // 返回文件内容
+          return new Response(file.body, {
+              headers
+          });
+      } catch (error) {
+          console.error('Error fetching file:', error);
+          return new Response('Internal Server Error', { status: 500 });
+      }
     }
     
-    // 从路径中提取文件名
-    const filePath = url.pathname.replace('/file/', '');
-    if (!filePath) {
-        return new Response('File path is required', { status: 400 });
-    }
-    
-    try {
-        // 从 R2 获取文件
-        const file = await env.MY_BUCKET.get(`my-file/${filePath}`);
-        if (!file) {
-            return new Response('File not found', { status: 404 });
-        }
-        
-        // 准备响应头
-        const headers = new Headers();
-        headers.set('Content-Type', file.httpMetadata.contentType || 'application/octet-stream');
-        headers.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
-        headers.set('Access-Control-Allow-Origin', '*'); // 允许所有域名访问
-        headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-        
-        // 如果是图片，添加额外的缓存和安全头
-        if (file.httpMetadata.contentType?.startsWith('image/')) {
-            headers.set('Content-Security-Policy', "default-src 'self'");
-            headers.set('X-Content-Type-Options', 'nosniff');
-        }
-        
-        // 返回文件内容
-        return new Response(file.body, {
-            headers
-        });
-    } catch (error) {
-        console.error('Error fetching file:', error);
-        return new Response('Internal Server Error', { status: 500 });
-    }
+    // 对于其他请求，继续传递给下一个处理程序
+    console.log('无匹配路由，交给静态资源处理器');
+    return context.next();
   } catch (error) {
     console.error('处理请求时出错:', error);
     return new Response('Internal Server Error: ' + error.message, { status: 500 });

@@ -1318,25 +1318,33 @@
                     // 添加调试日志
                     console.log('Image rendering:', { href, title, text });
                     
-                    // 确保 href 是字符串类型
-                    if (!href || typeof href !== 'string') {
+                    // 处理 href 可能是对象的情况
+                    let imgSrc = '';
+                    if (typeof href === 'object' && href !== null) {
+                        imgSrc = href.href || ''; // 从对象中获取 href 属性
+                        text = href.text || text; // 从对象中获取 text 属性
+                        title = href.title || title; // 从对象中获取 title 属性
+                    } else if (typeof href === 'string') {
+                        imgSrc = href;
+                    } else {
                         console.warn('Invalid image href:', href);
                         return '';
                     }
                     
-                    // 处理图片路径
-                    let imgSrc = href.trim();
-                    
-                    // 调试日志
-                    console.log('Original imgSrc:', imgSrc);
-                    
-                    // 处理相对路径
-                    if (!imgSrc.match(/^(https?:\/\/|data:|\/)/)) {
-                        imgSrc = '/' + imgSrc;
+                    // 确保 imgSrc 是有效的
+                    if (!imgSrc) {
+                        console.warn('Empty image source');
+                        return '';
                     }
                     
+                    imgSrc = imgSrc.trim();
+                    
                     // 调试日志
-                    console.log('Processed imgSrc:', imgSrc);
+                    console.log('Processing image:', {
+                        src: imgSrc,
+                        title: title,
+                        text: text
+                    });
                     
                     // 构建完整的 img 标签
                     const imgTag = `

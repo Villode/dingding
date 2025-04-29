@@ -105,29 +105,186 @@
         
         /* 文章卡片样式 */
         .article-card {
-            background-color: var(--bg-card);
-            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            background-color: #FFFFFF;
+            border-radius: 12px;
             overflow: hidden;
-            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: var(--spacing-lg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
             position: relative;
-            border: 1px solid var(--border-color);
+            border: none;
         }
         
         .article-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         
-        .article-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
+        .article-preview {
+            padding: 16px;
+        }
+        
+        .article-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .article-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .article-author {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 12px;
+            background-color: #F0F2F5;
+        }
+        
+        .author-avatar img {
+            width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+            object-fit: cover;
+        }
+        
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .post-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+        
+        .article-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            line-height: 1.5;
+            transition: color 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .article-title:hover {
+            color: #FA541C;
+        }
+        
+        .article-summary {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .article-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #666;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-button:hover {
+            background-color: #f0f0f0;
+            color: #FA541C;
+        }
+        
+        .action-button i {
+            margin-right: 4px;
+            font-size: 14px;
+        }
+        
+        .article-meta {
+            display: flex;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 12px;
+        }
+        
+        .article-meta span {
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .article-meta i {
+            margin-right: 5px;
+        }
+        
+        .article-divider {
+            display: none;
+        }
+        
+        /* 移除分隔线，采用卡片之间的间距分隔 */
+        #posts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 文章列表容器样式 */
+        .article-list {
+            margin-top: 15px;
+            padding: 0 5px;
+        }
+        
+        /* 增强滚动效果 */
+        #home-content {
+            padding-top: 15px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #d4d4d4 transparent;
+        }
+        
+        #home-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #home-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #home-content::-webkit-scrollbar-thumb {
+            background-color: #d4d4d4;
+            border-radius: 6px;
+        }
+        
+        /* 微博风格的时间显示 */
+        .time-ago {
+            font-size: 12px;
+            color: #999;
         }
         
         /* 点赞相关样式 */
@@ -169,14 +326,15 @@
         }
         
         .like-animation {
-            animation: likeEffect 0.8s ease-in-out;
+            animation: heartBeat 0.8s ease-in-out;
         }
         
-        @keyframes likeEffect {
+        @keyframes heartBeat {
             0% { transform: scale(1); }
-            25% { transform: scale(1.2); }
-            50% { transform: scale(0.95); }
-            75% { transform: scale(1.1); }
+            15% { transform: scale(1.3); }
+            30% { transform: scale(0.95); }
+            45% { transform: scale(1.2); }
+            70% { transform: scale(0.95); }
             100% { transform: scale(1); }
         }
         
@@ -487,91 +645,6 @@
             margin-right: auto;
         }
         
-        /* 卡片样式重置 */
-        .article-card {
-            display: flex;
-            flex-direction: column;
-            background-color: #FFFFFF;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-            position: relative;
-            border: none;
-        }
-        
-        .article-card::before {
-            display: none;
-        }
-        
-        /* 文章预览图 */
-        .article-preview {
-            display: flex;
-            gap: 20px;
-            padding: 20px;
-        }
-        
-        .article-thumb {
-            width: 120px;
-            height: 80px;
-            border-radius: 4px;
-            overflow: hidden;
-            flex-shrink: 0;
-            background-color: #F0F2F5;
-        }
-        
-        .article-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .article-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .article-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        
-        .article-summary {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        .article-meta {
-            display: flex;
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .article-meta span {
-            margin-right: 15px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .article-meta i {
-            margin-right: 5px;
-        }
-        
-        .article-divider {
-            height: 1px;
-            background-color: #EEEEEE;
-            margin: 0 20px;
-        }
-        
         /* 热门文章样式 */
         .hot-article {
             display: flex;
@@ -749,6 +822,28 @@
         
         .article-list {
             margin-top: 10px;
+        }
+        
+        .like-btn {
+            position: relative;
+        }
+        
+        .like-btn i {
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .like-btn i.fas {
+            color: #f1495b;
+        }
+        
+        .like-btn:hover i.far {
+            color: #f1495b;
+        }
+        
+        .like-btn .like-count {
+            margin-left: 4px;
+            transition: all 0.3s;
         }
     </style>
 </head>
@@ -959,38 +1054,54 @@
                             month: 'long',
                             day: 'numeric'
                         });
+                        
+                        // 计算时间差显示，类似微博
+                        const timeAgo = getTimeAgo(postDate);
+                        
                         const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false, remainingOperations: 0};
                         
                         const postElement = document.createElement('div');
                         postElement.className = 'article-card';
                         
                         const category = index % 3 === 0 ? '技术' : (index % 3 === 1 ? '生活' : '其他');
-                        const categoryDate = index % 2 === 0 ? formattedDate : `${postDate.getMonth() + 1}-${postDate.getDate()}`;
                         
                         postElement.innerHTML = `
                             <div class="article-preview">
+                                <div class="article-header">
+                                    <div class="article-author">
+                                        <div class="author-avatar">
+                                            <img src="https://img.yzcdn.cn/vant/cat.jpeg" alt="作者头像">
+                                        </div>
+                                        <div class="author-info">
+                                            <div class="author-name">此间少年</div>
+                                            <div class="post-time">${timeAgo}</div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="article-info">
                                     <a href="#" class="article-title article-link" data-id="${post.id}">${post.title}</a>
                                     <div class="article-summary">${post.summary || '无摘要'}</div>
                                     <div class="article-meta">
                                         <span><i class="fas fa-folder"></i>${category}</span>
-                                        <span><i class="far fa-calendar-alt"></i>${categoryDate}</span>
-                                        <span class="like-count">
-                                            <i class="fas fa-heart"></i>${likeStatus.likes}
-                                        </span>
+                                        <span><i class="far fa-calendar-alt"></i>${formattedDate}</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="article-actions">
+                                <div class="action-button">
+                                    <i class="far fa-comment"></i>评论
+                                </div>
+                                <div class="action-button">
+                                    <i class="fas fa-retweet"></i>转发
+                                </div>
+                                <div class="action-button like-btn" data-id="${post.id}" data-liked="${likeStatus.isLiked}">
+                                    <i class="far ${likeStatus.isLiked ? 'fas' : 'far'} fa-heart"></i>
+                                    <span class="like-count">${likeStatus.likes}</span>
                                 </div>
                             </div>
                         `;
                         
                         postsContainer.appendChild(postElement);
-                        
-                        // 如果不是最后一篇文章，添加分隔线
-                        if (index < posts.length - 1) {
-                            const divider = document.createElement('div');
-                            divider.className = 'article-divider';
-                            postsContainer.appendChild(divider);
-                        }
                     });
                     
                     // 添加文章链接点击事件
@@ -1000,6 +1111,37 @@
                             const articleId = this.getAttribute('data-id');
                             navigateToArticle(articleId);
                             history.pushState({}, '', `/post/${articleId}`);
+                        });
+                    });
+                    
+                    // 添加点赞按钮事件
+                    document.querySelectorAll('.like-btn').forEach(btn => {
+                        btn.addEventListener('click', async function() {
+                            const id = this.getAttribute('data-id');
+                            try {
+                                const response = await fetch(`/api/post/like/${id}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                
+                                if (response.ok) {
+                                    const result = await response.json();
+                                    const isLiked = result.isLiked;
+                                    
+                                    // 更新UI
+                                    const heartIcon = this.querySelector('i');
+                                    heartIcon.className = isLiked ? 'fas fa-heart' : 'far fa-heart';
+                                    
+                                    const countElement = this.querySelector('.like-count');
+                                    countElement.textContent = result.likes;
+                                    
+                                    // 添加动画效果
+                                    heartIcon.classList.add('like-animation');
+                                    setTimeout(() => heartIcon.classList.remove('like-animation'), 800);
+                                }
+                            } catch (error) {
+                                console.error('点赞失败:', error);
+                            }
                         });
                     });
                 } else {
@@ -1185,6 +1327,32 @@
                 document.getElementById('reload-article')?.addEventListener('click', () => {
                     loadArticle(articleId);
                 });
+            }
+        }
+
+        // 计算时间差的函数
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHour / 24);
+            const diffMonth = Math.floor(diffDay / 30);
+            const diffYear = Math.floor(diffMonth / 12);
+
+            if (diffYear > 0) {
+                return `${diffYear}年前`;
+            } else if (diffMonth > 0) {
+                return `${diffMonth}个月前`;
+            } else if (diffDay > 0) {
+                return diffDay === 1 ? '昨天' : `${diffDay}天前`;
+            } else if (diffHour > 0) {
+                return `${diffHour}小时前`;
+            } else if (diffMin > 0) {
+                return `${diffMin}分钟前`;
+            } else {
+                return '刚刚';
             }
         }
     </script>

@@ -286,30 +286,18 @@ export async function onRequest(context) {
                   }
 
                   .article-content-img {
-                      max-width: 100%;
+                      max-width: 60%;
                       height: auto;
                       margin: 1rem auto;
                       display: block;
                       border-radius: 0.5rem;
                       transition: all 0.3s ease;
+                      cursor: zoom-in;
                   }
 
                   .article-image-container {
                       text-align: center;
                       margin: 2rem 0;
-                  }
-
-                  .article-image-container.small-image img {
-                      max-width: 50%;
-                  }
-
-                  .article-image-container.large-image img {
-                      max-width: 100%;
-                  }
-
-                  /* 默认中等大小 */
-                  .article-image-container img {
-                      max-width: 75%;
                   }
 
                   .article-image-container figcaption {
@@ -394,13 +382,6 @@ export async function onRequest(context) {
                               }
                           }
                           
-                          console.log('Processing image:', {
-                              original: href,
-                              processed: imgSrc,
-                              title,
-                              text
-                          });
-                          
                           return '<figure class="article-image-container">' +
                               '<img src="' + imgSrc + '"' +
                               ' alt="' + (text || '') + '"' +
@@ -411,11 +392,6 @@ export async function onRequest(context) {
                               ' onerror="handleImageError(this)"' +
                               '/>' +
                               (title ? '<figcaption>' + title + '</figcaption>' : '') +
-                              '<div class="image-size-controls">' +
-                              '<button onclick="setImageSize(this.parentElement.parentElement, \'small\'); event.stopPropagation();">小图</button>' +
-                              '<button onclick="setImageSize(this.parentElement.parentElement, \'medium\'); event.stopPropagation();" class="active">中图</button>' +
-                              '<button onclick="setImageSize(this.parentElement.parentElement, \'large\'); event.stopPropagation();">大图</button>' +
-                              '</div>' +
                               '</figure>';
                       };
                       
@@ -600,32 +576,6 @@ export async function onRequest(context) {
                           closeImagePreview();
                       }
                   });
-
-                  // 图片大小控制功能
-                  function setImageSize(figure, size) {
-                      if (!figure) return;
-                      
-                      // 移除所有大小相关的类
-                      figure.classList.remove('small-image', 'large-image');
-                      
-                      // 根据选择添加相应的类
-                      if (size === 'small') {
-                          figure.classList.add('small-image');
-                      } else if (size === 'large') {
-                          figure.classList.add('large-image');
-                      }
-                      
-                      // 更新按钮状态
-                      const buttons = figure.querySelectorAll('.image-size-controls button');
-                      buttons.forEach(btn => {
-                          btn.classList.remove('active');
-                          if ((size === 'small' && btn.textContent === '小图') ||
-                              (size === 'medium' && btn.textContent === '中图') ||
-                              (size === 'large' && btn.textContent === '大图')) {
-                              btn.classList.add('active');
-                          }
-                      });
-                  }
                 </script>
             </body>
             </html>`,

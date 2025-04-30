@@ -1279,17 +1279,34 @@
             }
         }
         
-        // 修改导航到文章页面的函数
+        // 导航到文章页面
         async function navigateToArticle(articleId) {
-            if (!articleId) return;
+            if (!articleId) {
+                console.error('文章ID为空');
+                return;
+            }
+            
+            console.log('开始导航到文章:', articleId);
             
             try {
-                showArticleView(); // 先显示文章视图
+                // 先显示文章视图
+                showArticleView();
+                console.log('已切换到文章视图');
                 
-                // 先检查 API 是否可用
-                if (await checkApi(articleId)) {
+                // 检查 API 可用性
+                const apiAvailable = await checkApi(articleId);
+                console.log('API 检查结果:', apiAvailable);
+                
+                if (apiAvailable) {
+                    // 更新 URL
                     history.pushState({type: 'article', id: articleId}, '', `/post/${articleId}`);
+                    console.log('URL 已更新');
+                    
+                    // 加载文章
+                    console.log('准备加载文章内容');
                     await loadArticle(articleId);
+                } else {
+                    throw new Error('API 服务不可用');
                 }
             } catch (error) {
                 console.error('导航到文章失败:', error);
@@ -1298,7 +1315,7 @@
                         <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                         <p class="text-xl font-bold text-red-500">加载失败</p>
                         <p class="text-gray-500 mt-2">${error.message}</p>
-                        <button onclick="navigateToArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                        <button onclick="window.navigateToArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
                             重试
                         </button>
                     </div>
@@ -1306,21 +1323,143 @@
             }
         }
         
-        // 导航到首页
-        function navigateToHome() {
-            history.pushState({type: 'home'}, '', '/');
-            currentArticleId = null;
-            showHomeView();
-            loadArticleList();
+        // 修改文章列表中的点击事件处理
+        function setupArticleListeners() {
+            const postsContainer = document.getElementById('posts-container');
+            if (postsContainer) {
+                postsContainer.addEventListener('click', async function(e) {
+                    const link = e.target.closest('.article-link');
+                    if (link) {
+                        e.preventDefault();
+                        const articleId = link.getAttribute('data-post-id');
+                        console.log('文章链接被点击:', articleId);
+                        if (articleId) {
+                            await window.navigateToArticle(articleId);
+                        }
+                    }
+                });
+            }
         }
-        
-        // 处理返回按钮点击
-        document.getElementById('back-button').addEventListener('click', function(e) {
-            e.preventDefault();
-            navigateToHome();
+
+        // 确保函数在全局作用域可用
+        window.navigateToArticle = navigateToArticle;
+        window.loadArticle = loadArticle;
+        window.checkApi = checkApi;
+
+        // 在文档加载完成后设置事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，设置事件监听器');
+            setupArticleListeners();
+            
+            // 检查当前 URL 是否是文章页面
+            const path = window.location.pathname;
+            if (path.startsWith('/post/')) {
+                const postId = path.split('/').pop();
+                if (postId) {
+                    console.log('检测到文章 URL，加载文章:', postId);
+                    navigateToArticle(postId);
+                }
+            } else {
+                console.log('加载文章列表');
+                loadArticleList();
+            }
         });
 
-        // 添加文章详情加载函数
+        // 计算时间差的函数
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHour / 24);
+            const diffMonth = Math.floor(diffDay / 30);
+            const diffYear = Math.floor(diffMonth / 12);
+
+            if (diffYear > 0) {
+                return `${diffYear}年前`;
+            } else if (diffMonth > 0) {
+                return `${diffMonth}个月前`;
+            } else if (diffDay > 0) {
+                return diffDay === 1 ? '昨天' : `${diffDay}天前`;
+            } else if (diffHour > 0) {
+                return `${diffHour}小时前`;
+            } else if (diffMin > 0) {
+                return `${diffMin}分钟前`;
+            } else {
+                return '刚刚';
+            }
+        }
+
+        // 图片预览功能
+        function openImagePreview(img) {
+            if (img.classList.contains('image-load-error')) {
+                return; // 如果图片加载失败，不执行预览
+            }
+            
+            const modal = document.getElementById('imagePreviewModal');
+            const previewImage = document.getElementById('previewImage');
+            const caption = document.getElementById('imageCaption');
+            
+            previewImage.src = img.src;
+            previewImage.alt = img.alt;
+            
+            // 设置说明文字（优先使用 title，如果没有则使用 alt）
+            const captionText = img.title || img.alt;
+            if (captionText) {
+                caption.textContent = captionText;
+                caption.style.display = 'block';
+            } else {
+                caption.style.display = 'none';
+            }
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+        }
+
+        function closeImagePreview() {
+            const modal = document.getElementById('imagePreviewModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // 恢复滚动
+        }
+
+        // 按 ESC 键关闭预览
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImagePreview();
+            }
+        });
+
+        // 修改文章内容渲染时的图片处理
+        function renderArticleContent(content) {
+            const renderer = new marked.Renderer();
+            renderer.image = function(href, title, text) {
+                return `<figure class="article-image-container">
+                    <img src="${href}" 
+                         alt="${text || ''}" 
+                         title="${title || ''}" 
+                         class="article-content-img" 
+                         loading="lazy"
+                         onclick="openImagePreview(this)"
+                         onerror="handleImageError(this)"
+                    />
+                    ${title ? `<figcaption>${title}</figcaption>` : ''}
+                </figure>`;
+            };
+            
+            marked.setOptions({
+                renderer: renderer,
+                gfm: true,
+                breaks: true,
+                sanitize: false,
+                smartLists: true,
+                smartypants: true
+            });
+            
+            return marked.parse(content || '');
+        }
+
+        // 修改加载文章的代码，使用新的渲染函数
         async function loadArticle(articleId) {
             try {
                 console.log('开始加载文章:', articleId);
@@ -1494,128 +1633,6 @@
                 `;
             }
         }
-
-        // 计算时间差的函数
-        function getTimeAgo(date) {
-            const now = new Date();
-            const diffMs = now - date;
-            const diffSec = Math.floor(diffMs / 1000);
-            const diffMin = Math.floor(diffSec / 60);
-            const diffHour = Math.floor(diffMin / 60);
-            const diffDay = Math.floor(diffHour / 24);
-            const diffMonth = Math.floor(diffDay / 30);
-            const diffYear = Math.floor(diffMonth / 12);
-
-            if (diffYear > 0) {
-                return `${diffYear}年前`;
-            } else if (diffMonth > 0) {
-                return `${diffMonth}个月前`;
-            } else if (diffDay > 0) {
-                return diffDay === 1 ? '昨天' : `${diffDay}天前`;
-            } else if (diffHour > 0) {
-                return `${diffHour}小时前`;
-            } else if (diffMin > 0) {
-                return `${diffMin}分钟前`;
-            } else {
-                return '刚刚';
-            }
-        }
-
-        // 图片预览功能
-        function openImagePreview(img) {
-            if (img.classList.contains('image-load-error')) {
-                return; // 如果图片加载失败，不执行预览
-            }
-            
-            const modal = document.getElementById('imagePreviewModal');
-            const previewImage = document.getElementById('previewImage');
-            const caption = document.getElementById('imageCaption');
-            
-            previewImage.src = img.src;
-            previewImage.alt = img.alt;
-            
-            // 设置说明文字（优先使用 title，如果没有则使用 alt）
-            const captionText = img.title || img.alt;
-            if (captionText) {
-                caption.textContent = captionText;
-                caption.style.display = 'block';
-            } else {
-                caption.style.display = 'none';
-            }
-            
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden'; // 防止背景滚动
-        }
-
-        function closeImagePreview() {
-            const modal = document.getElementById('imagePreviewModal');
-            modal.style.display = 'none';
-            document.body.style.overflow = ''; // 恢复滚动
-        }
-
-        // 按 ESC 键关闭预览
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeImagePreview();
-            }
-        });
-
-        // 修改文章内容渲染时的图片处理
-        function renderArticleContent(content) {
-            const renderer = new marked.Renderer();
-            renderer.image = function(href, title, text) {
-                return `<figure class="article-image-container">
-                    <img src="${href}" 
-                         alt="${text || ''}" 
-                         title="${title || ''}" 
-                         class="article-content-img" 
-                         loading="lazy"
-                         onclick="openImagePreview(this)"
-                         onerror="handleImageError(this)"
-                    />
-                    ${title ? `<figcaption>${title}</figcaption>` : ''}
-                </figure>`;
-            };
-            
-            marked.setOptions({
-                renderer: renderer,
-                gfm: true,
-                breaks: true,
-                sanitize: false,
-                smartLists: true,
-                smartypants: true
-            });
-            
-            return marked.parse(content || '');
-        }
-
-        // 修改加载文章的代码，使用新的渲染函数
-        async function loadArticle(articleId) {
-            try {
-                // ... existing code ...
-                
-                // 在渲染文章内容时使用新的渲染函数
-                const renderedContent = renderArticleContent(article.content);
-                
-                // ... rest of the existing code ...
-            } catch (error) {
-                // ... existing error handling ...
-            }
-        }
-
-        // 添加 popstate 事件处理
-        window.addEventListener('popstate', function(event) {
-            const path = window.location.pathname;
-            if (path === '/') {
-                showHomeView();
-                loadArticleList();
-            } else if (path.startsWith('/post/')) {
-                const postId = path.split('/').pop();
-                if (postId) {
-                    loadArticle(postId);
-                }
-            }
-        });
     </script>
 </body>
 </html> 

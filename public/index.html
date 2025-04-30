@@ -1327,6 +1327,12 @@
                 currentArticleId = articleId;
                 const articleContainer = document.getElementById('article-container');
                 
+                // 检查 marked 是否已加载
+                if (typeof marked === 'undefined') {
+                    console.error('marked 库未加载');
+                    throw new Error('Markdown 解析器未加载，请刷新页面重试');
+                }
+                
                 // 显示加载状态
                 articleContainer.innerHTML = `
                     <div class="loading">
@@ -1343,8 +1349,17 @@
                     throw new Error(`文章获取失败: ${response.status} ${response.statusText}`);
                 }
                 
-                const article = await response.json();
-                console.log('获取到文章数据:', article ? '成功' : '为空');
+                const articleText = await response.text();
+                console.log('获取到的原始响应:', articleText);
+                
+                let article;
+                try {
+                    article = JSON.parse(articleText);
+                    console.log('解析后的文章数据:', article);
+                } catch (e) {
+                    console.error('JSON解析失败:', e);
+                    throw new Error('文章数据格式错误');
+                }
                 
                 if (!article) {
                     throw new Error('文章数据为空');
@@ -1384,14 +1399,15 @@
                 let renderedContent;
                 try {
                     renderedContent = article.content ? marked.parse(article.content) : '<p>暂无内容</p>';
+                    console.log('文章内容渲染完成');
                 } catch (error) {
                     console.error('Markdown 渲染失败:', error);
                     renderedContent = `<pre class="error-content">${article.content}</pre>`;
                 }
                 
                 // 更新文章容器内容
-                console.log('更新 DOM');
-                articleContainer.innerHTML = `
+                console.log('开始更新 DOM');
+                const newHtml = `
                     <div class="p-6 md:p-8">
                         <h1 class="text-2xl md:text-3xl font-bold mb-4">${article.title}</h1>
                         <div class="flex items-center text-gray-500 mb-6">
@@ -1432,6 +1448,34 @@
                         </div>
                     </div>
                 `;
+                
+                console.log('准备更新 DOM');
+                articleContainer.innerHTML = newHtml;
+                console.log('DOM 更新完成');
+                
+                // 添加点赞按钮事件
+                const likeButton = document.getElementById('like-button');
+                if (likeButton) {
+                    likeButton.addEventListener('click', async function() {
+                        try {
+                            const response = await fetch(`/api/post/like/${articleId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const result = await response.json();
+                                this.classList.toggle('liked', result.isLiked);
+                                this.querySelector('.like-text').textContent = result.isLiked ? '已点赞' : '点赞';
+                                this.querySelector('.like-count').textContent = result.likes;
+                            }
+                        } catch (error) {
+                            console.error('点赞失败:', error);
+                        }
+                    });
+                }
                 
                 console.log('文章加载完成');
                 

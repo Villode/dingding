@@ -1083,26 +1083,27 @@
         // 加载文章列表
         async function loadArticleList() {
             try {
-                let postsContainer = document.getElementById('posts-container');
+                const postsContainer = document.getElementById('posts-container');
+                if (!postsContainer) {
+                    console.error('找不到文章列表容器元素');
+                    return;
+                }
+
+                console.log('开始加载文章列表');
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
                 
                 if (posts && posts.length > 0) {
-                    // 移除之前的事件监听器
-                    const oldContainer = postsContainer.cloneNode(false);
-                    postsContainer.parentNode.replaceChild(oldContainer, postsContainer);
+                    console.log(`获取到 ${posts.length} 篇文章`);
                     
-                    // 更新引用
-                    postsContainer = oldContainer;
-                    
+                    // 清空容器内容
                     postsContainer.innerHTML = '';
                     
                     // 获取所有文章的点赞数
                     const likesPromises = posts.map(post => 
                         fetch(`/api/post/like/${post.id}`)
-                            .then(res => res.ok ? res.json() : {likes: 0, isLiked: false, remainingOperations: 0})
-                            .then(data => data)
-                            .catch(() => ({id: post.id, likes: 0, isLiked: false, remainingOperations: 0}))
+                            .then(res => res.ok ? res.json() : {likes: 0, isLiked: false})
+                            .catch(() => ({likes: 0, isLiked: false}))
                     );
                     
                     const likesResults = await Promise.all(likesPromises);
@@ -1111,6 +1112,7 @@
                         likesMap[posts[index].id] = item;
                     });
                     
+                    // 创建文章卡片
                     posts.forEach((post, index) => {
                         const postDate = new Date(post.published_at);
                         const formattedDate = postDate.toLocaleDateString('zh-CN', {
@@ -1119,13 +1121,11 @@
                             day: 'numeric'
                         });
                         
-                        // 计算时间差显示，类似微博
                         const timeAgo = getTimeAgo(postDate);
-                        
-                        const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false, remainingOperations: 0};
+                        const likeStatus = likesMap[post.id] || {likes: 0, isLiked: false};
                         
                         const postElement = document.createElement('div');
-                        postElement.className = 'article-card';
+                        postElement.className = 'article-card fade-in';
                         
                         postElement.innerHTML = `
                             <div class="article-preview">
@@ -1158,7 +1158,7 @@
                                     <i class="fas fa-retweet"></i>转发
                                 </div>
                                 <div class="action-button like-btn" data-id="${post.id}" data-liked="${likeStatus.isLiked}">
-                                    <i class="far ${likeStatus.isLiked ? 'fas' : 'far'} fa-heart"></i>
+                                    <i class="${likeStatus.isLiked ? 'fas' : 'far'} fa-heart"></i>
                                     <span class="like-count">${likeStatus.likes}</span>
                                 </div>
                             </div>
@@ -1167,49 +1167,11 @@
                         postsContainer.appendChild(postElement);
                     });
                     
-                    // 添加事件委托，处理文章链接点击
-                    postsContainer.addEventListener('click', async function(e) {
-                        const link = e.target.closest('.article-link');
-                        if (link) {
-                            e.preventDefault();
-                            const articleId = link.getAttribute('data-post-id');
-                            if (articleId) {
-                                await navigateToArticle(articleId);
-                            }
-                        }
-                    });
+                    // 重新设置事件监听器
+                    setupArticleListeners();
                     
-                    // 添加点赞按钮事件
-                    document.querySelectorAll('.like-btn').forEach(btn => {
-                        btn.addEventListener('click', async function() {
-                            const id = this.getAttribute('data-id');
-                            try {
-                                const response = await fetch(`/api/post/like/${id}`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' }
-                                });
-                                
-                                if (response.ok) {
-                                    const result = await response.json();
-                                    const isLiked = result.isLiked;
-                                    
-                                    // 更新UI
-                                    const heartIcon = this.querySelector('i');
-                                    heartIcon.className = isLiked ? 'fas fa-heart' : 'far fa-heart';
-                                    
-                                    const countElement = this.querySelector('.like-count');
-                                    countElement.textContent = result.likes;
-                                    
-                                    // 添加动画效果
-                                    heartIcon.classList.add('like-animation');
-                                    setTimeout(() => heartIcon.classList.remove('like-animation'), 800);
-                                }
-                            } catch (error) {
-                                console.error('点赞失败:', error);
-                            }
-                        });
-                    });
                 } else {
+                    console.log('没有找到文章');
                     postsContainer.innerHTML = `
                         <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
                             <i class="fas fa-inbox text-4xl text-gray-400 mb-2"></i>
@@ -1220,15 +1182,22 @@
                 
                 // 显示首页，隐藏文章详情页
                 showHomeView();
+                
             } catch (error) {
                 console.error('获取文章失败:', error);
-                document.getElementById('posts-container').innerHTML = `
-                    <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
-                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
-                        <p class="text-red-500">获取文章列表失败，请稍后再试</p>
-                        <p class="text-gray-500 text-sm mt-2">${error.message}</p>
-                    </div>
-                `;
+                const postsContainer = document.getElementById('posts-container');
+                if (postsContainer) {
+                    postsContainer.innerHTML = `
+                        <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
+                            <p class="text-red-500">获取文章列表失败，请稍后再试</p>
+                            <p class="text-gray-500 text-sm mt-2">${error.message}</p>
+                            <button onclick="loadArticleList()" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
         
@@ -1323,11 +1292,20 @@
             }
         }
         
-        // 修改文章列表中的点击事件处理
+        // 设置文章相关的事件监听器
         function setupArticleListeners() {
+            console.log('设置文章事件监听器');
+            
+            // 文章点击事件
             const postsContainer = document.getElementById('posts-container');
             if (postsContainer) {
-                postsContainer.addEventListener('click', async function(e) {
+                // 移除旧的事件监听器
+                const newContainer = postsContainer.cloneNode(true);
+                postsContainer.parentNode.replaceChild(newContainer, postsContainer);
+                
+                // 添加新的事件监听器
+                newContainer.addEventListener('click', async function(e) {
+                    // 处理文章链接点击
                     const link = e.target.closest('.article-link');
                     if (link) {
                         e.preventDefault();
@@ -1335,6 +1313,37 @@
                         console.log('文章链接被点击:', articleId);
                         if (articleId) {
                             await window.navigateToArticle(articleId);
+                        }
+                    }
+                    
+                    // 处理点赞按钮点击
+                    const likeBtn = e.target.closest('.like-btn');
+                    if (likeBtn) {
+                        const id = likeBtn.getAttribute('data-id');
+                        console.log('点赞按钮被点击:', id);
+                        try {
+                            const response = await fetch(`/api/post/like/${id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            
+                            if (response.ok) {
+                                const result = await response.json();
+                                console.log('点赞结果:', result);
+                                
+                                // 更新UI
+                                const heartIcon = likeBtn.querySelector('i');
+                                heartIcon.className = result.isLiked ? 'fas fa-heart' : 'far fa-heart';
+                                
+                                const countElement = likeBtn.querySelector('.like-count');
+                                countElement.textContent = result.likes;
+                                
+                                // 添加动画效果
+                                heartIcon.classList.add('like-animation');
+                                setTimeout(() => heartIcon.classList.remove('like-animation'), 800);
+                            }
+                        } catch (error) {
+                            console.error('点赞失败:', error);
                         }
                     }
                 });

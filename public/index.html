@@ -1168,13 +1168,13 @@
                     });
                     
                     // 添加事件委托，处理文章链接点击
-                    postsContainer.addEventListener('click', function(e) {
+                    postsContainer.addEventListener('click', async function(e) {
                         const link = e.target.closest('.article-link');
                         if (link) {
                             e.preventDefault();
                             const articleId = link.getAttribute('data-post-id');
                             if (articleId) {
-                                navigateToArticle(articleId);
+                                await navigateToArticle(articleId);
                             }
                         }
                     });
@@ -1248,19 +1248,20 @@
         }
         
         // 导航到文章页面
-        function navigateToArticle(articleId) {
+        async function navigateToArticle(articleId) {
             if (!articleId) return;
             
             history.pushState({type: 'article', id: articleId}, '', `/post/${articleId}`);
-            loadArticle(articleId);
+            await loadArticle(articleId);
+            showArticleView();
         }
         
         // 导航到首页
         function navigateToHome() {
-            history.pushState({}, '', '/');
+            history.pushState({type: 'home'}, '', '/');
             currentArticleId = null;
             showHomeView();
-            loadArticleList(); // 添加重新加载文章列表
+            loadArticleList();
         }
         
         // 处理返回按钮点击

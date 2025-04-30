@@ -1251,9 +1251,24 @@
         async function navigateToArticle(articleId) {
             if (!articleId) return;
             
-            history.pushState({type: 'article', id: articleId}, '', `/post/${articleId}`);
-            await loadArticle(articleId);
-            showArticleView();
+            try {
+                showArticleView(); // 先显示文章视图
+                history.pushState({type: 'article', id: articleId}, '', `/post/${articleId}`);
+                await loadArticle(articleId);
+            } catch (error) {
+                console.error('导航到文章失败:', error);
+                // 如果加载失败，显示错误信息但保持在文章视图
+                document.getElementById('article-container').innerHTML = `
+                    <div class="p-6 text-center">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <p class="text-xl font-bold text-red-500">加载失败</p>
+                        <p class="text-gray-500 mt-2">${error.message}</p>
+                        <button onclick="navigateToArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                            重试
+                        </button>
+                    </div>
+                `;
+            }
         }
         
         // 导航到首页
@@ -1274,9 +1289,9 @@
         async function loadArticle(articleId) {
             try {
                 currentArticleId = articleId;
-                showArticleView();
-                
                 const articleContainer = document.getElementById('article-container');
+                
+                // 显示加载状态
                 articleContainer.innerHTML = `
                     <div class="loading">
                         <div class="spinner"></div>
@@ -1287,14 +1302,25 @@
                 const response = await fetch(`/api/post/${articleId}`);
                 
                 if (!response.ok) {
-                    throw new Error(`文章获取失败: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const article = await response.json();
                 
+                if (!article) {
+                    throw new Error('文章数据为空');
+                }
+                
                 // 获取点赞信息
-                const likeResponse = await fetch(`/api/post/like/${articleId}`).catch(() => null);
-                const likeData = likeResponse && likeResponse.ok ? await likeResponse.json() : { likes: 0, isLiked: false };
+                let likeData = { likes: 0, isLiked: false };
+                try {
+                    const likeResponse = await fetch(`/api/post/like/${articleId}`);
+                    if (likeResponse.ok) {
+                        likeData = await likeResponse.json();
+                    }
+                } catch (error) {
+                    console.warn('获取点赞信息失败:', error);
+                }
                 
                 // 更新页面标题
                 document.title = `${article.title} - 叮叮博客`;
@@ -1307,189 +1333,10 @@
                     day: 'numeric'
                 });
                 
-                // 确保 marked 已加载
-                if (typeof marked === 'undefined') {
-                    throw new Error('Markdown 解析器尚未加载，请刷新页面重试');
-                }
+                // 渲染文章内容
+                const renderedContent = article.content ? marked.parse(article.content) : '<p>暂无内容</p>';
                 
-                // 配置 marked
-                const renderer = new marked.Renderer();
-                renderer.image = function(href, title, text) {
-                    // 添加调试日志
-                    console.log('Image rendering:', { href, title, text });
-                    
-                    // 处理 href 可能是对象的情况
-                    let imgSrc = '';
-                    if (typeof href === 'object' && href !== null) {
-                        imgSrc = href.href || ''; // 从对象中获取 href 属性
-                        text = href.text || text; // 从对象中获取 text 属性
-                        title = href.title || title; // 从对象中获取 title 属性
-                    } else if (typeof href === 'string') {
-                        imgSrc = href;
-                    } else {
-                        console.warn('Invalid image href:', href);
-                        return '';
-                    }
-                    
-                    // 确保 imgSrc 是有效的
-                    if (!imgSrc) {
-                        console.warn('Empty image source');
-                        return '';
-                    }
-                    
-                    imgSrc = imgSrc.trim();
-                    
-                    // 如果是 R2 URL，转换为 Workers URL
-                    if (imgSrc.includes('r2.cloudflarestorage.com')) {
-                        const filePathMatch = imgSrc.match(/\/my-file\/(.+)$/);
-                        if (filePathMatch) {
-                            const filePath = filePathMatch[1];
-                            // 使用 Workers 域名
-                            imgSrc = `https://dingding-blog.pages.dev/file/${filePath}`;
-                        }
-                    }
-                    
-                    // 调试日志
-                    console.log('Processing image:', {
-                        src: imgSrc,
-                        title: title,
-                        text: text
-                    });
-                    
-                    // 构建完整的 img 标签，添加错误处理和预加载
-                    const imgTag = `
-                        <figure class="article-image-container">
-                            <img src="${imgSrc}" 
-                                 alt="${text || ''}" 
-                                 title="${title || ''}" 
-                                 class="article-content-img" 
-                                 loading="lazy"
-                                 onerror="handleImageError(this)"
-                            />
-                            ${title ? `<figcaption>${title}</figcaption>` : ''}
-                        </figure>
-                    `;
-                    
-                    return imgTag;
-                };
-                
-                marked.setOptions({
-                    renderer: renderer,
-                    gfm: true,
-                    breaks: true,
-                    sanitize: false,
-                    smartLists: true,
-                    smartypants: true,
-                    xhtml: true
-                });
-                
-                // 添加图片错误处理函数
-                const script = document.createElement('script');
-                script.textContent = `
-                    function handleImageError(img) {
-                        if (img.retryCount === undefined) {
-                            img.retryCount = 0;
-                        }
-
-                        if (img.retryCount < 3) {
-                            img.retryCount++;
-                            console.log(\`Retrying image load (\${img.retryCount}/3): \${img.src}\`);
-                            
-                            // 清除错误处理器，防止无限循环
-                            img.onerror = null;
-                            
-                            // 添加时间戳参数避免缓存
-                            const timestamp = new Date().getTime();
-                            const separator = img.src.includes('?') ? '&' : '?';
-                            img.src = \`\${img.src}\${separator}t=\${timestamp}\`;
-                            
-                            // 恢复错误处理器
-                            setTimeout(() => {
-                                img.onerror = () => handleImageError(img);
-                            }, 0);
-                        } else {
-                            console.error('Image load failed after 3 retries:', img.src);
-                            img.classList.add('image-load-error');
-                            img.dataset.originalSrc = img.src;
-                            
-                            // 添加点击重试事件
-                            img.onclick = function() {
-                                if (this.classList.contains('image-load-error')) {
-                                    this.classList.remove('image-load-error');
-                                    this.retryCount = 0;
-                                    const timestamp = new Date().getTime();
-                                    const separator = this.dataset.originalSrc.includes('?') ? '&' : '?';
-                                    this.src = \`\${this.dataset.originalSrc}\${separator}t=\${timestamp}\`;
-                                }
-                            };
-                        }
-                    }
-                `;
-                document.head.appendChild(script);
-                
-                // 更新图片样式
-                const style = document.createElement('style');
-                style.textContent = `
-                    .article-image-container {
-                        margin: 1.5rem 0;
-                        text-align: center;
-                    }
-                    
-                    .article-content-img {
-                        max-width: 100%;
-                        height: auto;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                        display: inline-block;
-                        cursor: pointer;
-                        transition: transform 0.2s ease;
-                    }
-                    
-                    .article-content-img:not(.image-load-error):hover {
-                        transform: scale(1.02);
-                    }
-                    
-                    .article-image-container figcaption {
-                        margin-top: 0.5rem;
-                        color: #666;
-                        font-size: 0.9em;
-                        text-align: center;
-                    }
-                    
-                    .image-load-error {
-                        position: relative;
-                        min-height: 200px;
-                        min-width: 300px;
-                        background-color: #f3f4f6;
-                        border: 1px dashed #d1d5db;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .image-load-error::before {
-                        content: "图片加载失败 (点击重试)";
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        color: #666;
-                        font-size: 0.9em;
-                        white-space: nowrap;
-                        transition: color 0.3s ease;
-                    }
-                    
-                    .image-load-error:hover {
-                        background-color: #e5e7eb;
-                        border-color: #FA541C;
-                    }
-                    
-                    .image-load-error:hover::before {
-                        color: #FA541C;
-                    }
-                `;
-                document.head.appendChild(style);
-                
-                // 渲染文章
+                // 更新文章容器内容
                 articleContainer.innerHTML = `
                     <div class="p-6 md:p-8">
                         <h1 class="text-2xl md:text-3xl font-bold mb-4">${article.title}</h1>
@@ -1520,7 +1367,7 @@
                         </div>
                         ` : ''}
                         <div class="article-content prose max-w-none">
-                            ${marked.parse(article.content || '')}
+                            ${renderedContent}
                         </div>
                         <div class="mt-8 flex justify-center">
                             <button class="like-button ${likeData.isLiked ? 'liked' : ''}" id="like-button" data-id="${articleId}">
@@ -1529,19 +1376,15 @@
                                 <span class="like-count">${likeData.likes}</span>
                             </button>
                         </div>
-                        <div class="operations-counter text-center mt-2 ${likeData.remainingOperations < 3 ? (likeData.remainingOperations < 1 ? 'danger' : 'warning') : ''}">
-                            今日剩余操作次数: ${likeData.remainingOperations || 0}
-                        </div>
                     </div>
                 `;
                 
-                // 点赞按钮事件
+                // 添加点赞按钮事件
                 const likeButton = document.getElementById('like-button');
                 if (likeButton) {
                     likeButton.addEventListener('click', async function() {
                         try {
-                            const id = this.getAttribute('data-id');
-                            const response = await fetch(`/api/post/like/${id}`, {
+                            const response = await fetch(`/api/post/like/${articleId}`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -1550,34 +1393,16 @@
                             
                             if (response.ok) {
                                 const result = await response.json();
-                                
-                                // 更新UI
                                 this.classList.toggle('liked', result.isLiked);
                                 this.querySelector('.like-text').textContent = result.isLiked ? '已点赞' : '点赞';
-                                
-                                const countElement = this.querySelector('.like-count');
-                                countElement.textContent = result.likes;
-                                countElement.classList.add('like-count-change');
-                                setTimeout(() => countElement.classList.remove('like-count-change'), 500);
-                                
-                                const heartIcon = this.querySelector('.heart-icon');
-                                heartIcon.classList.add('like-animation');
-                                setTimeout(() => heartIcon.classList.remove('like-animation'), 800);
-                                
-                                // 更新操作计数
-                                const counterElement = document.querySelector('.operations-counter');
-                                if (counterElement) {
-                                    counterElement.textContent = `今日剩余操作次数: ${result.remainingOperations}`;
-                                    counterElement.className = `operations-counter text-center mt-2 ${
-                                        result.remainingOperations < 3 ? (result.remainingOperations < 1 ? 'danger' : 'warning') : ''
-                                    }`;
-                                }
+                                this.querySelector('.like-count').textContent = result.likes;
                             }
                         } catch (error) {
                             console.error('点赞失败:', error);
                         }
                     });
                 }
+                
             } catch (error) {
                 console.error('加载文章失败:', error);
                 document.getElementById('article-container').innerHTML = `
@@ -1585,15 +1410,11 @@
                         <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                         <p class="text-xl font-bold text-red-500">文章加载失败</p>
                         <p class="text-gray-500 mt-2">${error.message}</p>
-                        <button id="reload-article" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                        <button onclick="loadArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
                             重试
                         </button>
                     </div>
                 `;
-                
-                document.getElementById('reload-article')?.addEventListener('click', () => {
-                    loadArticle(articleId);
-                });
             }
         }
 

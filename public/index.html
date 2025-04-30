@@ -1351,6 +1351,29 @@
             console.log('页面加载完成，设置事件监听器');
             setupArticleListeners();
             
+            // 设置返回按钮事件
+            const backButton = document.getElementById('back-button');
+            if (backButton) {
+                backButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateToHome();
+                });
+            }
+            
+            // 添加 popstate 事件处理
+            window.addEventListener('popstate', function(event) {
+                const path = window.location.pathname;
+                if (path === '/') {
+                    showHomeView();
+                    loadArticleList();
+                } else if (path.startsWith('/post/')) {
+                    const postId = path.split('/').pop();
+                    if (postId) {
+                        navigateToArticle(postId);
+                    }
+                }
+            });
+            
             // 检查当前 URL 是否是文章页面
             const path = window.location.pathname;
             if (path.startsWith('/post/')) {
@@ -1632,6 +1655,15 @@
                     </div>
                 `;
             }
+        }
+
+        // 导航到首页
+        function navigateToHome() {
+            console.log('返回首页');
+            history.pushState({type: 'home'}, '', '/');
+            currentArticleId = null;
+            showHomeView();
+            loadArticleList();
         }
     </script>
 </body>

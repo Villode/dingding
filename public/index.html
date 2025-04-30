@@ -1083,10 +1083,9 @@
         // 加载文章列表
         async function loadArticleList() {
             try {
+                let postsContainer = document.getElementById('posts-container');
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
-                
-                const postsContainer = document.getElementById('posts-container');
                 
                 if (posts && posts.length > 0) {
                     // 移除之前的事件监听器

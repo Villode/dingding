@@ -963,7 +963,7 @@
             <div class="main-content">
                 <div id="main-content">
                     <!-- 主页文章列表 -->
-                    <div id="home-content">
+                    <div id="home-content" style="display: block;">
                         <div id="posts-container" class="article-list">
                             <div class="loading">
                                 <div class="spinner"></div>
@@ -971,8 +971,8 @@
                         </div>
                     </div>
                     
-                    <!-- 文章详情页，默认隐藏 -->
-                    <div id="article-content" class="hidden">
+                    <!-- 文章详情页 -->
+                    <div id="article-content" style="display: none;">
                         <div class="mb-6">
                             <button id="back-button" class="back-button">
                                 <i class="fas fa-arrow-left"></i> 返回首页
@@ -1057,27 +1057,39 @@
         let currentState = 'home';
         let currentArticleId = null;
         
-        // 初始化时检查URL并设置页面
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 设置TAB点击事件
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
+        // 初始化页面状态
+        function initializePageState() {
+            console.log('初始化页面状态');
+            const homeContent = document.getElementById('home-content');
+            const articleContent = document.getElementById('article-content');
             
-            const path = window.location.pathname;
-            if (path.startsWith('/post/')) {
-                const postId = path.split('/').pop();
-                if (postId) {
-                    await loadArticle(postId);
-                    return;
+            if (homeContent && articleContent) {
+                // 默认显示首页
+                homeContent.style.display = 'block';
+                articleContent.style.display = 'none';
+                
+                // 检查当前 URL 是否是文章页面
+                const path = window.location.pathname;
+                if (path.startsWith('/post/')) {
+                    const postId = path.split('/').pop();
+                    if (postId) {
+                        console.log('检测到文章 URL，加载文章:', postId);
+                        navigateToArticle(postId);
+                    }
+                } else {
+                    console.log('加载文章列表');
+                    loadArticleList();
                 }
+            } else {
+                console.error('找不到必要的视图容器元素');
             }
-            
-            // 默认加载文章列表
-            await loadArticleList();
+        }
+
+        // 在文档加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始初始化');
+            initializePageState();
+            setupArticleListeners();
         });
         
         // 加载文章列表
@@ -1203,17 +1215,43 @@
         
         // 显示首页视图
         function showHomeView() {
-            document.getElementById('home-content').classList.remove('hidden');
-            document.getElementById('article-content').classList.add('hidden');
+            console.log('切换到首页视图');
+            const homeContent = document.getElementById('home-content');
+            const articleContent = document.getElementById('article-content');
+            
+            if (!homeContent || !articleContent) {
+                console.error('找不到视图容器元素:', {
+                    homeContent: !!homeContent,
+                    articleContent: !!articleContent
+                });
+                return;
+            }
+            
+            homeContent.style.display = 'block';
+            articleContent.style.display = 'none';
             document.title = '叮叮博客';
             currentState = 'home';
+            console.log('首页视图已显示');
         }
         
         // 显示文章详情视图
         function showArticleView() {
-            document.getElementById('home-content').classList.add('hidden');
-            document.getElementById('article-content').classList.remove('hidden');
+            console.log('切换到文章视图');
+            const homeContent = document.getElementById('home-content');
+            const articleContent = document.getElementById('article-content');
+            
+            if (!homeContent || !articleContent) {
+                console.error('找不到视图容器元素:', {
+                    homeContent: !!homeContent,
+                    articleContent: !!articleContent
+                });
+                return;
+            }
+            
+            homeContent.style.display = 'none';
+            articleContent.style.display = 'block';
             currentState = 'article';
+            console.log('文章视图已显示');
         }
         
         // 检查 API 是否可用
@@ -1258,11 +1296,7 @@
             console.log('开始导航到文章:', articleId);
             
             try {
-                // 先显示文章视图
-                showArticleView();
-                console.log('已切换到文章视图');
-                
-                // 检查 API 可用性
+                // 先检查 API 是否可用
                 const apiAvailable = await checkApi(articleId);
                 console.log('API 检查结果:', apiAvailable);
                 
@@ -1270,6 +1304,9 @@
                     // 更新 URL
                     history.pushState({type: 'article', id: articleId}, '', `/post/${articleId}`);
                     console.log('URL 已更新');
+                    
+                    // 切换到文章视图
+                    showArticleView();
                     
                     // 加载文章
                     console.log('准备加载文章内容');
@@ -1279,16 +1316,19 @@
                 }
             } catch (error) {
                 console.error('导航到文章失败:', error);
-                document.getElementById('article-container').innerHTML = `
-                    <div class="p-6 text-center">
-                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
-                        <p class="text-xl font-bold text-red-500">加载失败</p>
-                        <p class="text-gray-500 mt-2">${error.message}</p>
-                        <button onclick="window.navigateToArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
-                            重试
-                        </button>
-                    </div>
-                `;
+                const articleContainer = document.getElementById('article-container');
+                if (articleContainer) {
+                    articleContainer.innerHTML = `
+                        <div class="p-6 text-center">
+                            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                            <p class="text-xl font-bold text-red-500">加载失败</p>
+                            <p class="text-gray-500 mt-2">${error.message}</p>
+                            <button onclick="window.navigateToArticle('${articleId}')" class="mt-4 bg-primary-light text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
         

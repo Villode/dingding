@@ -899,6 +899,13 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- 图片预览模态框 -->
+    <div id="imagePreviewModal" class="image-preview-modal" onclick="closeImagePreview()">
+        <div class="close-button" onclick="closeImagePreview()">×</div>
+        <img id="previewImage" src="" alt="" onclick="event.stopPropagation()">
+        <div id="imageCaption" class="image-caption"></div>
+    </div>
+    
     <!-- 左侧功能菜单 -->
     <div class="sidebar">
         <div class="sidebar-logo">
@@ -1627,6 +1634,88 @@
                 return `${diffMin}分钟前`;
             } else {
                 return '刚刚';
+            }
+        }
+
+        // 图片预览功能
+        function openImagePreview(img) {
+            if (img.classList.contains('image-load-error')) {
+                return; // 如果图片加载失败，不执行预览
+            }
+            
+            const modal = document.getElementById('imagePreviewModal');
+            const previewImage = document.getElementById('previewImage');
+            const caption = document.getElementById('imageCaption');
+            
+            previewImage.src = img.src;
+            previewImage.alt = img.alt;
+            
+            // 设置说明文字（优先使用 title，如果没有则使用 alt）
+            const captionText = img.title || img.alt;
+            if (captionText) {
+                caption.textContent = captionText;
+                caption.style.display = 'block';
+            } else {
+                caption.style.display = 'none';
+            }
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+        }
+
+        function closeImagePreview() {
+            const modal = document.getElementById('imagePreviewModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // 恢复滚动
+        }
+
+        // 按 ESC 键关闭预览
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImagePreview();
+            }
+        });
+
+        // 修改文章内容渲染时的图片处理
+        function renderArticleContent(content) {
+            const renderer = new marked.Renderer();
+            renderer.image = function(href, title, text) {
+                return `<figure class="article-image-container">
+                    <img src="${href}" 
+                         alt="${text || ''}" 
+                         title="${title || ''}" 
+                         class="article-content-img" 
+                         loading="lazy"
+                         onclick="openImagePreview(this)"
+                         onerror="handleImageError(this)"
+                    />
+                    ${title ? `<figcaption>${title}</figcaption>` : ''}
+                </figure>`;
+            };
+            
+            marked.setOptions({
+                renderer: renderer,
+                gfm: true,
+                breaks: true,
+                sanitize: false,
+                smartLists: true,
+                smartypants: true
+            });
+            
+            return marked.parse(content || '');
+        }
+
+        // 修改加载文章的代码，使用新的渲染函数
+        async function loadArticle(articleId) {
+            try {
+                // ... existing code ...
+                
+                // 在渲染文章内容时使用新的渲染函数
+                const renderedContent = renderArticleContent(article.content);
+                
+                // ... rest of the existing code ...
+            } catch (error) {
+                // ... existing error handling ...
             }
         }
     </script>

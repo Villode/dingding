@@ -112,19 +112,19 @@
             border-radius: 12px;
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
             position: relative;
             border: none;
         }
         
         .article-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .article-preview {
-            padding: 16px;
+            padding: 1rem;
         }
         
         .article-info {
@@ -177,10 +177,10 @@
         }
         
         .article-title {
-            font-size: 17px;
+            font-size: 1.25rem;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            color: #333;
             line-height: 1.5;
             transition: color 0.2s;
             text-decoration: none;
@@ -188,38 +188,38 @@
         }
         
         .article-title:hover {
-            color: #FA541C;
+            color: var(--primary-color);
         }
         
         .article-summary {
             color: #666;
-            font-size: 14px;
-            margin-bottom: 12px;
-            line-height: 1.6;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
         }
         
         .article-actions {
             display: flex;
-            justify-content: space-between;
-            padding: 8px 16px;
-            background-color: #f9f9f9;
+            justify-content: space-around;
+            padding: 0.75rem;
             border-top: 1px solid #f0f0f0;
+            background-color: #fafafa;
         }
         
         .action-button {
             display: flex;
             align-items: center;
-            font-size: 13px;
+            gap: 0.5rem;
             color: #666;
-            padding: 6px 12px;
-            border-radius: 4px;
             cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
             transition: all 0.2s;
         }
         
         .action-button:hover {
             background-color: #f0f0f0;
-            color: #FA541C;
+            color: var(--primary-color);
         }
         
         .action-button i {
@@ -229,15 +229,16 @@
         
         .article-meta {
             display: flex;
-            font-size: 12px;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.75rem;
             color: #999;
-            margin-bottom: 12px;
         }
         
         .article-meta span {
-            margin-right: 15px;
             display: flex;
             align-items: center;
+            gap: 0.25rem;
         }
         
         .article-meta i {
@@ -264,8 +265,9 @@
         
         /* 文章列表容器样式 */
         .article-list {
-            margin-top: 15px;
-            padding: 0 5px;
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
         }
         
         /* 增强滚动效果 */
@@ -396,6 +398,7 @@
         
         /* 动画 */
         .fade-in {
+            opacity: 0;
             animation: fadeIn 0.5s ease forwards;
         }
         
@@ -415,7 +418,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: var(--spacing-xl);
+            padding: 2rem;
+            min-height: 200px;
         }
         
         .spinner {
@@ -579,6 +583,9 @@
         
         .main-content {
             flex: 1;
+            background-color: #F4F5F7;
+            min-height: calc(100vh - 60px);
+            padding: 20px;
         }
         
         .sidebar-right {
@@ -896,6 +903,11 @@
             margin: 1rem 0;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
+        
+        /* 确保加载状态正确显示 */
+        #posts-container:empty + .loading {
+            display: flex;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -1102,6 +1114,14 @@
                 }
 
                 console.log('开始加载文章列表');
+                
+                // 显示加载状态
+                postsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
                 
@@ -1118,15 +1138,19 @@
                             .catch(() => ({likes: 0, isLiked: false}))
                     );
                     
+                    console.log('获取点赞信息...');
                     const likesResults = await Promise.all(likesPromises);
                     const likesMap = {};
                     likesResults.forEach((item, index) => {
                         likesMap[posts[index].id] = item;
                     });
+                    console.log('点赞信息获取完成');
                     
+                    console.log('开始渲染文章列表');
                     // 创建文章卡片
                     posts.forEach((post, index) => {
-                        const postDate = new Date(post.published_at);
+                        console.log(`渲染第 ${index + 1} 篇文章:`, post.title);
+                        const postDate = new Date(post.published_at || Date.now());
                         const formattedDate = postDate.toLocaleDateString('zh-CN', {
                             year: 'numeric',
                             month: 'long',
@@ -1178,6 +1202,8 @@
                         
                         postsContainer.appendChild(postElement);
                     });
+                    
+                    console.log('文章列表渲染完成');
                     
                     // 重新设置事件监听器
                     setupArticleListeners();

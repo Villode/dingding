@@ -1160,7 +1160,7 @@
                                     </div>
                                 </div>
                                 <div class="article-info">
-                                    <a href="#" class="article-title article-link" data-id="${post.id}">${post.title}</a>
+                                    <a href="/post/${post.id}" class="article-title article-link" data-post-id="${post.id}">${post.title}</a>
                                     <div class="article-summary">${post.summary || '无摘要'}</div>
                                     <div class="article-meta">
                                         <span><i class="far fa-calendar-alt"></i>${formattedDate}</span>
@@ -1186,14 +1186,16 @@
                         postsContainer.appendChild(postElement);
                     });
                     
-                    // 添加文章链接点击事件
-                    document.querySelectorAll('.article-link').forEach(link => {
-                        link.addEventListener('click', function(e) {
+                    // 使用事件委托来处理文章链接点击
+                    postsContainer.addEventListener('click', function(e) {
+                        const link = e.target.closest('.article-link');
+                        if (link) {
                             e.preventDefault();
-                            const articleId = this.getAttribute('data-id');
-                            navigateToArticle(articleId);
-                            history.pushState({}, '', `/post/${articleId}`);
-                        });
+                            const articleId = link.getAttribute('data-post-id');
+                            if (articleId) {
+                                navigateToArticle(articleId);
+                            }
+                        }
                     });
                     
                     // 添加点赞按钮事件

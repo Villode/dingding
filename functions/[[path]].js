@@ -71,7 +71,7 @@ export async function onRequest(context) {
                       transform: scale(1.02);
                   }
 
-                  /* 图片预览模态框 */
+                  /* 图片预览模态框样式优化 */
                   .image-preview-modal {
                       display: none;
                       position: fixed;
